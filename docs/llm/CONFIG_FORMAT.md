@@ -1,0 +1,197 @@
+# RAVL Loop Configuration Format
+
+This document describes the `config/ravl.yml` format for RAVL loops.
+
+## Basic Configuration
+
+Every RAVL loop requires a `config/ravl.yml` file with at minimum:
+
+```yaml
+name: my_loop
+description: Brief description of what this loop does
+emoji: ➿
+```
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Loop identifier (matches directory name) |
+| `description` | string | Human-readable description |
+| `emoji` | string | Single emoji for display |
+
+## Loop Types
+
+### Python Loops
+
+Default type. Requires `ravl_loop.py` implementation.
+
+```yaml
+name: habit_tracker
+description: Track daily habits
+emoji: ✅
+```
+
+### Markdown Loops
+
+For LLM-interpreted markdown-based loops.
+
+```yaml
+name: weekly_reflection
+description: Weekly reflection loop
+emoji: ➿
+type: markdown
+markdown_file: ravl_loop.md
+```
+
+## Advanced Configuration
+
+### Template Variables
+
+For markdown loops that need dynamic input:
+
+```yaml
+template_variables:
+  week_number:
+    cli_arg: --week
+    required: false
+    help: Week number to analyze
+    type: string
+    default: current
+```
+
+### Learning Path Configuration
+
+Custom location for learning artifacts (see main project CLAUDE.md):
+
+```yaml
+learning_path: /custom/path/to/learnings
+```
+
+### Virtual Environment Path
+
+Custom venv location for generated code dependencies.
+
+**Configuration Priority (highest to lowest):**
+
+1. **CLI flag**: `./ravl my_loop --venv-path /tmp/venv`
+2. **Loop config**: `venv_path: /custom/venv` in `config/ravl.yml`
+3. **Project config**: `ravl_loops/config/ravl.yml`
+4. **Environment variable**: `RAVL_DEFAULT_VENV_DIRECTORY=/data/venvs`
+5. **Default**: `.ravl/venv`
+
+```yaml
+venv_path: /custom/path/to/venv
+```
+
+**Note:** Unlike learning paths, venv paths do NOT inherit from parent loops. Each loop can specify its own venv or share a project-wide venv configured via environment variable.
+
+### Dependency Whitelist
+
+Approved packages for generated code (hierarchical):
+
+```yaml
+allowed_dependencies:
+  google-api-python-client:
+    min_version: '2.100.0'
+    max_version: '3.0.0'
+
+  pandas:
+    min_version: '2.0.0'
+    max_version: '3.0.0'
+```
+
+**Resolution Order**: Loop config → Parent config → Project config → Framework config
+
+### Google Workspace Configuration
+
+For loops using Google APIs:
+
+```yaml
+max_google_file_revisions_to_track: 100
+```
+
+### Runtime Options
+
+Runtime options are configured via CLI flags only (not in `ravl.yml`):
+
+**Quiet Mode** (suppress framework output):
+```bash
+./ravl my_loop --quiet
+```
+
+**Execution Mode** (fast vs full analysis):
+```bash
+./ravl my_loop --mode fast  # Skip expensive analysis
+./ravl my_loop --mode full  # Complete execution (default)
+```
+
+**Timeout** (max execution time):
+```bash
+./ravl my_loop --timeout 600  # 10 minutes (default: 300)
+```
+
+**Disable Deep Learning** (skip model-based learning):
+```bash
+./ravl my_loop --no-deep-learning
+```
+
+**See full list**: `./ravl --help`
+
+## Configuration Hierarchy
+
+RAVL uses hierarchical configuration with this priority (highest to lowest):
+
+1. **Loop config**: `ravl_loops/my_loop/config/ravl.yml`
+2. **Parent config**: `ravl_loops/parent_loop/config/ravl.yml`
+3. **Project config**: `ravl_loops/config/ravl.yml`
+4. **Framework config**: `.ravl/config/ravl.yml`
+
+Child loops automatically inherit parent configurations unless overridden.
+
+## Complete Example
+
+```yaml
+name: api_data_ingestion
+description: Ingest data from external API with self-healing
+emoji: 🔄
+type: markdown
+markdown_file: ravl_loop.md
+
+# Custom paths (can also use RAVL_DEFAULT_LEARNING_DIRECTORY and RAVL_DEFAULT_VENV_DIRECTORY in .env)
+learning_path: /data/ravl_learning/api_ingestion  # CLI: --learning-path, env: RAVL_DEFAULT_LEARNING_DIRECTORY
+venv_path: /data/venvs/api_ingestion             # CLI: --venv-path, env: RAVL_DEFAULT_VENV_DIRECTORY
+
+# Template variables for markdown
+template_variables:
+  api_endpoint:
+    cli_arg: --endpoint
+    required: true
+    help: API endpoint URL
+    type: string
+
+  start_date:
+    cli_arg: --start-date
+    required: false
+    help: Start date for data fetch (YYYY-MM-DD)
+    type: string
+
+# Approved dependencies
+allowed_dependencies:
+  requests:
+    min_version: '2.31.0'
+    max_version: '3.0.0'
+
+  pydantic:
+    min_version: '2.0.0'
+    max_version: '3.0.0'
+
+# Google integration
+max_google_file_revisions_to_track: 50
+```
+
+## See Also
+
+- [Markdown Loop Infrastructure](README.md) - Full markdown loop documentation
+- [PROMPTS.md](PROMPTS.md) - Prompt template system
+- Project CLAUDE.md - Configurable paths and dependency management

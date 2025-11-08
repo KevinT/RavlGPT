@@ -1,0 +1,14 @@
+name: hacker_news
+description: Fetches Hacker News RSS feed
+type: child_example
+loop_type: markdown
+
+execution_timeout: 60
+
+allowed_dependencies:
+  requests:
+    min_version: '2.31.0'
+    max_version: '3.0.0'
+  feedparser:
+    min_version: '6.0.0'
+    max_version: '7.0.0'

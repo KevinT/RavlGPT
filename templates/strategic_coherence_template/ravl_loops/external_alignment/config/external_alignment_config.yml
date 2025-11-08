@@ -1,0 +1,32 @@
+# External Alignment Template Configuration
+# Configure document folders and external sources to compare for drift
+
+# TODO: Update this section with directories containing your internal documents
+document_folders:
+  - "# TODO: Replace with your internal document paths"
+
+# TODO: Update this section with external sources to monitor
+# External sources can be:
+# - Google Docs (requires read access for service account)
+# - GitHub URLs (public or private with auth)
+# - Local file paths
+# - HTTP URLs to documents/pages
+external_sources:
+  - id: "source_1"
+    name: "# TODO: Name your external source"
+    url: "# TODO: Provide URL or path to external source"
+    type: "# TODO: google_docs, github, local_file, or http_url"
+    topics: ["# TODO: List relevant topics"]
+    authority_level: "canonical"  # canonical or reference
+    enabled: false  # Set to true once configured
+
+# Drift detection parameters
+drift_detection:
+  min_confidence: 0.3
+  max_issues_per_run: 50
+  check_frequency: "on_change"
+
+# Learning parameters
+learning:
+  weight_adjustment_rate: 0.2
+  false_positive_threshold: 3

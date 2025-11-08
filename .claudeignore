@@ -1,0 +1,9 @@
+# Generated code caches
+**/__pycache__/
+**/*.pyc
+.pytest_cache/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/

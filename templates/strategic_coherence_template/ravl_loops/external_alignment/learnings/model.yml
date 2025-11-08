@@ -1,0 +1,36 @@
+version: "1.0"
+last_learned: null
+learning_iterations: 0
+
+# Drift category weights (discovered dynamically)
+drift_weights: {}
+
+# Strategy performance (which analysis strategies work best for this content)
+strategy_performance:
+  broad_comparison:
+    success_rate: 0.5
+    avg_issues_found: 0
+    avg_true_positives: 0
+  source_focused:
+    success_rate: 0.5
+    avg_issues_found: 0
+    avg_true_positives: 0
+  hybrid:
+    success_rate: 0.5
+    avg_issues_found: 0
+    avg_true_positives: 0
+
+# External source reliability tracking
+source_reliability: {}
+
+# Overall performance metrics
+performance:
+  precision: 0.5
+  recall: 0.5
+  false_positive_rate: 0.5
+  suggestions_accepted_rate: 0.0
+
+# Configuration status
+configuration_status: "unchecked"
+last_config_check: null
+configuration_errors: []

@@ -1,0 +1,40 @@
+## BASIC METADATA
+description: New markdown RAVL loop - change me in ravl.yml
+type: markdown
+markdown_file: ravl_loop.md
+emoji: ➿
+
+## PARAMETER PASSING
+# Variables that can be used in ravl_loop.md with {variable_name} syntax
+#  template_variables:
+#    batch_size: 100
+#    retry_delay: 5
+#    max_items: 1000
+#    # Any key-value pairs your markdown loop needs
+template_variables: {}
+
+## LEARNING OUTPUT
+# Override where learning artifacts are stored
+# Priority: CLI flag > this config > .env RAVL_DEFAULT_LEARNING_DIRECTORY > default (learnings/)
+# learning_path: ./data/ravl-learning/org_context
+
+## API KEYS & TOKENS
+# They don't go in this file. Don't be stupid.
+
+## APPROVED DEPENDENCIES
+# Runtime pip installation whitelist for generated code
+# If not specified, falls back to: ravl_loops/config/ravl.yml → .ravl/config/ravl.yml
+# Only packages listed here can be installed by generated code (security model)
+allowed_dependencies:
+  anthropic:
+    min_version: '0.25.0'
+    max_version: '1.0.0'
+  pyyaml:
+    min_version: '6.0.1'
+    max_version: '7.0.0'
+  requests:
+    min_version: '2.31.0'
+    max_version: '3.0.0'
+
+## ADDITIONAL LOOP CONFIG
+# Add anything else your loop needs

@@ -1,0 +1,83 @@
+{
+  "header_template": [
+    "# This Source Code Form is subject to the terms of the Mozilla Public",
+    "# License, v. 2.0. If a copy of the MPL was not distributed with this",
+    "# file, You can obtain one at http://mozilla.org/MPL/2.0/.",
+    "#",
+    "# Copyright (c) 2025 Kevin Trethewey"
+  ],
+  "copyright_holder": "Kevin Trethewey",
+  "license": "MPL-2.0",
+  "license_url": "http://mozilla.org/MPL/2.0/",
+  "file_patterns": {
+    "priority_1": {
+      "description": "Core Framework",
+      "files": [
+        "common/ravl_protocol.py",
+        "common/ravl_base.py",
+        "common/ravl_runner.py"
+      ]
+    },
+    "priority_2": {
+      "description": "Main Executors",
+      "files": [
+        "common/llm/run_markdown_ravl.py",
+        "common/execution/markdown/markdown_ravl_executor.py",
+        "common/execution/code/data_ingress_executor.py"
+      ]
+    },
+    "priority_3": {
+      "description": "Key Utilities",
+      "files": [
+        "common/core/learning/learning_manager.py",
+        "common/core/error_handling/error_semantic_analyzer.py",
+        "common/core/verification/schema_adapters.py"
+      ]
+    },
+    "priority_4": {
+      "description": "Integrations",
+      "files": [
+        "common/llm/llm_providers.py",
+        "common/mixins/llm_mixin.py",
+        "common/integrations/google_apis_mixin.py",
+        "common/integrations/credential_validator.py"
+      ]
+    },
+    "priority_5": {
+      "description": "CLI Scripts",
+      "files": [
+        "bin/ravl",
+        "bin/ravl-wrapper",
+        "bin/ravl-health",
+        "bin/ravl-list",
+        "bin/ravl-clean",
+        "bin/ravl-clone"
+      ]
+    }
+  },
+  "exclusions": {
+    "patterns": [
+      "tests/**/*.py",
+      "**/__pycache__/**",
+      "**/learnings/**",
+      "**/ravl_learning/**",
+      "docs/examples/**",
+      "templates/**/*.py",
+      "**/*.pyc",
+      "**/.DS_Store"
+    ],
+    "directories": [
+      "tests",
+      "venv",
+      ".git",
+      "__pycache__",
+      "learnings",
+      "ravl_learning"
+    ]
+  },
+  "settings": {
+    "check_after_shebang": true,
+    "require_blank_line_after_header": true,
+    "allow_additional_copyright_holders": true
+  }
+}

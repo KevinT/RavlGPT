@@ -1,0 +1,10 @@
+description: Analysis of execution health of RAVL loops
+emoji: 🏥
+type: framework
+
+# Framework loops should always use framework-local learnings (not project defaults)
+#learning_path: learnings
+
+# Configuration
+#target_loop: null  # Set via CLI parameter
+#analysis_depth: medium  # quick, medium, deep

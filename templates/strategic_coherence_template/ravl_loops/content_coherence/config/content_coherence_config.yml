@@ -1,0 +1,31 @@
+# Content Coherence Template Configuration
+# Customize these paths for your project
+
+# TODO: Update these paths to directories containing markdown/content files to analyze
+# Example: ['docs/', 'content/handbook/']
+# The glob pattern will recursively find all .md files in subdirectories
+scan_paths:
+  - "# TODO: Replace with your content directory paths"
+
+# Paths to exclude from scanning
+exclude_paths:
+  - "_site"
+  - ".git"
+  - "node_modules"
+  - "__pycache__"
+
+# Strategy selection parameters
+strategy_selection:
+  max_files_for_broad_survey: 100
+  max_files_for_focused_scan: 30
+  token_budget: 200000
+
+# Gap detection parameters
+gap_detection:
+  min_confidence: 0.3
+  max_gaps_per_run: 50
+
+# Learning parameters
+learning:
+  weight_adjustment_rate: 0.2
+  false_positive_threshold: 3

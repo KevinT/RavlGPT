@@ -1,0 +1,100 @@
+"""Logging utilities for RAVL framework
+
+Standardizes logging output formats and emoji usage across the framework.
+"""
+
+import sys
+from typing import Optional
+
+# Standard emoji constants
+EMOJI_SUCCESS = "✅"
+EMOJI_ERROR = "❌"
+EMOJI_WARNING = "⚠️"
+EMOJI_INFO = "ℹ️"
+EMOJI_LOOP = "➿"
+EMOJI_REFLECT = "🔍"
+EMOJI_VERIFY = "✅"
+EMOJI_LEARN = "📚"
+EMOJI_TRASH = "🗑️"
+EMOJI_RUNNING = "▶️"
+EMOJI_DONE = "✨"
+EMOJI_CHECK = "✓"
+EMOJI_CROSS = "✗"
+EMOJI_BULLET = "•"
+
+# Status symbols for consistent output
+STATUS_SYMBOLS = {
+    'info': '[i]',
+    'success': '[✓]',
+    'error': '[✗]',
+    'working': '[•]',
+}
+
+
+def log_message(message: str, status: str = 'info', indent: int = 2, file=None):
+    """
+    Log a formatted message with consistent styling.
+
+    Args:
+        message: Message to log
+        status: Status type ('info', 'success', 'error', 'working')
+        indent: Number of spaces to indent
+        file: File to write to (default: sys.stderr)
+    """
+    if file is None:
+        file = sys.stderr
+
+    symbol = STATUS_SYMBOLS.get(status, '[i]')
+    indent_str = ' ' * indent
+    print(f"{indent_str}{symbol} {message}", file=file, flush=True)
+
+
+def log_verification_error(error_title: str, error_msg: str, max_length: int = 150, file=None):
+    """
+    Log a verification error in consistent format.
+
+    Args:
+        error_title: Short title of the error
+        error_msg: Detailed error message (will be truncated if needed)
+        max_length: Maximum length of error message to display
+        file: File to write to (default: sys.stderr)
+    """
+    if file is None:
+        file = sys.stderr
+
+    truncated_msg = error_msg[:max_length] if len(error_msg) > max_length else error_msg
+    log_message(error_title, status='error', file=file)
+    log_message(f"Error: {truncated_msg}", indent=6, file=file)
+
+
+def log_phase_banner(phase_name: str, emoji: str = "🔍", file=None):
+    """
+    Log a phase transition banner.
+
+    Args:
+        phase_name: Name of the phase
+        emoji: Emoji to display
+        file: File to write to (default: sys.stderr)
+    """
+    if file is None:
+        file = sys.stderr
+
+    print("\n" + "="*80, file=file, flush=True)
+    print(f"{emoji} {phase_name}", file=file, flush=True)
+    print("="*80, file=file, flush=True)
+
+
+def truncate_output(content: str, max_length: int) -> str:
+    """
+    Truncate content to a maximum length, keeping the end of the content.
+
+    Args:
+        content: Content to truncate
+        max_length: Maximum length
+
+    Returns:
+        Truncated content
+    """
+    if len(content) <= max_length:
+        return content
+    return content[-max_length:]

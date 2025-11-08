@@ -1,0 +1,6 @@
+description: Detects drift between documents and external sources
+emoji: 🔗
+type: markdown
+markdown_file: ravl_loop.md
+
+template_variables: {}

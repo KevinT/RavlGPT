@@ -1,0 +1,17 @@
+# Core RAVL Framework Dependencies
+# Install with: pip install -r requirements.txt
+
+# Configuration and data handling
+pyyaml>=6.0
+
+# LLM Providers (install the ones you need)
+anthropic>=0.39.0
+openai>=1.0.0
+google-generativeai>=0.3.0
+
+# For Ollama local LLM support
+requests>=2.31.0
+
+# For Google Docs/Sheets external source fetching
+google-api-python-client>=2.0.0
+google-auth>=2.0.0

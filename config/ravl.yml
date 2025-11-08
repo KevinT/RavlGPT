@@ -1,0 +1,71 @@
+# RAVL Framework Configuration - Framework Level
+#
+# This file defines framework-wide defaults for all RAVL loops across all projects.
+# Project defaults are in ravl_loops/config/ravl.yml
+# Individual loops can override in their own config/ravl.yml files.
+#
+# These are the most minimal set of dependencies that the framework uses internally.
+
+description: Framework-level RAVL configuration
+
+# ==================== Framework Infrastructure Configuration ====================
+#
+# Python version requirements for virtual environment creation
+# The framework will create venvs using this specific Python version to ensure
+# compatibility with dependencies (e.g., Anthropic library requires Python 3.9-3.13)
+
+framework:
+  required_python_version: "3.12"  # Specific Python version to use for all venvs
+  min_python_version: "3.9"         # Minimum supported Python version
+  max_python_version: "3.13"        # Maximum supported Python version (3.14+ has compatibility issues)
+
+# ==================== Google Workspace Integration Configuration ====================
+#
+# Configuration for loops that integrate with Google Workspace (Docs, Sheets, etc)
+
+max_google_file_revisions_to_track: 100
+# Maximum number of revisions to track for Google Docs/Sheets/Slides
+# Loops can override this in their own config/ravl.yml
+# Used by GoogleDocsRevisionTracker and similar workflow classes
+
+# ==================== LLM Token Limits Configuration ====================
+#
+# Maximum token limits for LLM API calls throughout the framework.
+# Higher limits prevent truncation but increase API costs and latency.
+# Projects and loops can override these in their own config/ravl.yml files.
+
+llm:
+  max_tokens:
+    # Code generation (where truncation is CRITICAL)
+    code_generation: 16384                    # Main code generator (increased from 8192)
+    act_phase_code_generation: 16384          # Markdown act phase code gen (increased from 8192)
+    data_ingress_code_generation: 8192        # API integration code (increased from 3000)
+
+    # Analysis and synthesis
+    domain_context_synthesis: 4096            # REFLECT synthesis (increased from 2048)
+    verification: 4096                        # VERIFY phase analysis (unchanged)
+    learn_insights: 4096                      # LEARN phase synthesis (increased from 2048)
+    markdown_enhancement: 4096                # Markdown enhancement (increased from 2048)
+
+    # Health checks
+    health_check_execution_analysis: 4096     # Execution diagnostics (increased from 2048)
+    health_check_domain_analysis: 4096        # Domain diagnostics (increased from 2048)
+
+    # Default fallback (for generic LLM provider calls)
+    default: 8192                             # LLM provider default (increased from 4096)
+
+# ==================== Approved Dependencies (Framework Baseline) ====================
+#
+# This is the minimal set of dependencies approved at the framework level.
+# Projects typically add their own dependencies in ravl_loops/config/ravl.yml
+# Individual loops can override further in their own config/ravl.yml files.
+
+allowed_dependencies:
+  # Minimal core dependencies required by framework
+  pyyaml:
+    min_version: '6.0.1'
+    max_version: '7.0.0'
+
+  requests:
+    min_version: '2.31.0'
+    max_version: '3.0.0'

@@ -1,0 +1,22 @@
+description: Generic parent loop for content coherence and external alignment monitoring
+emoji: ➿
+type: markdown
+markdown_file: ravl_loop.md
+
+template_variables: {}
+
+# ==================== Approved Dependencies ====================
+
+# Runtime pip installation whitelist for generated code
+# If not specified, falls back to: ravl_loops/config/ravl.yml → .ravl/config/ravl.yml
+# Only packages listed here can be installed by generated code (security model)
+allowed_dependencies:
+  anthropic:
+    min_version: '0.25.0'
+    max_version: '1.0.0'
+  pyyaml:
+    min_version: '6.0.1'
+    max_version: '7.0.0'
+  requests:
+    min_version: '2.31.0'
+    max_version: '3.0.0'

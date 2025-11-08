@@ -1,0 +1,4 @@
+name: release_notes
+description: Look at git history and extract new items for the change log
+#type: framework
+#learning_path: 

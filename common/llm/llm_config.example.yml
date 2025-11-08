@@ -1,0 +1,38 @@
+# LLM Provider Configuration for Coherence Guardian
+# Copy this to your coherence_intelligence.yml under 'llm_config' section
+
+# Example 1: Anthropic Claude
+llm_config:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+  # api_key: "optional-if-not-in-env"
+
+# Example 2: OpenAI GPT
+# llm_config:
+#   provider: openai
+#   model: gpt-4o
+#   # api_key: "optional-if-not-in-env"
+
+# Example 3: Google Gemini
+# llm_config:
+#   provider: google
+#   model: gemini-2.0-flash-exp
+#   # api_key: "optional-if-not-in-env"
+
+# Example 4: Ollama (local, free)
+# llm_config:
+#   provider: ollama
+#   model: llama3.1
+#   base_url: http://localhost:11434
+
+# Auto-detection (if no config specified):
+# 1. Checks for ANTHROPIC_API_KEY
+# 2. Checks for OPENAI_API_KEY
+# 3. Checks for GOOGLE_API_KEY
+# 4. Falls back to local Ollama
+
+# Notes:
+# - API keys can be set via environment variables
+# - Model names can be customized per provider
+# - Ollama requires running local instance
+# - Leave llm_config empty for auto-detection

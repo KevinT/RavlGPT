@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""
+RAVL Execution Health Check - Analyze code generation, DSL stability, and dependencies
+
+Focuses on SOLUTION SPACE: How to make the infrastructure work.
+
+Usage:
+    ravl-execution-health <loop-name>
+
+Examples:
+    ravl-execution-health org_context
+    ravl-execution-health strategy_coherence
+
+Analyzes:
+- DSL iteration stability (converging vs unstable)
+- Execution failure patterns
+- Code cache effectiveness
+- Recent execution success rates
+
+Runs: ./.ravl/bin/ravl health_checks/execution_health_check --loop <loop-name>
+"""
+
+import sys
+import subprocess
+from pathlib import Path
+import difflib
+
+if len(sys.argv) < 2:
+    print(__doc__)
+    sys.exit(1)
+
+# Find framework directory
+_current = Path(__file__).resolve().parent.parent
+_framework_dir = _current  # .ravl directory
+project_root = _framework_dir.parent
+
+loop_name = sys.argv[1]
+
+# Validate that the loop exists before running health check
+sys.path.insert(0, str(_framework_dir / "common" / "cli"))
+try:
+    from loop_discovery import LoopDiscovery
+
+    discovery = LoopDiscovery(project_root)
+
+    # Try to find the loop
+    try:
+        target_loop = discovery.find_loop(loop_name)
+    except ValueError:
+        # Loop not found - provide helpful suggestions
+        all_loops = discovery.find_all_loops()
+        loop_names = [loop['path'].name for loop in all_loops]
+
+        print(f"❌ Loop not found: {loop_name}", file=sys.stderr)
+        print(file=sys.stderr)
+
+        # Find close matches using fuzzy matching
+        close_matches = difflib.get_close_matches(loop_name, loop_names, n=3, cutoff=0.6)
+
+        if close_matches:
+            print("💡 Did you mean:", file=sys.stderr)
+            for match in close_matches:
+                print(f"   • {match}", file=sys.stderr)
+            print(file=sys.stderr)
+
+        if loop_names:
+            print("📋 Available loops:", file=sys.stderr)
+            for name in sorted(loop_names)[:10]:  # Show first 10
+                print(f"   • {name}", file=sys.stderr)
+            if len(loop_names) > 10:
+                print(f"   ... and {len(loop_names) - 10} more", file=sys.stderr)
+
+        print(file=sys.stderr)
+        print("Use './ravl-list' to see all available loops", file=sys.stderr)
+        sys.exit(1)
+
+except Exception as e:
+    print(f"Error validating loop: {str(e)}", file=sys.stderr)
+    sys.exit(1)
+
+# Build ravl command
+ravl_cmd = [
+    str(_framework_dir / "bin" / "ravl"),
+    "health_checks/execution_health_check",
+    # Note: Don't use --quiet so diagnostics are printed
+]
+
+# Pass through remaining arguments
+for arg in sys.argv[2:]:
+    ravl_cmd.append(arg)
+
+# Run the health check through RAVL runner with target loop in environment
+import os
+env = os.environ.copy()
+env["HEALTH_CHECK_TARGET_LOOP"] = loop_name
+
+try:
+    result = subprocess.run(ravl_cmd, cwd=str(project_root), env=env)
+    sys.exit(result.returncode)
+except Exception as e:
+    print(f"Error: {str(e)}", file=sys.stderr)
+    sys.exit(1)

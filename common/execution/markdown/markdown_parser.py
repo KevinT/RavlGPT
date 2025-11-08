@@ -1,0 +1,254 @@
+#!/usr/bin/env python3
+"""
+Markdown RAVL Loop Parser
+
+Handles parsing, normalization, and interpretation of markdown-defined RAVL loops.
+Converts markdown into structured RAVL phases (Reflect, Act, Verify, Learn).
+"""
+
+import re
+import sys
+from pathlib import Path
+from typing import Dict, Optional, Any
+
+
+class MarkdownParser:
+    """
+    Parses markdown into RAVL phases
+
+    Responsibilities:
+    - Parse markdown into phase sections (Act, Verify, etc.)
+    - Normalize phase names (Verification → verify, Acceptance Criteria → verify)
+    - Interpret free-form markdown into structured RAVL format
+    - Handle loading related loop examples for context
+    """
+
+    def __init__(self, loop_dir: Path, learnings_dir: Path, llm_provider=None):
+        """
+        Initialize parser
+
+        Args:
+            loop_dir: Path to the loop directory
+            learnings_dir: Path to learnings directory
+            llm_provider: Optional LLM provider for interpreting free-form markdown
+        """
+        self.loop_dir = loop_dir
+        self.learnings_dir = learnings_dir
+        self.llm = llm_provider
+
+    def parse_markdown(self, markdown_text: str) -> Dict[str, str]:
+        """Parse markdown into phase sections"""
+        phases = {}
+        current_phase = None
+        current_content = []
+        has_explicit_phases = False
+
+        for line in markdown_text.split('\n'):
+            # Check if line is a phase heading (# Act, # Verify, etc.)
+            if line.strip().startswith('# '):
+                has_explicit_phases = True
+                # Save previous phase
+                if current_phase:
+                    phases[current_phase] = '\n'.join(current_content).strip()
+
+                # Start new phase - normalize the name
+                heading = line.strip('# ').strip()
+                current_phase = self._normalize_phase_name(heading)
+                current_content = []
+            else:
+                current_content.append(line)
+
+        # Save final phase
+        if current_phase:
+            phases[current_phase] = '\n'.join(current_content).strip()
+
+        # Always trigger interpretation for markdown loops
+        # This allows the LLM to validate, improve, and fill in missing sections
+        # Well-defined loops will have minimal changes; incomplete loops will be enhanced
+        if markdown_text.strip():
+            if self.llm:
+                interpreted = self._interpret_free_form_markdown(markdown_text, phases)
+                # Re-parse the interpreted markdown which should now have explicit phases
+                return self._parse_markdown_internal(interpreted)
+
+        return phases
+
+    def _normalize_phase_name(self, heading: str) -> str:
+        """
+        Normalize phase heading to canonical name
+
+        Supports alternative names:
+        - "Acceptance Criteria" → "verify"
+        - "Verification" → "verify"
+        """
+        normalized = heading.lower().strip()
+
+        # Map alternative names to canonical phase names
+        phase_mappings = {
+            'acceptance criteria': 'verify',
+            'verification': 'verify',
+        }
+
+        return phase_mappings.get(normalized, normalized)
+
+    def _parse_markdown_internal(self, markdown_text: str) -> Dict[str, str]:
+        """Internal parse that doesn't trigger interpretation (to avoid recursion)"""
+        phases = {}
+        current_phase = None
+        current_content = []
+
+        for line in markdown_text.split('\n'):
+            # Check if line is a phase heading (# Act, # Verify, etc.)
+            if line.strip().startswith('# '):
+                # Save previous phase
+                if current_phase:
+                    phases[current_phase] = '\n'.join(current_content).strip()
+
+                # Start new phase - normalize the name
+                heading = line.strip('# ').strip()
+                current_phase = self._normalize_phase_name(heading)
+                current_content = []
+            else:
+                current_content.append(line)
+
+        # Save final phase
+        if current_phase:
+            phases[current_phase] = '\n'.join(current_content).strip()
+
+        return phases
+
+    def _interpret_free_form_markdown(self, raw_markdown: str, existing_phases: dict = None) -> str:
+        """
+        Use LLM to interpret/enhance markdown into structured RAVL phases
+
+        Provides context from:
+        - RAVL protocol documentation
+        - Related loops (parent/child/sibling) as examples
+        - Loop configuration
+        - Existing phase sections (if any) to preserve or enhance
+
+        Args:
+            raw_markdown: The original markdown content
+            existing_phases: Dict of already-parsed phase sections (e.g., {'act': '...'})
+        """
+        # Lazy import to avoid circular dependency issues
+        from common.config.config_loader import get_max_tokens
+
+        if not self.llm:
+            raise ValueError("LLM provider required for markdown interpretation")
+
+        import os
+
+        # Load RAVL protocol
+        protocol_file = self.loop_dir.parent.parent.parent / '.ravl' / 'docs' / 'RAVL_PROTOCOL.md'
+        protocol_text = ""
+        if protocol_file.exists():
+            with open(protocol_file, 'r', encoding='utf-8') as f:
+                protocol_text = f.read()[:3000]  # First 3000 chars to keep context reasonable
+
+        # Load related loop examples
+        examples_text = ""
+
+        # Load parent loop example
+        parent_loop = self.loop_dir.parent.parent if self.loop_dir.parent.name == 'ravl_loops' else None
+        if parent_loop and (parent_loop / 'ravl_loop.md').exists():
+            with open(parent_loop / 'ravl_loop.md', 'r', encoding='utf-8') as f:
+                parent_content = f.read()[:1500]
+                examples_text += f"## Parent Loop Example:\n{parent_content}\n\n"
+
+        # Load sibling/child examples
+        siblings_dir = self.loop_dir.parent if self.loop_dir.parent.name == 'ravl_loops' else self.loop_dir
+        if siblings_dir.exists():
+            for sibling in list(siblings_dir.iterdir())[:2]:  # First 2 siblings
+                if sibling.is_dir() and sibling != self.loop_dir and (sibling / 'ravl_loop.md').exists():
+                    with open(sibling / 'ravl_loop.md', 'r', encoding='utf-8') as f:
+                        sibling_content = f.read()[:1000]
+                        examples_text += f"## Similar Loop ({sibling.name}):\n{sibling_content}\n\n"
+
+        # Build and load prompt from template file
+        prompts_dir = Path(__file__).parent / 'prompts'
+        prompt_file = prompts_dir / 'interpret_freeform_markdown.md'
+
+        if not prompt_file.exists():
+            raise FileNotFoundError(f"Prompt file not found: {prompt_file}")
+
+        with open(prompt_file, 'r', encoding='utf-8') as f:
+            prompt_template = f.read()
+
+        loop_name = self.loop_dir.name
+
+        # Format existing phases for prompt context
+        existing_phases_text = ""
+        if existing_phases:
+            existing_phases_text = "\n\n## Existing Phase Sections:\n"
+            for phase_name, phase_content in existing_phases.items():
+                existing_phases_text += f"\n### {phase_name.capitalize()}\n{phase_content}\n"
+
+        # Load recent run insights from execution_learning/recent_attempts/
+        run_insights_text = ""
+        execution_learning_dir = self.learnings_dir / 'execution_learning'
+        recent_attempts_dir = execution_learning_dir / 'recent_attempts'
+
+        if recent_attempts_dir.exists():
+            # Find all run_insights files across all attempts
+            all_insights = []
+            for attempt_dir in recent_attempts_dir.iterdir():
+                if attempt_dir.is_dir() and attempt_dir.name.startswith('attempt_'):
+                    for insights_file in attempt_dir.glob('run_insights_*.json'):
+                        try:
+                            import json
+                            with open(insights_file, 'r', encoding='utf-8') as f:
+                                insights_data = json.load(f)
+                                all_insights.append((insights_file.name, insights_data))
+                        except Exception:
+                            pass  # Skip files that can't be read
+
+            if all_insights:
+                # Get most recent insights (sorted by timestamp in filename)
+                recent_insights_file, recent_insights_data = sorted(all_insights, key=lambda x: x[0])[-1]
+                insights = recent_insights_data.get('insights', {})
+
+                # Format insights for prompt
+                run_insights_text = "\n\n## Previous Run Insights\n\n"
+                run_insights_text += "The following insights were learned from previous runs:\n\n"
+
+                if insights.get('priority_focus'):
+                    run_insights_text += "**Priority Focus:**\n"
+                    for item in insights['priority_focus']:
+                        run_insights_text += f"- {item}\n"
+                    run_insights_text += "\n"
+
+                if insights.get('successful_patterns'):
+                    run_insights_text += "**Successful Patterns:**\n"
+                    for item in insights['successful_patterns']:
+                        run_insights_text += f"- {item}\n"
+                    run_insights_text += "\n"
+
+                if insights.get('failed_patterns'):
+                    run_insights_text += "**Failed Patterns to Avoid:**\n"
+                    for item in insights['failed_patterns']:
+                        run_insights_text += f"- {item}\n"
+                    run_insights_text += "\n"
+
+        prompt = prompt_template.format(
+            protocol_text=protocol_text,
+            examples_text=examples_text,
+            loop_name=loop_name,
+            raw_markdown=raw_markdown,
+            existing_phases=existing_phases_text,
+            run_insights=run_insights_text
+        )
+
+        # Call LLM
+        response = self.llm.complete(prompt, max_tokens=get_max_tokens('markdown_enhancement', 4096))
+
+        # Save enhanced version to current_state/
+        current_state_dir = self.learnings_dir / 'current_state'
+        current_state_dir.mkdir(parents=True, exist_ok=True)
+        enhanced_file = current_state_dir / 'ravl_loop_enhanced.md'
+        with open(enhanced_file, 'w', encoding='utf-8') as f:
+            f.write(response)
+
+        print(f"  [•] Enhanced markdown saved to learnings/current_state/ravl_loop_enhanced.md", file=sys.stderr)
+
+        return response

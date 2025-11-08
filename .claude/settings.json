@@ -1,0 +1,26 @@
+{
+  "description": "Project-wide Claude Code settings for RAVL framework",
+  "hooks": {
+    "_comment_git_commit": "Uncomment the section below to enable copyright checking before git commits",
+    "_PreToolUse_disabled": [
+      {
+        "matcher": "Bash(git commit:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/scripts/copyright_manager.py check --priority priority_1 priority_2 priority_3 2>&1 | grep -E '(MISSING|INVALID)' && echo '\n⚠️  Warning: Some files are missing copyright headers. Run /copyright-add to fix.' || true",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(python3 .claude/scripts/copyright_manager.py:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
