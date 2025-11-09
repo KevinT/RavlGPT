@@ -140,7 +140,9 @@ class CodeCacheManager:
         """
         Check if cache should be invalidated based on error patterns
 
-        Invalidates if 3+ recent attempts have errors in same category
+        Invalidates if:
+        - 3+ recent execution attempts have errors in same category, OR
+        - 2+ recent domain verifications recommend code regeneration
         """
         # Read from actual attempt directories
         recent_attempts_dir = self.learnings_dir / 'recent_attempts'
@@ -182,7 +184,40 @@ class CodeCacheManager:
                     error_categories[error_type] = error_categories.get(error_type, 0) + 1
 
             # Invalidate if same error happened 3+ times
-            return any(count >= 3 for count in error_categories.values())
+            if any(count >= 3 for count in error_categories.values()):
+                return True
+
+            # NEW: Check domain verification recommendations
+            # Look in parent's sibling directory: execution_learning/../loop_learning/
+            loop_learning_dir = self.learnings_dir.parent / 'loop_learning'
+            if loop_learning_dir.exists():
+                loop_attempts_dir = loop_learning_dir / 'recent_attempts'
+                if loop_attempts_dir.exists():
+                    # Find all domain attempt directories
+                    domain_attempt_dirs = sorted(
+                        [d for d in loop_attempts_dir.iterdir() if d.is_dir() and d.name.startswith('attempt_')],
+                        key=lambda d: int(d.name.split('_')[1])
+                    )
+
+                    # Check last 3 domain verifications for regeneration recommendations
+                    regeneration_recommendations = 0
+                    for attempt_dir in domain_attempt_dirs[-3:]:
+                        domain_verification_file = attempt_dir / 'domain_verification.json'
+                        if domain_verification_file.exists():
+                            try:
+                                with open(domain_verification_file, 'r') as f:
+                                    verification = json.load(f)
+
+                                if verification.get('recommend_code_regeneration', False):
+                                    regeneration_recommendations += 1
+                            except (IOError, json.JSONDecodeError):
+                                continue
+
+                    # If 2+ recent verifications recommend regeneration, invalidate cache
+                    if regeneration_recommendations >= 2:
+                        return True
+
+            return False
 
         except (IOError, json.JSONDecodeError, KeyError, ValueError):
             return False

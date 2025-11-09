@@ -6,24 +6,36 @@
 
 ## 🚀 Installation
 
-**As a git submodule in your project:**
+**Quick Install (Recommended):**
+
+From your project root directory:
+
 ```bash
-# Add to your project via either HTTPS or SSH
-cd your-project/
-
-# HTTPS option
-git submodule add https://github.com/KevinT/RavlGPT .ravl
-
-# SSH option
-git submodule add git@github.com:KevinT/RavlGPT.git .ravl
-
-# Install dependencies
-pip install -r .ravl/requirements.txt
+curl -sSL https://raw.githubusercontent.com/KevinT/RavlGPT/main/install.sh | bash
 ```
 
-**Clone with submodules:**
+This automatically:
+- Adds RAVL as a git submodule
+- Sets up CLI tools
+- Checks prerequisites
+- Verifies your environment
+
+**Set up your API key:**
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."  # Get key from console.anthropic.com
+```
+
+**Run your first loop:**
+```bash
+./ravl example_1_rugby_tips
+```
+
+📖 **[Full Installation Guide](INSTALL.md)** - Detailed instructions, troubleshooting, and manual installation.
+
+**For existing projects with RAVL:**
 ```bash
 git clone --recurse-submodules https://github.com/your-org/your-project.git
+chmod +x .ravl/bin/*
 ```
 
 **Update framework to latest:**

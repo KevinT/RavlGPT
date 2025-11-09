@@ -51,6 +51,15 @@ Additionally, analyze whether regenerating the code would likely improve outcome
 **Regeneration Guidance**:
 - Recommend if: Code approach is flawed, same failure pattern 3+ times, logic errors evident
 - Don't recommend if: External service issue, transient errors, code working as designed but data unavailable
+- **IMPORTANT**: If current context shows "Using CACHED CODE" and same error repeats across multiple attempts,
+  this strongly indicates a CODE LOGIC issue (not a transient failure) → recommend regeneration
+
+**Key Indicators for Regeneration**:
+1. **Cached code + repeated identical failures** = Code logic issue → REGENERATE
+2. **Framework-chosen values failing** (e.g., wrong URL, incorrect API endpoint, bad data source) = Code logic issue → REGENERATE
+3. **External service errors** (rate limits, timeouts, authentication failures) = Transient issue → DON'T REGENERATE
+4. **One-off failures** with variable errors = May be transient → DON'T REGENERATE (yet)
+5. **First or second failure** = Give code benefit of doubt → DON'T REGENERATE (yet)
 
 Respond in JSON format:
 ```json

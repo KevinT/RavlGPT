@@ -1332,8 +1332,11 @@ class MarkdownRAVLExecutor:
             regeneration_rationale = domain_verification.get('regeneration_rationale', '')
 
             if recommend_regeneration:
-                log_execution(f"Domain verification recommends code regeneration: {regeneration_rationale}", status='info')
-                # Don't cache code - force regeneration on next run
+                log_execution(f"🔄 Domain verification recommends code regeneration: {regeneration_rationale}", status='info')
+                # Explicitly invalidate cache to force regeneration on next run
+                if hasattr(self, 'cache_manager'):
+                    self.cache_manager._clear_cache()
+                    log_execution("✓ Cache cleared - code will be regenerated on next run", status='success')
                 return
 
         # Cache code only if execution succeeded AND has no warnings
@@ -1634,6 +1637,49 @@ class MarkdownRAVLExecutor:
     def _build_context_summary(self, reflection: Dict[str, Any]) -> str:
         """Build human-readable context summary from reflection"""
         summary_parts = []
+
+        # NEW: Execution History (CRITICAL for cache invalidation decisions)
+        execution_learning_dir = self.learnings_dir / 'execution_learning'
+        if execution_learning_dir.exists():
+            recent_attempts_dir = execution_learning_dir / 'recent_attempts'
+            if recent_attempts_dir.exists():
+                attempt_count = len([d for d in recent_attempts_dir.iterdir()
+                                    if d.is_dir() and d.name.startswith('attempt_')])
+
+                if attempt_count > 0:
+                    summary_parts.append("## Execution History")
+                    summary_parts.append(f"- Total attempts: {attempt_count}")
+
+                    # Check if using cached code
+                    current_state_dir = execution_learning_dir / 'current_state'
+                    verified_code_file = current_state_dir / 'verified_code.py'
+                    if verified_code_file.exists():
+                        summary_parts.append("- Status: Using CACHED CODE (same code across multiple runs)")
+                        summary_parts.append("  ⚠️  If same error repeats, this indicates a CODE LOGIC issue, not transient failure")
+                    else:
+                        summary_parts.append("- Status: Generating fresh code each run")
+
+                    # Show recent execution outcomes
+                    attempt_dirs = sorted(
+                        [d for d in recent_attempts_dir.iterdir() if d.is_dir() and d.name.startswith('attempt_')],
+                        key=lambda d: int(d.name.split('_')[1])
+                    )
+
+                    if attempt_dirs:
+                        summary_parts.append("- Recent execution results:")
+                        for attempt_dir in attempt_dirs[-5:]:  # Last 5 attempts
+                            attempt_num = attempt_dir.name
+                            result_file = attempt_dir / 'execution_result.json'
+                            if result_file.exists():
+                                try:
+                                    with open(result_file, 'r') as f:
+                                        result = json.load(f)
+                                    passed = result.get('passed', False)
+                                    status = "✓" if passed else "✗"
+                                    summary_parts.append(f"  {status} {attempt_num}")
+                                except (IOError, json.JSONDecodeError):
+                                    pass
+                    summary_parts.append("")
 
         # Context vars
         if self.context_vars:
