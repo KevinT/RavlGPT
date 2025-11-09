@@ -80,16 +80,30 @@ class RAVLListCommand(RAVLCLIBase):
             all_project = [l for l in all_loops if l.get('loop_type') == 'project']
             all_framework = [l for l in all_loops if l.get('loop_type') == 'framework']
 
+            # Further filter framework loops to only those in .ravl/ravl_loops/
+            # (exclude those in .ravl/examples/ and .ravl/templates/)
+            framework_loops_only = []
+            for loop in all_framework:
+                loop_path_str = str(loop['path'])
+                # Check if this is in the actual ravl_loops directory, not examples or templates
+                if '/.ravl/ravl_loops/' in loop_path_str:
+                    framework_loops_only.append(loop)
+                elif '/.ravl/examples/' not in loop_path_str and '/.ravl/templates/' not in loop_path_str:
+                    # Also include framework loops that aren't in examples/templates subdirs
+                    # but are still in .ravl/ (for backward compatibility)
+                    if '/.ravl/' in loop_path_str:
+                        framework_loops_only.append(loop)
+
             # Apply loop type filters
             if only_project_loops:
                 project_loops = all_project
                 framework_loops = []
             elif only_framework_loops:
                 project_loops = []
-                framework_loops = all_framework
+                framework_loops = framework_loops_only
             else:
                 project_loops = all_project
-                framework_loops = all_framework
+                framework_loops = framework_loops_only
 
         # Find all templates
         templates = []
@@ -171,25 +185,29 @@ class RAVLListCommand(RAVLCLIBase):
     def _print_tree(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]]):
         """Print loops in tree view, separated by type"""
         if project_loops:
-            self.print_header("-----Project Loops-----", "")
+            self.print_header("[Project Loops]", "")
+            print(" │", file=sys.stderr)
             # Build hierarchy
             hierarchy = self._build_hierarchy(project_loops)
-            # Print top-level loops
-            for loop_info in hierarchy:
-                self._print_loop_tree(loop_info, indent=0)
+            # Print top-level loops with tree structure
+            for idx, loop_info in enumerate(hierarchy):
+                is_last = (idx == len(hierarchy) - 1)
+                self._print_project_loop_tree(loop_info, is_last)
 
         if framework_loops:
-            self.print_header("-----Framework Loops-----", "")
+            self.print_header("[Framework Loops (built-in)]", "")
+            print(" │", file=sys.stderr)
             # Build hierarchy
             hierarchy = self._build_hierarchy(framework_loops)
-            # Print top-level loops
-            for loop_info in hierarchy:
-                self._print_loop_tree(loop_info, indent=0)
+            # Print top-level loops with tree structure
+            for idx, loop_info in enumerate(hierarchy):
+                is_last = (idx == len(hierarchy) - 1)
+                self._print_project_loop_tree(loop_info, is_last)
 
     def _print_flat(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]]):
         """Print loops in flat list, separated by type"""
         if project_loops:
-            self.print_header("-----Project Loops-----", "")
+            self.print_header("[Project Loops]", "")
             for loop_info in sorted(project_loops, key=lambda x: str(x['path'])):
                 config = loop_info['config']
                 emoji = config.get('emoji', '➰')
@@ -202,7 +220,7 @@ class RAVLListCommand(RAVLCLIBase):
                 print(f"{emoji} {loop_name} - {display_name} - Last run: {last_run} ({rel_path})", file=sys.stderr)
 
         if framework_loops:
-            self.print_header("-----Framework Loops-----", "")
+            self.print_header("[Framework Loops (built-in)]", "")
             for loop_info in sorted(framework_loops, key=lambda x: str(x['path'])):
                 config = loop_info['config']
                 emoji = config.get('emoji', '➰')
@@ -389,9 +407,21 @@ class RAVLListCommand(RAVLCLIBase):
         """Print loops and templates in tree view"""
         # Check for and display collision warnings first
         self._print_collision_warnings(project_loops + framework_loops)
-        self._print_tree(project_loops, framework_loops)
-        if templates:
-            self._print_templates(templates)
+
+        # Print project loops only
+        if project_loops:
+            self.print_header("[Project Loops]", "")
+            print(" │", file=sys.stderr)
+            # Build hierarchy
+            hierarchy = self._build_hierarchy(project_loops)
+            # Print top-level loops with tree structure
+            for idx, loop_info in enumerate(hierarchy):
+                is_last = (idx == len(hierarchy) - 1)
+                self._print_project_loop_tree(loop_info, is_last)
+
+        # Print framework resources (framework loops, templates, examples) together
+        if framework_loops or templates:
+            self._print_framework_resources(framework_loops, templates)
 
     def _print_flat_with_templates(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
         """Print loops and templates in flat view"""
@@ -449,40 +479,147 @@ class RAVLListCommand(RAVLCLIBase):
 
     def _print_templates(self, templates: List[Dict[str, Any]]):
         """Print available templates and examples"""
-        self.print_header("-----Framework Resources-----", "")
+        # This method is kept for backward compatibility but delegates to new method
+        self._print_framework_resources([], templates)
 
-        # Group by source type for cleaner display
+    def _print_framework_resources(self, framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
+        """Print framework resources: loops, templates, and examples"""
+        self.print_header("[Framework Resources]", "")
+
+        # Group templates by source type
         examples = [t for t in templates if t.get('source_type') == 'example']
         templates_only = [t for t in templates if t.get('source_type') == 'template']
 
-        # Print examples first
-        if examples:
-            print(f"\n📚 Examples (clone to start a new loop):", file=sys.stderr)
-            for example in sorted(examples, key=lambda x: x['name']):
-                emoji = example.get('emoji', '➿')
-                example_name = example['name']
-                display_name = self._format_loop_name(example_name)
-                description = example.get('description', 'Example loop')
-                loop_type = example.get('loop_type', '')
-                clone_cmd = f"./ravl --clone {example_name} <loop_name>"
+        # Print tree structure
+        print(" │", file=sys.stderr)
 
-                print(f"   {emoji} {example_name} - {display_name} ({loop_type})", file=sys.stderr)
-                print(f"      {description}", file=sys.stderr)
-                print(f"      Clone: {clone_cmd}", file=sys.stderr)
+        # Framework Loops subsection
+        if framework_loops:
+            print(" ├── Framework Loops (built-in loops)", file=sys.stderr)
+            # Build hierarchy for framework loops to show nesting
+            hierarchy = self._build_hierarchy(framework_loops)
+            # Print top-level framework loops with tree structure
+            for idx, loop_info in enumerate(hierarchy):
+                is_last = (idx == len(hierarchy) - 1)
+                self._print_framework_loop_tree(loop_info, " │    ", is_last)
+            print(" │", file=sys.stderr)
 
-        # Print templates
+        # Templates subsection
         if templates_only:
-            print(f"\n📋 Templates:", file=sys.stderr)
-            for template in sorted(templates_only, key=lambda x: x['name']):
+            print(" ├── Templates (useful starting points to clone):", file=sys.stderr)
+            if templates_only:
+                print(" │    Clone with: ./ravl-clone <name> <new_name>", file=sys.stderr)
+            for idx, template in enumerate(sorted(templates_only, key=lambda x: x['name'])):
                 emoji = template.get('emoji', '📋')
                 template_name = template['name']
-                display_name = self._format_loop_name(template_name)
                 description = template.get('description', 'Template loop')
-                clone_cmd = f"./ravl --clone {template_name} <loop_name>"
+                # Truncate description to fit on one line
+                if len(description) > 50:
+                    description = description[:47] + "..."
 
-                print(f"   {emoji} {template_name} - {display_name}", file=sys.stderr)
-                print(f"      {description}", file=sys.stderr)
-                print(f"      Clone: {clone_cmd}", file=sys.stderr)
+                is_last = (idx == len(templates_only) - 1)
+                branch = " │    └──" if is_last else " │    ├──"
+                print(f"{branch} {emoji} {template_name} - {description}", file=sys.stderr)
+            print(" │", file=sys.stderr)
+
+        # Examples subsection
+        if examples:
+            print(" └── Examples (working examples to clone):", file=sys.stderr)
+            if examples:
+                print("      Clone with: ./ravl-clone <name> <new_name>", file=sys.stderr)
+            for idx, example in enumerate(sorted(examples, key=lambda x: x['name'])):
+                emoji = example.get('emoji', '📋')
+                example_name = example['name']
+                description = example.get('description', 'Example loop')
+                # Truncate description to fit on one line
+                if len(description) > 50:
+                    description = description[:47] + "..."
+
+                is_last = (idx == len(examples) - 1)
+                branch = "      └──" if is_last else "      ├──"
+                print(f"{branch} {emoji} {example_name} - {description}", file=sys.stderr)
+
+    def _print_project_loop_tree(self, loop_info: Dict[str, Any], is_last: bool):
+        """
+        Print a project loop with tree structure
+
+        Args:
+            loop_info: Loop information dict
+            is_last: Whether this is the last loop in the list
+        """
+        config = loop_info['config']
+        emoji = config.get('emoji', '➿')
+        loop_name = loop_info['path'].name
+        display_name = self._format_loop_name(loop_name)
+        last_run = loop_info.get('last_run') or 'Never'
+
+        # Use appropriate tree character
+        branch = " └──" if is_last else " ├──"
+        print(f"{branch} {emoji} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
+
+        # Print children with proper indentation
+        children = loop_info.get('children', [])
+        for idx, child in enumerate(children):
+            is_child_last = (idx == len(children) - 1)
+            child_prefix = " │   " if not is_last else "     "
+            self._print_project_loop_child(child, child_prefix, is_child_last)
+
+        # Add separator line after each top-level loop (except the last)
+        if not is_last:
+            print(" │", file=sys.stderr)
+
+    def _print_project_loop_child(self, loop_info: Dict[str, Any], prefix: str, is_last: bool):
+        """
+        Print a child project loop with correct tree characters
+
+        Args:
+            loop_info: Loop information dict
+            prefix: Prefix string for tree structure
+            is_last: Whether this is the last child in the parent's list
+        """
+        config = loop_info['config']
+        emoji = config.get('emoji', '➿')
+        loop_name = config['name']
+        display_name = self._format_loop_name(loop_name)
+        last_run = loop_info.get('last_run') or 'Never'
+
+        branch = "└──" if is_last else "├──"
+        print(f"{prefix}{branch} {emoji} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
+
+        # Print grandchildren with proper prefix continuation
+        child_prefix = prefix + ("    " if is_last else "│   ")
+        children = loop_info.get('children', [])
+        for idx, child in enumerate(children):
+            is_child_last = (idx == len(children) - 1)
+            self._print_project_loop_child(child, child_prefix, is_child_last)
+
+    def _print_framework_loop_tree(self, loop_info: Dict[str, Any], prefix: str, is_last: bool):
+        """
+        Print a framework loop with tree structure and truncated description
+
+        Args:
+            loop_info: Loop information dict
+            prefix: Prefix string for indentation (e.g., " │    ")
+            is_last: Whether this is the last loop in the list
+        """
+        config = loop_info['config']
+        emoji = config.get('emoji', '➿')
+        loop_name = loop_info['path'].name
+        description = config.get('description', '')
+
+        # Truncate description to fit on one line
+        if len(description) > 50:
+            description = description[:47] + "..."
+
+        branch = "└──" if is_last else "├──"
+        print(f"{prefix}{branch} {emoji} {loop_name} - {description}", file=sys.stderr)
+
+        # Print children with proper indentation
+        children = loop_info.get('children', [])
+        child_prefix = prefix + ("    " if is_last else "│   ")
+        for idx, child in enumerate(children):
+            is_child_last = (idx == len(children) - 1)
+            self._print_framework_loop_tree(child, child_prefix, is_child_last)
 
     def _format_loop_name(self, name: str) -> str:
         """Format loop name for display (snake_case to Title Case)"""

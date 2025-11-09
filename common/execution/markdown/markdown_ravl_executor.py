@@ -1298,7 +1298,9 @@ class MarkdownRAVLExecutor:
 
         # EXECUTION LEARNING: How to make code work
         if 'execution' in verification:
-            self._learn_execution(verification['execution'], action_result)
+            # Pass domain verification too, so execution learning can check regeneration recommendation
+            domain_verification = verification.get('domain', {})
+            self._learn_execution(verification['execution'], action_result, domain_verification)
 
         # DOMAIN LEARNING: What the loop learned about its problem (THE "L" IN RAVL)
         if 'domain' in verification:
@@ -1309,7 +1311,8 @@ class MarkdownRAVLExecutor:
     def _learn_execution(
         self,
         execution_verification: Dict[str, Any],
-        action_result: Dict[str, Any]
+        action_result: Dict[str, Any],
+        domain_verification: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         Learn from execution outcomes (code generation, infrastructure)
@@ -1322,6 +1325,16 @@ class MarkdownRAVLExecutor:
             generated_code=self._last_generated_code,
             dsl=action_result.get('inferred_dsl')
         )
+
+        # Check if LLM recommends code regeneration based on domain verification
+        if domain_verification:
+            recommend_regeneration = domain_verification.get('recommend_code_regeneration', False)
+            regeneration_rationale = domain_verification.get('regeneration_rationale', '')
+
+            if recommend_regeneration:
+                log_execution(f"Domain verification recommends code regeneration: {regeneration_rationale}", status='info')
+                # Don't cache code - force regeneration on next run
+                return
 
         # Cache code only if execution succeeded AND has no warnings
         # If code has warnings, force regeneration with warning guidance

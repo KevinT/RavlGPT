@@ -214,11 +214,20 @@ class RAVLUniversalRunner(RAVLCLIBase):
         # Check if this is an example loop
         if self.discovery.is_example_loop(loop_dir):
             loop_name = loop_dir.name
-            target_path = self.project_root / 'ravl_loops' / loop_name
+
+            # Strip example_n_ prefix for target name
+            import re
+            match = re.match(r'^example_\d+_(.+)$', loop_name)
+            if match:
+                target_name = match.group(1)
+            else:
+                target_name = loop_name
+
+            target_path = self.project_root / 'ravl_loops' / target_name
 
             # Check if already cloned
             if target_path.exists():
-                print(f"\nℹ️  Example '{loop_name}' already cloned to ravl_loops/", file=sys.stderr)
+                print(f"\nℹ️  Example '{loop_name}' already cloned to ravl_loops/{target_name}/", file=sys.stderr)
                 print(f"   Running from: {target_path.relative_to(self.project_root)}\n", file=sys.stderr)
                 loop_dir = target_path
             else:
@@ -226,15 +235,15 @@ class RAVLUniversalRunner(RAVLCLIBase):
                 print(f"\n📚 '{loop_name}' is an example loop.", file=sys.stderr)
                 print(f"   Examples should be cloned to ravl_loops/ before running.\n", file=sys.stderr)
 
-                response = input(f"Clone to ravl_loops/{loop_name}? (y/n): ").strip().lower()
+                response = input(f"Clone to ravl_loops/{target_name}? (y/n): ").strip().lower()
 
                 if response in ['y', 'yes']:
-                    # Clone the example
+                    # Clone the example (ravl-clone will auto-strip the prefix)
                     import subprocess
                     clone_cmd = [
                         str(self.project_root / '.ravl' / 'bin' / 'ravl-clone'),
-                        loop_name,
                         loop_name
+                        # No target name - let ravl-clone auto-strip the prefix
                     ]
                     result = subprocess.run(clone_cmd, capture_output=False)
 

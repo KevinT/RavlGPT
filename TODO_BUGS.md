@@ -1,6 +1,7 @@
-- --list should separate out framework loops from examples
+- when directly running an example the clone does not remove the example_n text
+- rugby_tips_1 is failing but still running the cached code
 
-- claude ravl agent never seems to invoke.
+- claude ravl agent in .claude of DigitalTerrain never seems to invoke.
 
 - Real-time output streaming for generated code (print statements visible during execution, better UX for long-running operations)
 

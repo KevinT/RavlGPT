@@ -42,6 +42,16 @@ You are executing the VERIFY phase of a RAVL loop following the RAVL protocol.
 
 Evaluate the current output against each verification criterion.
 
+Additionally, analyze whether regenerating the code would likely improve outcomes:
+- **Consider recent execution history** (patterns of repeated failures)
+- **Distinguish root causes**: Is this a code logic issue or external factor?
+- **Code logic issues** (recommend regeneration): Wrong algorithm, missing logic, incorrect data handling
+- **External issues** (don't recommend regeneration): API down, network timeout, rate limiting, authentication
+
+**Regeneration Guidance**:
+- Recommend if: Code approach is flawed, same failure pattern 3+ times, logic errors evident
+- Don't recommend if: External service issue, transient errors, code working as designed but data unavailable
+
 Respond in JSON format:
 ```json
 {{
@@ -50,6 +60,8 @@ Respond in JSON format:
     ...
   ],
   "overall_passed": true/false,
-  "suggestions": ["improvement 1", "improvement 2", ...]
+  "suggestions": ["improvement 1", "improvement 2", ...],
+  "recommend_code_regeneration": true/false,
+  "regeneration_rationale": "Brief explanation of why regeneration would/wouldn't help"
 }}
 ```
