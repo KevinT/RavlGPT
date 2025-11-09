@@ -61,6 +61,28 @@ Additionally, analyze whether regenerating the code would likely improve outcome
 4. **One-off failures** with variable errors = May be transient → DON'T REGENERATE (yet)
 5. **First or second failure** = Give code benefit of doubt → DON'T REGENERATE (yet)
 
+## SPECIAL CASE: Exploratory/Discovery Loops
+
+**CRITICAL**: Some loops are designed for **progressive discovery** - each run should explore something NEW, not repeat the same exploration.
+
+**Detecting Exploratory Loops** - Look for these patterns in the VERIFICATION CRITERIA or loop context:
+- Keywords: "discover **new**", "explore **next**", "**each run**", "**progressive**", "**incremental**", "adds to knowledge", "map unknown territory"
+- Explicit run-based progression (e.g., "runs 1-3 do X, runs 4+ do Y")
+- Instructions to avoid repetition or to build on previous discoveries
+- Goals about expanding knowledge over time
+
+**If loop is exploratory:**
+1. Check if current context shows "Using CACHED CODE"
+2. If cached + exploratory → **ALWAYS recommend regeneration**
+3. Rationale: "Loop requires discovering new things each run, but cached code will execute the same deterministic exploration. Fresh code generation is needed to explore different aspects."
+
+**Exception**: Only skip regeneration recommendation if:
+- Code explicitly implements randomization/variation logic
+- Code reads previous discoveries and explicitly explores new areas
+- Code has adaptive exploration strategy that changes based on history
+
+**Bottom line**: Exploratory loops fundamentally conflict with code caching. When detected, prioritize the loop's learning goal over caching efficiency.
+
 Respond in JSON format:
 ```json
 {{

@@ -1,17 +1,12 @@
 # This file is maintained by a human, do not change it
 
-name of the ants in terry pratchett?
-
 ----- BUSY
 
 strategy_coherence delegated loop
-./ravl --execution-health fde_facts failing
 
 ----- TODO -----
 
 # Tidy First
-
-- remove ability to name a ravl in the config - the folder name is the ravl name, otherwise there's confusion
 
 - Additional learning clean up 
 	- the /logs folder could go under /history and be called /terminal-log or something like that

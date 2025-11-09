@@ -460,6 +460,55 @@ class MarkdownRAVLExecutor:
         except Exception:
             return {}
 
+    def _detect_exploratory_loop(self) -> bool:
+        """
+        Detect if this loop is exploratory/discovery-based
+
+        Exploratory loops are designed to discover NEW things each run,
+        which fundamentally conflicts with code caching.
+
+        Detection patterns:
+        - Keywords: "discover new", "explore next", "each run", "progressive",
+                    "incremental", "adds to knowledge", "map unknown territory"
+        - Config metadata: learning_type: discovery or exploration
+        - Run-based progression instructions (e.g., "runs 1-3 do X, runs 4+ do Y")
+
+        Returns:
+            True if loop shows exploratory patterns
+        """
+        # Check config metadata
+        metadata = self.config.get('metadata', {})
+        learning_type = metadata.get('learning_type', '').lower()
+        if learning_type in ['discovery', 'exploration', 'exploratory']:
+            return True
+
+        # Check for exploratory concepts in metadata
+        concepts = metadata.get('concepts', [])
+        exploratory_concepts = {'exploration', 'discovery', 'knowledge_building', 'progressive_learning'}
+        if any(concept in exploratory_concepts for concept in concepts):
+            return True
+
+        # Check markdown text for exploratory keywords
+        text_lower = self.markdown_text.lower()
+        exploratory_keywords = [
+            'discover new', 'explore next', 'each run', 'progressive',
+            'incremental', 'adds to knowledge', 'map unknown territory',
+            'explore different', 'learn something new', 'new discoveries',
+            'expand knowledge', 'avoid repetition', 'build on previous'
+        ]
+
+        # Count keyword matches (need at least 2 for confidence)
+        keyword_matches = sum(1 for keyword in exploratory_keywords if keyword in text_lower)
+        if keyword_matches >= 2:
+            return True
+
+        # Check for run-based progression patterns (e.g., "runs 1-3", "runs 4+")
+        run_progression_pattern = r'runs?\s+\d+[-+]'
+        if re.search(run_progression_pattern, text_lower):
+            return True
+
+        return False
+
     def _get_available_notion_credentials(self) -> List[str]:
         """Get list of available Notion credential environment variable names"""
         import os
@@ -1638,6 +1687,14 @@ class MarkdownRAVLExecutor:
         """Build human-readable context summary from reflection"""
         summary_parts = []
 
+        # EXPLORATORY LOOP DETECTION (CRITICAL for cache invalidation decisions)
+        is_exploratory = self._detect_exploratory_loop()
+        if is_exploratory:
+            summary_parts.append("## LOOP TYPE: EXPLORATORY/DISCOVERY")
+            summary_parts.append("⚠️  This loop is designed for PROGRESSIVE DISCOVERY - each run should explore something NEW.")
+            summary_parts.append("⚠️  Exploratory loops fundamentally conflict with code caching.")
+            summary_parts.append("")
+
         # NEW: Execution History (CRITICAL for cache invalidation decisions)
         execution_learning_dir = self.learnings_dir / 'execution_learning'
         if execution_learning_dir.exists():
@@ -1655,6 +1712,8 @@ class MarkdownRAVLExecutor:
                     verified_code_file = current_state_dir / 'verified_code.py'
                     if verified_code_file.exists():
                         summary_parts.append("- Status: Using CACHED CODE (same code across multiple runs)")
+                        if is_exploratory:
+                            summary_parts.append("  🚨 CRITICAL: Exploratory loop + cached code = repetitive exploration (NOT progressive)")
                         summary_parts.append("  ⚠️  If same error repeats, this indicates a CODE LOGIC issue, not transient failure")
                     else:
                         summary_parts.append("- Status: Generating fresh code each run")
