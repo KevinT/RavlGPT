@@ -1,6 +1,0 @@
-name: hello_ravl_md
-description: Simplest markdown-based RAVL loop - demonstrates markdown to code generation
-type: example
-loop_type: markdown
-
-execution_timeout: 30

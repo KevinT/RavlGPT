@@ -3,6 +3,7 @@
 Standardizes logging output formats and emoji usage across the framework.
 """
 
+import os
 import sys
 from typing import Optional
 
@@ -29,6 +30,72 @@ STATUS_SYMBOLS = {
     'error': '[✗]',
     'working': '[•]',
 }
+
+# Global flag for execution detail visibility
+# Controls whether execution learning messages (code generation, DSL, caching) are shown
+# Domain learning messages (validation, insights, patterns) are always shown
+_show_execution: bool = False
+
+
+def set_show_execution(enabled: bool):
+    """
+    Set global flag for execution detail visibility.
+
+    Call this once at runner startup to control whether execution learning
+    details (code generation, DSL inference, caching) are shown.
+
+    Args:
+        enabled: True to show execution details, False to hide them
+    """
+    global _show_execution
+    _show_execution = enabled
+
+
+def should_show_execution() -> bool:
+    """
+    Check if execution details should be shown.
+
+    Checks both the global flag and RAVL_SHOW_EXECUTION environment variable.
+
+    Returns:
+        True if execution details should be shown, False otherwise
+    """
+    global _show_execution
+    # Check environment variable as fallback
+    if os.environ.get('RAVL_SHOW_EXECUTION', '').lower() in ('1', 'true', 'yes'):
+        return True
+    return _show_execution
+
+
+def log_execution(message: str, indent: int = 2, status: str = 'working'):
+    """
+    Log execution-related message (only shown if show_execution enabled).
+
+    Use for framework plumbing messages like code generation, DSL inference,
+    caching, etc. These are hidden by default unless --show-execution flag is used.
+
+    Args:
+        message: Message to log
+        indent: Number of spaces to indent (default: 2)
+        status: Status type ('info', 'success', 'error', 'working')
+    """
+    if should_show_execution():
+        log_message(message, status=status, indent=indent)
+
+
+def log_domain(message: str, indent: int = 2, status: str = 'info'):
+    """
+    Log domain-related message (always shown).
+
+    Use for user-facing messages about domain learning progress like
+    validation results, insights, patterns, metrics, etc.
+
+    Args:
+        message: Message to log
+        indent: Number of spaces to indent (default: 2)
+        status: Status type ('info', 'success', 'error', 'working')
+    """
+    log_message(message, status=status, indent=indent)
 
 
 def log_message(message: str, status: str = 'info', indent: int = 2, file=None):

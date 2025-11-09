@@ -57,7 +57,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `data_ingress/` - API data fetching and transformation
   - `empty_loop/` - Minimal RAVL loop template
   - `strategic_coherence/` - Pattern-based decision making
-- `docs/examples/` - Complete example implementations
+- `examples/` - Complete example implementations
 
 ### Key Design Patterns
 

@@ -61,7 +61,7 @@
       "**/__pycache__/**",
       "**/learnings/**",
       "**/ravl_learning/**",
-      "docs/examples/**",
+      "examples/**",
       "templates/**/*.py",
       "**/*.pyc",
       "**/.DS_Store"

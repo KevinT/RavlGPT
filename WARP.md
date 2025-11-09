@@ -63,7 +63,7 @@ pytest tests/test_ravl_base.py::test_model_persistence -v
 ./bin/ravl-clean {loop_name}
 
 # Clone a loop from template
-./bin/ravl-clone .ravl/docs/examples/habit_tracker ravl_loops/my_new_loop
+./bin/ravl-clone .ravl/examples/habit_tracker ravl_loops/my_new_loop
 ```
 
 ### Working with Submodules (for parent projects)
@@ -109,7 +109,7 @@ git add .ravl
 - `templates/data_ingress/` - Self-healing API integration template
 - `templates/strategic_coherence/` - Parent/child coordination template
 - `templates/empty_loop/` - Minimal starter template
-- `docs/examples/` - Complete working examples (habit tracker, weekly reflection)
+- `examples/` - Complete working examples (habit tracker, weekly reflection)
 
 ### RAVL Protocol (Four-Phase Loop)
 
@@ -366,4 +366,4 @@ git add .ravl
 - **[RAVL Protocol](docs/RAVL_PROTOCOL.md)** - Four-phase specification
 - **[Mixins Guide](docs/MIXINS.md)** - Composable functionality
 - **[LLM Infrastructure](docs/llm/README.md)** - Building LLM-powered loops
-- **[Examples](docs/examples/)** - Ready-to-run implementations
+- **[Examples](examples/)** - Ready-to-run implementations

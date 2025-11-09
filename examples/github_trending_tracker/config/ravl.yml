@@ -1,4 +1,3 @@
-name: github_trending_tracker
 description: Python RAVL loop that tracks GitHub trending repositories and learns trending patterns
 type: example
 loop_type: python

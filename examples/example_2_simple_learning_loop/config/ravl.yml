@@ -1,0 +1,14 @@
+description: Environment Explorer - Discovers and maps its execution environment through learning
+type: example
+loop_type: markdown
+
+execution_timeout: 30
+
+# Metadata for categorization
+metadata:
+  complexity: beginner
+  concepts:
+    - exploration
+    - knowledge_building
+    - strategic_decisions
+  learning_type: discovery

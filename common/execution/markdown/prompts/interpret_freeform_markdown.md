@@ -42,6 +42,19 @@ User says: "Parse files and extract email addresses"
 
 Consider these learned insights when structuring the loop. If previous runs identified successful patterns, incorporate them. If previous runs identified failed patterns, avoid them in your enhancement.
 
+{domain_guidance}
+
+## How to Use Domain Guidance
+
+When fresh domain guidance is provided above:
+
+1. **Priority Focus**: Structure ACT instructions to address these priorities first
+2. **Successful Patterns**: Incorporate these approaches into ACT guidance - they worked before
+3. **Failed Patterns**: Add warnings or avoid these in ACT instructions - they failed before
+4. **Verification Failures**: Structure VERIFY criteria to catch these specific issues
+
+The enhanced ACT section should directly address domain learnings from REFLECT, not just translate user's raw instructions.
+
 ## USER'S LOOP INTENT
 
 **Name:** {loop_name}

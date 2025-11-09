@@ -46,7 +46,7 @@ No GitHub authentication required - uses public API with 60 requests/hour limit.
 ./ravl examples/github_trending_tracker
 
 # Or directly
-cd docs/examples/github_trending_tracker
+cd examples/github_trending_tracker
 python3 ravl_loop.py
 ```
 

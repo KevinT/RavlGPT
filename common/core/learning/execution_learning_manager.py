@@ -22,6 +22,7 @@ Organization:
   │   └── attempt_3/
   ├── history/                 # Aggregated execution history
   │   ├── execution_failures.jsonl
+  │   ├── execution_warnings.jsonl
   │   ├── dsl_iterations.jsonl
   │   └── code_strategies.jsonl
   ├── verified_code.py         # Cached working code
@@ -239,6 +240,12 @@ class ExecutionLearningManager:
         if not execution_result.get('success', True):
             self._update_execution_failures(execution_result)
 
+        # Save warnings if present (warnings are pre-extracted by verify phase)
+        if execution_result.get('has_warnings', False):
+            warnings = execution_result.get('warnings', [])
+            if warnings:
+                self._save_execution_warnings(warnings)
+
         # Update DSL iterations
         if dsl:
             self._update_dsl_iterations(dsl)
@@ -294,6 +301,64 @@ class ExecutionLearningManager:
         with open(strategies_file, 'a', encoding='utf-8') as f:
             f.write(json.dumps(strategy_entry) + '\n')
 
+    def _extract_execution_warnings(self, stderr: str) -> List[Dict[str, Any]]:
+        """
+        Extract warnings from stderr (deprecations, future warnings, etc.)
+
+        Args:
+            stderr: Standard error output from code execution
+
+        Returns:
+            List of warning dictionaries with type, message, and api fields
+        """
+        warnings = []
+        if not stderr:
+            return warnings
+
+        import re
+
+        # Extract DeprecationWarnings
+        deprecation_pattern = r'DeprecationWarning: (.+?) is deprecated'
+        for match in re.finditer(deprecation_pattern, stderr):
+            warnings.append({
+                'type': 'deprecation',
+                'message': match.group(0),
+                'api': match.group(1).strip()
+            })
+
+        # Extract FutureWarnings
+        future_pattern = r'FutureWarning: (.+?)(?:\n|$)'
+        for match in re.finditer(future_pattern, stderr):
+            warnings.append({
+                'type': 'future',
+                'message': match.group(0).strip()
+            })
+
+        return warnings
+
+    def _save_execution_warnings(self, warnings: List[Dict[str, Any]]) -> None:
+        """
+        Save execution warnings to history for learning
+
+        Args:
+            warnings: List of warning dictionaries from _extract_execution_warnings()
+        """
+        if not warnings:
+            return
+
+        warnings_file = self.learning_dir / 'history' / 'execution_warnings.jsonl'
+
+        for warning in warnings:
+            warning_entry = {
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'type': warning.get('type'),
+                'message': warning.get('message'),
+                'api': warning.get('api')  # May be None for non-deprecation warnings
+            }
+
+            with open(warnings_file, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(warning_entry) + '\n')
+
     def get_execution_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """
         Get recent execution failures for context
@@ -315,6 +380,28 @@ class ExecutionLearningManager:
                     failures.append(json.loads(line))
 
         return failures[-limit:]
+
+    def get_warning_history(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """
+        Get recent execution warnings for learning
+
+        Args:
+            limit: Maximum number of recent warnings to return
+
+        Returns:
+            List of recent execution warnings
+        """
+        warnings_file = self.learning_dir / 'history' / 'execution_warnings.jsonl'
+        if not warnings_file.exists():
+            return []
+
+        warnings = []
+        with open(warnings_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    warnings.append(json.loads(line))
+
+        return warnings[-limit:]
 
     def get_recent_attempts(self) -> List[Dict[str, Any]]:
         """Get data from recent execution attempts"""

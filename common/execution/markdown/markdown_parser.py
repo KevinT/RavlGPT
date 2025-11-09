@@ -11,6 +11,10 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional, Any
 
+# Add utils to path for logging
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'utils'))
+from logging_utils import log_execution
+
 
 class MarkdownParser:
     """
@@ -37,7 +41,12 @@ class MarkdownParser:
         self.llm = llm_provider
 
     def parse_markdown(self, markdown_text: str) -> Dict[str, str]:
-        """Parse markdown into phase sections"""
+        """
+        Parse markdown into phase sections (legacy method - no reflection context).
+
+        Note: This method is kept for backwards compatibility but won't have access
+        to fresh domain_guidance. Use parse_with_context() instead.
+        """
         phases = {}
         current_phase = None
         current_content = []
@@ -70,6 +79,54 @@ class MarkdownParser:
                 interpreted = self._interpret_free_form_markdown(markdown_text, phases)
                 # Re-parse the interpreted markdown which should now have explicit phases
                 return self._parse_markdown_internal(interpreted)
+
+        return phases
+
+    def parse_with_context(
+        self,
+        markdown_text: str,
+        reflection: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, str]:
+        """
+        Parse markdown into phases, enhancing with reflection context.
+
+        If reflection provided, uses fresh domain_guidance to inform enhancement.
+        Otherwise falls back to disk-based run_insights.
+
+        Args:
+            markdown_text: Raw markdown content
+            reflection: Optional reflection dict with domain_guidance
+
+        Returns:
+            Dict of phase names to phase content
+        """
+        # First pass parse to extract existing phases
+        phases = {}
+        current_phase = None
+        current_content = []
+
+        for line in markdown_text.split('\n'):
+            if line.strip().startswith('# '):
+                if current_phase:
+                    phases[current_phase] = '\n'.join(current_content).strip()
+                heading = line.strip('# ').strip()
+                current_phase = self._normalize_phase_name(heading)
+                current_content = []
+            else:
+                current_content.append(line)
+
+        if current_phase:
+            phases[current_phase] = '\n'.join(current_content).strip()
+
+        # Enhance with reflection context (includes fresh domain_guidance)
+        if markdown_text.strip() and self.llm:
+            interpreted = self._interpret_free_form_markdown(
+                markdown_text,
+                phases,
+                reflection=reflection  # Pass reflection context
+            )
+            # Re-parse the interpreted markdown
+            return self._parse_markdown_internal(interpreted)
 
         return phases
 
@@ -117,7 +174,12 @@ class MarkdownParser:
 
         return phases
 
-    def _interpret_free_form_markdown(self, raw_markdown: str, existing_phases: dict = None) -> str:
+    def _interpret_free_form_markdown(
+        self,
+        raw_markdown: str,
+        existing_phases: dict = None,
+        reflection: dict = None
+    ) -> str:
         """
         Use LLM to interpret/enhance markdown into structured RAVL phases
 
@@ -126,10 +188,12 @@ class MarkdownParser:
         - Related loops (parent/child/sibling) as examples
         - Loop configuration
         - Existing phase sections (if any) to preserve or enhance
+        - Fresh domain guidance from reflection (if available)
 
         Args:
             raw_markdown: The original markdown content
             existing_phases: Dict of already-parsed phase sections (e.g., {'act': '...'})
+            reflection: Optional reflection dict with fresh domain_guidance
         """
         # Lazy import to avoid circular dependency issues
         from common.config.config_loader import get_max_tokens
@@ -230,13 +294,53 @@ class MarkdownParser:
                         run_insights_text += f"- {item}\n"
                     run_insights_text += "\n"
 
+        # Build FRESH domain guidance from reflection (if available)
+        # This takes priority over disk-based run_insights
+        domain_guidance_text = ""
+        if reflection:
+            domain_guidance = reflection.get('domain_guidance', {})
+
+            if domain_guidance:
+                domain_guidance_text = "\n\n## Fresh Domain Guidance from REFLECT Phase\n\n"
+                domain_guidance_text += "Just synthesized from this REFLECT phase:\n\n"
+
+                # Priority focus
+                if domain_guidance.get('priority_focus'):
+                    domain_guidance_text += "**Current Priorities:**\n"
+                    for item in domain_guidance['priority_focus']:
+                        domain_guidance_text += f"- {item}\n"
+                    domain_guidance_text += "\n"
+
+                # Successful patterns (to reinforce)
+                if domain_guidance.get('successful_patterns'):
+                    domain_guidance_text += "**Patterns That Work (use these):**\n"
+                    for pattern in domain_guidance['successful_patterns']:
+                        domain_guidance_text += f"- ✓ {pattern}\n"
+                    domain_guidance_text += "\n"
+
+                # Failed patterns (to avoid)
+                if domain_guidance.get('failed_patterns'):
+                    domain_guidance_text += "**Patterns That Failed (avoid these):**\n"
+                    for pattern in domain_guidance['failed_patterns']:
+                        domain_guidance_text += f"- ✗ {pattern}\n"
+                    domain_guidance_text += "\n"
+
+                # Verification issues
+                verification_notes = domain_guidance.get('verification_notes', {})
+                if verification_notes.get('recent_failures'):
+                    domain_guidance_text += "**Recent Verification Failures:**\n"
+                    for failure in verification_notes['recent_failures']:
+                        domain_guidance_text += f"- ⚠️ {failure}\n"
+                    domain_guidance_text += "\n"
+
         prompt = prompt_template.format(
             protocol_text=protocol_text,
             examples_text=examples_text,
             loop_name=loop_name,
             raw_markdown=raw_markdown,
             existing_phases=existing_phases_text,
-            run_insights=run_insights_text
+            run_insights=run_insights_text,
+            domain_guidance=domain_guidance_text  # NEW: Pass fresh domain guidance
         )
 
         # Call LLM
@@ -249,6 +353,6 @@ class MarkdownParser:
         with open(enhanced_file, 'w', encoding='utf-8') as f:
             f.write(response)
 
-        print(f"  [•] Enhanced markdown saved to learnings/current_state/ravl_loop_enhanced.md", file=sys.stderr)
+        log_execution("Enhanced markdown saved to learnings/current_state/ravl_loop_enhanced.md")
 
         return response

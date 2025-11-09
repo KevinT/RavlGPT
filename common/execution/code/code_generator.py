@@ -23,6 +23,9 @@ sys.path.insert(0, str(_common_dir / 'core' / 'verification'))
 from dsl_inference_engine import DSLInferenceEngine
 from schema_adapters import enhance_llm_guidance_with_schema_adaptation
 
+# Import logging utilities
+from utils.logging_utils import log_execution
+
 
 class CodeGenerator:
     """
@@ -94,11 +97,11 @@ class CodeGenerator:
         try:
             should_generate = self.dsl_engine.should_generate_code(act_section, verify_section)
             if should_generate:
-                print(f"  [•] Custom code required - complex operations in loop spec", file=sys.stderr)
+                log_execution("Custom code required - complex operations in loop spec")
             return should_generate
         except Exception as e:
             # If analysis fails, default to False (safer fallback)
-            print(f"  [•] Code generation decision analysis failed: {e}", file=sys.stderr)
+            log_execution(f"Code generation decision analysis failed: {e}")
             return False
 
     def generate_with_dsl_inference(
@@ -127,7 +130,7 @@ class CodeGenerator:
         timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
 
         # Infer DSL from loop specification
-        print(f"  [•] Inferring DSL from specification...", file=sys.stderr)
+        log_execution("Inferring DSL from specification...")
         dsl = self.dsl_engine.infer(act_spec, verify_spec)
 
         # Save inferred DSL for reference (pattern must match _get_next_attempt_number lookup)
@@ -163,7 +166,7 @@ class CodeGenerator:
         prompt += f"\n\n## Code Generation DSL\n\n{dsl_guidance}"
 
         # Generate code
-        print(f"  [•] Generating code (attempt {dsl['attempt_number']})...", file=sys.stderr)
+        log_execution(f"Generating code (attempt {dsl['attempt_number']})...")
         generated_code = self.llm.complete(prompt, max_tokens=get_max_tokens('code_generation', 16384))
 
         return {
@@ -196,7 +199,7 @@ class CodeGenerator:
         inferred_dsl = act_result.get('inferred_dsl')
 
         if generated_code and inferred_dsl:
-            print(f"  [•] Caching code strategy for future attempts", file=sys.stderr)
+            log_execution("Caching code strategy for future attempts")
             save_verified_code_fn(generated_code, inferred_dsl)
 
         # Update DSL learning with successful attempt
@@ -211,7 +214,7 @@ class CodeGenerator:
                 }
                 f.write(json.dumps(entry) + '\n')
         except Exception as e:
-            print(f"  [i] Failed to record successful strategy: {str(e)[:100]}", file=sys.stderr)
+            log_execution(f"Failed to record successful strategy: {str(e)[:100]}", status='info')
 
     def generate_next_suggestions(
         self,
@@ -245,5 +248,5 @@ class CodeGenerator:
             return suggestions
 
         except Exception as e:
-            print(f"  [i] Failed to generate suggestions: {str(e)[:100]}", file=sys.stderr)
+            log_execution(f"Failed to generate suggestions: {str(e)[:100]}", status='info')
             return None

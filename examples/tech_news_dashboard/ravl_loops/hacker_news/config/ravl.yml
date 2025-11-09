@@ -1,4 +1,3 @@
-name: hacker_news
 description: Fetches Hacker News RSS feed
 type: child_example
 loop_type: markdown

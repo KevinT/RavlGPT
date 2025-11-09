@@ -1,8 +1,8 @@
 # Hello RAVL (Python) - Your First RAVL Loop
 
-The simplest possible Python-based RAVL loop. Perfect for understanding the basics.
+The is a simple Python-based RAVL loop. Perfect for understanding the basics of how to imeplement a code based loop.
 
-**Also see**: `hello_ravl_md` for the same behavior using markdown (even simpler!).
+**Also see**: `hello_ravl_md` for how to create loops in plain english.
 
 ## What It Does
 
@@ -37,77 +37,26 @@ Run this multiple times and watch:
 
 ```bash
 # From framework root
-./ravl examples/hello_ravl
+./ravl hello_ravl_py
+./ravl hello_ravl_py --show-config # framework can also resolve loops by name alone
 
 # Or directly
-cd docs/examples/hello_ravl
+cd examples/hello_ravl_py
 python3 ravl_loop.py
 ```
 
 ## Expected Output
 
-**First run:**
-```
-🚀 Starting Hello RAVL Loop
-================================================================================
+The first time you run an example the framework will clone a local copy for you into a `./ravl_loops/hello_ravl_py` directory. The loop will output it's progress to the screen, and it's learning and logs to a `hello_ravl_py/learnings` folder in the loop (this is configurable per project and per loop).
 
-================================================================================
- Step 1 of 4: [R]EFLECT
-================================================================================
-
-  ℹ️  Hello RAVL: No existing model found, initializing new model
-
-📊 Previous State:
-   Total runs: 0
-   Last run: never
-
-💡 This is our first run! Let's create our first greeting.
-
-================================================================================
- Step 2 of 4: [A]CT
-================================================================================
-
-✍️  Generating greeting:
-   Hello from RAVL! (Run #1 at 2025-11-08 14:30:45 UTC)
-
-💾 Saved to: output/greetings_2025-11-08.txt
-
-================================================================================
- Step 3 of 4: [V]ERIFY
-================================================================================
-
-🔍 Verification Results:
-   Output file exists: ✅
-   Output has content: ✅ (58 bytes)
-
-All checks passed! ✅
-
-================================================================================
- Step 4 of 4: [L]EARN
-================================================================================
-
-📈 Updated Statistics:
-   Total runs: 1
-   Successful: 1
-   Failed: 0
-   Success rate: 100.0%
-
-💾 Model saved to learnings/loop_learning/
-
-================================================================================
-✅ Hello RAVL Loop completed successfully
-================================================================================
-```
-
-**Subsequent runs:**
-The loop will show increasing run counts and maintain a success rate history.
+Each subsequent run will show increasing run counts and maintain a success rate history. You can run the loop with either `--show-config` to show it's configuration settings, or with `--show-execution` to get it to show a lot more detailed execution information during that loop's run.
 
 ## File Structure
 
 After running, you'll see:
 
 ```
-hello_ravl/
+hello_ravl_py/
 ├── ravl_loop.py              # The loop implementation
 ├── config/
 │   └── ravl.yml             # Loop configuration

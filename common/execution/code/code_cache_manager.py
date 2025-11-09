@@ -16,6 +16,9 @@ from typing import Dict, Optional, Tuple, Any, List
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from core.dependency_validator import DependencyValidator
 
+# Import logging utilities
+from utils.logging_utils import log_execution
+
 
 class CodeCacheManager:
     """
@@ -72,7 +75,7 @@ class CodeCacheManager:
             # Check if ravl_loop.md was modified since code was cached
             if self._is_markdown_loop_modified(dsl):
                 self._clear_cache()
-                print(f"  [i] Cache invalidated: ravl_loop.md was modified", file=sys.stderr)
+                log_execution("Cache invalidated: ravl_loop.md was modified", status='info')
                 return None
 
             return (code, dsl)
@@ -105,14 +108,14 @@ class CodeCacheManager:
                 validator = DependencyValidator(self.loop_dir, self.project_root)
                 is_valid, error_msg = validator.validate_generated_code(code)
                 if not is_valid:
-                    print(f"\n{error_msg}\n", file=sys.stderr)
+                    log_execution(f"\n{error_msg}\n", status='error')
                     return (False, error_msg)
 
             # Save code
             with open(self.verified_code_file, 'w') as f:
                 f.write(code)
 
-            print(f"  [✓] Cached verified code to {self.verified_code_file.name}", file=sys.stderr)
+            log_execution(f"Cached verified code to {self.verified_code_file.name}", status='success')
 
             # Save DSL if provided
             if dsl:
@@ -124,13 +127,13 @@ class CodeCacheManager:
 
                 with open(self.verified_dsl_file, 'w') as f:
                     json.dump(dsl, f, indent=2)
-                print(f"  [✓] Cached DSL to {self.verified_dsl_file.name}", file=sys.stderr)
+                log_execution(f"Cached DSL to {self.verified_dsl_file.name}", status='success')
 
             return (True, None)
 
         except Exception as e:
             error_msg = f"Failed to save verified code: {str(e)[:100]}"
-            print(f"  [i] {error_msg}", file=sys.stderr)
+            log_execution(error_msg, status='info')
             return (False, error_msg)
 
     def _should_invalidate_cache(self) -> bool:
@@ -223,6 +226,6 @@ class CodeCacheManager:
                 self.verified_code_file.unlink()
             if self.verified_dsl_file.exists():
                 self.verified_dsl_file.unlink()
-            print(f"  [i] Cache invalidated: repeated error patterns detected", file=sys.stderr)
+            log_execution("Cache invalidated: repeated error patterns detected", status='info')
         except Exception as e:
-            print(f"  [i] Failed to clear cache: {str(e)[:100]}", file=sys.stderr)
+            log_execution(f"Failed to clear cache: {str(e)[:100]}", status='info')

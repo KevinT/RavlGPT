@@ -211,12 +211,57 @@ class RAVLUniversalRunner(RAVLCLIBase):
             self.print_error(str(e))
             sys.exit(1)
 
+        # Check if this is an example loop
+        if self.discovery.is_example_loop(loop_dir):
+            loop_name = loop_dir.name
+            target_path = self.project_root / 'ravl_loops' / loop_name
+
+            # Check if already cloned
+            if target_path.exists():
+                print(f"\nℹ️  Example '{loop_name}' already cloned to ravl_loops/", file=sys.stderr)
+                print(f"   Running from: {target_path.relative_to(self.project_root)}\n", file=sys.stderr)
+                loop_dir = target_path
+            else:
+                # Prompt user to clone
+                print(f"\n📚 '{loop_name}' is an example loop.", file=sys.stderr)
+                print(f"   Examples should be cloned to ravl_loops/ before running.\n", file=sys.stderr)
+
+                response = input(f"Clone to ravl_loops/{loop_name}? (y/n): ").strip().lower()
+
+                if response in ['y', 'yes']:
+                    # Clone the example
+                    import subprocess
+                    clone_cmd = [
+                        str(self.project_root / '.ravl' / 'bin' / 'ravl-clone'),
+                        loop_name,
+                        loop_name
+                    ]
+                    result = subprocess.run(clone_cmd, capture_output=False)
+
+                    if result.returncode != 0:
+                        self.print_error(f"Failed to clone example: {loop_name}")
+                        sys.exit(1)
+
+                    # Update loop_dir to cloned location
+                    loop_dir = target_path
+                    print(f"\n✅ Example cloned successfully\n", file=sys.stderr)
+                else:
+                    print(f"\n❌ Clone declined. Use './ravl --clone {loop_name} <name>' to clone manually.\n", file=sys.stderr)
+                    sys.exit(0)
+
         # Load configuration
         try:
             config = self.discovery.load_config(loop_dir)
         except Exception as e:
             self.print_error(f"Failed to load configuration: {e}")
             sys.exit(1)
+
+        # Initialize execution logging visibility
+        # This must be set before any loop execution to control message visibility
+        from utils.logging_utils import set_show_execution
+        if hasattr(args, 'show_execution') and args.show_execution:
+            set_show_execution(True)
+            os.environ['RAVL_SHOW_EXECUTION'] = '1'  # For subprocess consistency
 
         # Detect loop type and route accordingly
         is_markdown_loop = (loop_dir / 'ravl_loop.md').exists()
@@ -295,7 +340,6 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         # Set RAVL_QUIET environment variable if quiet mode enabled
         if args.quiet:
-            import os
             os.environ['RAVL_QUIET'] = '1'
 
         # Resolve learning path BEFORE importing loop class
@@ -555,6 +599,9 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         if args.show_config:
             cmd.append('--show-config')
+
+        if hasattr(args, 'show_execution') and args.show_execution:
+            cmd.append('--show-execution')
 
         if hasattr(args, 'venv_path') and args.venv_path:
             cmd.extend(['--venv-path', str(args.venv_path)])
@@ -950,6 +997,12 @@ def main():
         '--quiet',
         action='store_true',
         help='Suppress framework status messages and phase banners'
+    )
+    parser.add_argument(
+        '--show-execution',
+        action='store_true',
+        help='Show execution learning details (code generation, DSL, caching). '
+             'Default: only show domain learning progress.'
     )
     parser.add_argument(
         '--learning-path',

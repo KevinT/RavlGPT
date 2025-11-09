@@ -335,7 +335,7 @@ else:
 ### From Examples Directory
 
 ```bash
-cd .ravl/docs/examples
+cd .ravl/examples
 
 # Run Python example directly
 cd hello_ravl_py && python3 ravl_loop.py
@@ -392,10 +392,10 @@ parent_loop/
 
 ```bash
 # Option 1: Clone an example (Python)
-cp -r .ravl/docs/examples/hello_ravl_py ravl_loops/my_loop
+cp -r .ravl/examples/hello_ravl_py ravl_loops/my_loop
 
 # Option 2: Clone an example (Markdown)
-cp -r .ravl/docs/examples/hello_ravl_md ravl_loops/my_loop
+cp -r .ravl/examples/hello_ravl_md ravl_loops/my_loop
 
 # Option 3: Use framework templates
 ./.ravl/bin/ravl-clone data_ingress_template my_api_loop

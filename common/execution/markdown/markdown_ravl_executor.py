@@ -51,7 +51,8 @@ from child_loop_executor import ChildLoopExecutor
 from file_utils import load_json_file, save_json_file, append_to_jsonl, load_yaml_file
 from logging_utils import (
     log_message, log_verification_error, log_phase_banner,
-    truncate_output, EMOJI_SUCCESS, EMOJI_ERROR, EMOJI_CHECK, EMOJI_CROSS, EMOJI_BULLET
+    truncate_output, EMOJI_SUCCESS, EMOJI_ERROR, EMOJI_CHECK, EMOJI_CROSS, EMOJI_BULLET,
+    log_execution
 )
 from constants import (
     DEFAULT_EXECUTION_TIMEOUT, CODE_EXECUTION_TIMEOUT,
@@ -384,8 +385,8 @@ class MarkdownRAVLExecutor:
         # Initialize markdown parser (needed for _parse_markdown)
         self.markdown_parser = MarkdownParser(self.loop_dir, self.learnings_dir, llm_provider=self.llm)
 
-        # Parse markdown phases
-        self.phases = self._parse_markdown()
+        # Don't parse phases yet - wait until after reflect() to get fresh domain_guidance
+        self._phases_cache = None
 
         # Initialize learning managers (SEPARATED: execution vs domain)
         from core.learning import create_learning_managers
@@ -418,11 +419,25 @@ class MarkdownRAVLExecutor:
         # Track last generated code for passing to LearningManager
         self._last_generated_code = None
 
-        # Track last reflection for LEARN phase synthesis
+        # Track last reflection for LEARN phase synthesis (also used for lazy phase parsing)
         self._last_reflection = None
 
         # Prompts directory
         self.prompts_dir = _script_dir / 'prompts'
+
+    @property
+    def phases(self) -> Dict[str, Any]:
+        """
+        Lazy-load phases - parses markdown AFTER reflection if available.
+        This ensures enhancement uses fresh domain_guidance from REFLECT phase.
+        """
+        if self._phases_cache is None:
+            # Parse with reflection context if available
+            self._phases_cache = self.markdown_parser.parse_with_context(
+                self.markdown_text,
+                reflection=self._last_reflection
+            )
+        return self._phases_cache
 
     def _find_project_root(self) -> Path:
         """Find project root by looking for .git directory"""
@@ -487,7 +502,7 @@ class MarkdownRAVLExecutor:
         """
         result = self.cache_manager.check_cache()
         if result:
-            print(f"  [•] Using cached verified code", file=sys.stderr)
+            log_execution("Using cached verified code")
         return result
 
     def _load_prompt(self, prompt_name: str, **variables) -> str:
@@ -594,6 +609,23 @@ class MarkdownRAVLExecutor:
 
         return learnings
 
+    def _check_has_domain_learnings(self) -> bool:
+        """
+        Check if loop_learning/ has meaningful DOMAIN data.
+        (Ignores execution_learning/ - that's framework plumbing)
+        """
+        loop_learning_dir = self.learnings_dir / 'loop_learning'
+        if not loop_learning_dir.exists():
+            return False
+
+        # Check for domain artifacts in key subdirectories
+        for subdir in ['history', 'current_state', 'recent_attempts']:
+            subdir_path = loop_learning_dir / subdir
+            if subdir_path.exists() and any(subdir_path.iterdir()):
+                return True
+
+        return False
+
     def reflect(self) -> Dict[str, Any]:
         """
         REFLECT phase: Automatic context gathering
@@ -612,9 +644,17 @@ class MarkdownRAVLExecutor:
             'learnings': {}
         }
 
-        # Read this loop's learnings
+        # Check for domain learnings specifically (not execution artifacts)
+        has_domain_learnings = self._check_has_domain_learnings()
+
+        # Read this loop's learnings (both execution and domain)
         reflection['learnings']['this_loop'] = self._read_learnings_files(self.learnings_dir)
-        print(f"  [i]  Found own loop learnings", file=sys.stderr)
+
+        # Report domain learning status to user
+        if has_domain_learnings:
+            print(f"  [i]  Found domain learnings from previous runs", file=sys.stderr)
+        else:
+            print(f"  [i]  No prior domain learnings (fresh start)", file=sys.stderr)
         
         # Synthesize domain guidance from this loop's learnings
         reflection['domain_guidance'] = self._synthesize_domain_context(
@@ -644,6 +684,9 @@ class MarkdownRAVLExecutor:
                 sibling_learnings_dir = sibling_dir / 'learnings'
                 reflection['learnings']['sibling_loops'][sibling_name] = self._read_learnings_files(sibling_learnings_dir)
             print(f"  [i]  Found {len(related_loops['siblings'])} sibling loop(s)", file=sys.stderr)
+
+        # Store reflection for lazy phase parsing (enhancement will use fresh domain_guidance)
+        self._last_reflection = reflection
 
         return reflection
 
@@ -810,7 +853,7 @@ class MarkdownRAVLExecutor:
 
         # For loops with code generation: execute the generated code
         if self._should_attempt_code_generation():
-            print(f"  [•] Code generation detected - executing generated code...", file=sys.stderr)
+            log_execution("Code generation detected - executing generated code...")
             action_result = self._execute_generated_code(llm_response, action_result)
 
         # Save human-readable companion files for generated code
@@ -848,7 +891,7 @@ class MarkdownRAVLExecutor:
         cache_result = self._check_code_cache()
         if cache_result:
             cached_code, cached_dsl = cache_result
-            print(f"  [•] Using cached verified code - executing...", file=sys.stderr)
+            log_execution("Using cached verified code - executing...")
             action_result = {
                 'timestamp': reflection['timestamp'],
                 'context_vars': self.context_vars,
@@ -867,7 +910,7 @@ class MarkdownRAVLExecutor:
             if action_result.get('output'):
                 self._save_generated_code_artifacts(action_result['output'], timestamp)
 
-            print(f"  [✓] Cached code executed", file=sys.stderr)
+            log_execution("Cached code executed", status='success')
             return action_result
 
         # Not cached - delegate DSL inference and code generation to CodeGenerator
@@ -891,14 +934,14 @@ class MarkdownRAVLExecutor:
 
         # Execute the generated code
         if self._should_attempt_code_generation():
-            print(f"  [•] Generated code detected - executing...", file=sys.stderr)
+            log_execution("Generated code detected - executing...")
             action_result = self._execute_generated_code(gen_result['generated_code'], action_result)
 
         # Save human-readable companion files for generated code
         if action_result.get('output'):
             self._save_generated_code_artifacts(action_result['output'], timestamp)
 
-        print(f"  [✓] Code generated and executed", file=sys.stderr)
+        log_execution("Code generated and executed", status='success')
 
         # Check if verification criteria specifies additional file outputs
         additional_files = self._create_additional_outputs(
@@ -942,10 +985,10 @@ class MarkdownRAVLExecutor:
                 act_result['credential_validation_passed'] = execution_result.get('credential_validation_passed', False)
 
                 if execution_result.get('success'):
-                    print(f"  [✓] Code executed successfully - data fetched", file=sys.stderr)
+                    log_execution("Code executed successfully - data fetched", status='success')
                     act_result['data_fetched'] = execution_result.get('data', {})
                 else:
-                    print(f"  [✗] Code execution failed: {execution_result.get('error', 'Unknown error')[:100]}", file=sys.stderr)
+                    log_execution(f"Code execution failed: {execution_result.get('error', 'Unknown error')[:100]}", status='error')
                     act_result['execution_error'] = execution_result.get('error', 'Unknown error')
             else:
                 # General loops use simple executor (file I/O, data transforms, etc.)
@@ -956,15 +999,15 @@ class MarkdownRAVLExecutor:
                 act_result['execution_result'] = execution_result
 
                 if execution_result.get('success'):
-                    print(f"  [✓] Code executed successfully", file=sys.stderr)
+                    log_execution("Code executed successfully", status='success')
                     if execution_result.get('stdout'):
-                        print(f"  [•] Output: {execution_result.get('stdout')[:200]}", file=sys.stderr)
+                        log_execution(f"Output: {execution_result.get('stdout')[:200]}")
                 else:
-                    print(f"  [✗] Code execution failed: {execution_result.get('error', 'Unknown error')[:100]}", file=sys.stderr)
+                    log_execution(f"Code execution failed: {execution_result.get('error', 'Unknown error')[:100]}", status='error')
                     act_result['execution_error'] = execution_result.get('error', 'Unknown error')
 
         except Exception as e:
-            print(f"  [✗] Error executing code: {str(e)[:100]}", file=sys.stderr)
+            log_execution(f"Error executing code: {str(e)[:100]}", status='error')
             act_result['code_executed'] = False
             act_result['execution_error'] = str(e)
 
@@ -1023,7 +1066,7 @@ class MarkdownRAVLExecutor:
 
     def verify(
         self,
-        previous_action: Optional[Dict[str, Any]],
+        action_result: Optional[Dict[str, Any]],
         current_reflection: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -1035,14 +1078,14 @@ class MarkdownRAVLExecutor:
         print(f"  Verifying...", file=sys.stderr)
 
         # EXECUTION VERIFICATION: Did code run successfully?
-        execution_verification = self._verify_execution(previous_action)
+        execution_verification = self._verify_execution(action_result)
 
         # DOMAIN VERIFICATION: Did it solve the problem?
-        domain_verification = self._verify_domain(previous_action, current_reflection)
+        domain_verification = self._verify_domain(action_result, current_reflection)
 
         # DSL-based learning: cache successful code or save failure analysis
-        if self._should_attempt_code_generation() and previous_action:
-            self._handle_dsl_verification_outcome(execution_verification, domain_verification, previous_action)
+        if self._should_attempt_code_generation() and action_result:
+            self._handle_dsl_verification_outcome(execution_verification, domain_verification, action_result)
 
         # Combined result
         return {
@@ -1052,29 +1095,31 @@ class MarkdownRAVLExecutor:
             'timestamp': datetime.now(timezone.utc).isoformat()
         }
 
-    def _verify_execution(self, previous_action: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    def _verify_execution(self, action_result: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """
         Verify execution infrastructure: did code run successfully?
 
         This is SOLUTION LEARNING - checking if infrastructure works.
         """
-        if not previous_action:
+        if not action_result:
             return {'passed': True, 'message': 'No execution to verify'}
 
         # Check if code was executed (for any loop type)
-        if previous_action.get('code_executed'):
-            execution_result = previous_action.get('execution_result', {})
+        if action_result.get('code_executed'):
+            execution_result = action_result.get('execution_result', {})
 
-            # Check credentials
-            if not execution_result.get('credential_validation_passed', False):
-                error_msg = execution_result.get('error', 'Missing credentials')
-                log_verification_error('Credential validation failed', error_msg, max_length=150)
-                return {
-                    'passed': False,
-                    'error_type': 'credential_validation',
-                    'error_message': error_msg,
-                    'timestamp': datetime.now(timezone.utc).isoformat()
-                }
+            # Check credentials (only for data ingress loops that explicitly validate)
+            # SimpleCodeExecutor doesn't set this field, so only check if present
+            if 'credential_validation_passed' in execution_result:
+                if not execution_result.get('credential_validation_passed', False):
+                    error_msg = execution_result.get('error', 'Missing credentials')
+                    log_verification_error('Credential validation failed', error_msg, max_length=150)
+                    return {
+                        'passed': False,
+                        'error_type': 'credential_validation',
+                        'error_message': error_msg,
+                        'timestamp': datetime.now(timezone.utc).isoformat()
+                    }
 
             # Check execution success
             if not execution_result.get('success', False):
@@ -1092,19 +1137,60 @@ class MarkdownRAVLExecutor:
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 }
 
-            # Execution succeeded
+            # Execution succeeded - check for warnings even on success
+            stderr = execution_result.get('stderr', '')
+            warnings = self._extract_execution_warnings(stderr)
+
             return {
                 'passed': True,
                 'execution_time': execution_result.get('execution_time'),
+                'has_warnings': len(warnings) > 0,
+                'warnings': warnings,
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
 
         # No code execution, consider it passed
         return {'passed': True, 'message': 'No code execution to verify'}
 
+    def _extract_execution_warnings(self, stderr: str) -> List[Dict[str, Any]]:
+        """
+        Extract warnings from stderr (deprecations, future warnings, etc.)
+
+        Args:
+            stderr: The stderr output from code execution
+
+        Returns:
+            List of warning dictionaries with type, message, and api fields
+        """
+        warnings = []
+
+        if not stderr:
+            return warnings
+
+        import re
+
+        # Extract DeprecationWarnings
+        deprecation_pattern = r'DeprecationWarning: (.+?) is deprecated'
+        for match in re.finditer(deprecation_pattern, stderr):
+            warnings.append({
+                'type': 'deprecation',
+                'message': match.group(0),
+                'api': match.group(1).strip()
+            })
+
+        # Extract FutureWarnings
+        future_pattern = r'FutureWarning: (.+?)(?:\n|$)'
+        for match in re.finditer(future_pattern, stderr):
+            warnings.append({
+                'type': 'future',
+                'message': match.group(0).strip()
+            })
+
+        return warnings
+
     def _verify_domain(
         self,
-        previous_action: Optional[Dict[str, Any]],
+        action_result: Optional[Dict[str, Any]],
         current_reflection: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
@@ -1121,11 +1207,11 @@ class MarkdownRAVLExecutor:
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
 
-        if not previous_action:
-            print(f"  [i]  No previous action to verify", file=sys.stderr)
+        if not action_result:
+            print(f"  [i]  No action result to verify", file=sys.stderr)
             return {
                 'overall_passed': None,
-                'message': 'No previous action available for verification',
+                'message': 'No action result available for verification',
                 'timestamp': datetime.now(timezone.utc).isoformat()
             }
 
@@ -1133,7 +1219,7 @@ class MarkdownRAVLExecutor:
         prompt = self._load_prompt(
             'verify_phase',
             verify_instructions=verify_instructions,
-            previous_action=json.dumps(previous_action, indent=2),
+            action_result=json.dumps(action_result, indent=2),
             current_context=self._build_context_summary(current_reflection)
         )
 
@@ -1237,9 +1323,15 @@ class MarkdownRAVLExecutor:
             dsl=action_result.get('inferred_dsl')
         )
 
-        # Cache code if execution succeeded
-        if execution_verification.get('passed', False) and self._last_generated_code:
+        # Cache code only if execution succeeded AND has no warnings
+        # If code has warnings, force regeneration with warning guidance
+        if (execution_verification.get('passed', False) and
+            not execution_verification.get('has_warnings', False) and
+            self._last_generated_code):
             self.save_verified_code(self._last_generated_code, action_result.get('inferred_dsl'))
+        elif execution_verification.get('has_warnings', False):
+            # Invalidate cache to force regeneration with warning fixes
+            log_execution("Code has warnings - invalidating cache to improve quality", status='info')
 
     def _learn_domain(
         self,

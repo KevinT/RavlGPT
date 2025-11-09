@@ -23,6 +23,7 @@ import sys
 import json
 import time
 import argparse
+import os
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -70,18 +71,16 @@ class ConfigBasedRAVLRunner:
 
         # If we loaded ravl.yml directly, it has everything
         # If we loaded config.yml, merge metadata from ravl.yml
-        if config_path.name == 'config.yml' and self.config and ('name' not in self.config or 'description' not in self.config):
+        if config_path.name == 'config.yml' and self.config and 'description' not in self.config:
             ravl_yml = self.loop_dir / 'config' / 'ravl.yml'
             ravl_config = load_yaml_file(ravl_yml) or {}
             if ravl_config:
-                # Merge metadata from ravl.yml
-                self.config.setdefault('name', ravl_config.get('name'))
+                # Merge metadata from ravl.yml (except name which comes from folder)
                 self.config.setdefault('description', ravl_config.get('description'))
                 self.config.setdefault('emoji', ravl_config.get('emoji'))
 
-        # Ensure name is always set (derive from loop folder if not in config)
-        if 'name' not in self.config:
-            self.config['name'] = self.loop_dir.name
+        # Always use folder name as loop name (ignore any name field in config)
+        self.config['name'] = self.loop_dir.name
 
         # Validate required config keys
         self._validate_config()
@@ -235,23 +234,8 @@ class ConfigBasedRAVLRunner:
 
                 RAVLRunner.print_banner("Phase 3 of 4: [V]ERIFY", "")
 
-                # Load previous action for verification from loop_learning/recent_attempts/
-                recent_attempts_dir = learnings_dir / 'loop_learning' / 'recent_attempts'
-                previous_action = None
-
-                if recent_attempts_dir.exists():
-                    # Find attempt folders and get second-most recent
-                    attempt_folders = sorted(
-                        [f for f in recent_attempts_dir.iterdir() if f.is_dir() and f.name.startswith('attempt_')],
-                        key=lambda f: int(f.name.split('_')[1])
-                    )
-                    if len(attempt_folders) >= 2:
-                        previous_action_file = attempt_folders[-2] / 'domain_action.json'
-                        if previous_action_file.exists():
-                            with open(previous_action_file, 'r', encoding='utf-8') as f:
-                                previous_action = json.load(f)
-
-                verification = executor.verify(previous_action, reflection)
+                # Verify the current action result against verification criteria
+                verification = executor.verify(action_result, reflection)
 
                 # Calculate duration
                 duration = time.time() - start_time
@@ -310,7 +294,8 @@ class ConfigBasedRAVLRunner:
 
                 print(f"", file=sys.stderr)
                 print(f"   Understand config and get diagnostic suggestions:", file=sys.stderr)
-                print(f"     ravl {loop_name} --show-config", file=sys.stderr)
+                print(f"     ravl {loop_name} --show-config # shows settings", file=sys.stderr)
+                print(f"     ravl {loop_name} --show-execution # shows execution steps", file=sys.stderr)
                 print(f"     ravl --loop-health {loop_name} # loop agentic health", file=sys.stderr)
                 print(f"     ravl --execution-health {loop_name} # loop execution health", file=sys.stderr)
                 print(f"", file=sys.stderr)
@@ -330,6 +315,105 @@ class ConfigBasedRAVLRunner:
 
         except (KeyboardInterrupt, Exception) as e:
             RAVLRunner.handle_error(e, tee_logger)
+
+
+def create_minimal_config(loop_dir: Path) -> bool:
+    """
+    Offer to create a minimal config file for a loop
+
+    Args:
+        loop_dir: Path to the loop directory
+
+    Returns:
+        True if config was created, False if user declined
+    """
+    # Determine loop name from folder
+    loop_name = loop_dir.name
+
+    print(f"\n⚠️  No config file found for loop '{loop_name}'", file=sys.stderr)
+    print("", file=sys.stderr)
+
+    # Interactive prompt
+    try:
+        response = input("Would you like to create a minimal config? (y/n): ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print("\n❌ Config creation cancelled", file=sys.stderr)
+        return False
+
+    if response != 'y':
+        print("\nℹ️  To create a config manually, create config/ravl.yml with:", file=sys.stderr)
+        print("    description: Your loop description", file=sys.stderr)
+        print("    loop_type: markdown  # or python", file=sys.stderr)
+        return False
+
+    # Prompt for description
+    print("", file=sys.stderr)
+    try:
+        description = input("Enter a description (or press Enter for default): ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print("\n❌ Config creation cancelled", file=sys.stderr)
+        return False
+
+    if not description:
+        description = "RAVL loop"
+
+    # Detect loop type
+    loop_type = "markdown" if (loop_dir / "ravl_loop.md").exists() else "python"
+
+    # Create config directory
+    config_dir = loop_dir / "config"
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate config content
+    config_content = f"""# RAVL loop configuration
+# Note: Loop name is always derived from the folder name: {loop_name}
+description: {description}
+loop_type: {loop_type}
+
+# Optional: Override execution timeout (default: 300 seconds)
+# execution_timeout: 120
+
+# Optional: Specify Python packages for generated code (markdown loops)
+# allowed_dependencies:
+#   requests:
+#     min_version: '2.31.0'
+#     max_version: '3.0.0'
+
+# Optional: Custom learning directory (default: ./learnings)
+# learning_path: /path/to/custom/learnings
+
+# Optional: Custom virtual environment (default: .ravl/venv)
+# venv_path: /path/to/custom/venv
+
+# Optional: Template variables for parameterized loops
+# template_variables:
+#   variable_name:
+#     cli_arg: --variable
+#     required: true
+#     type: string
+#     help: Description of variable
+
+# Optional: Metadata for categorization
+# metadata:
+#   author: Your Name
+#   tags: [tag1, tag2]
+"""
+
+    # Write config file
+    config_path = config_dir / "ravl.yml"
+    try:
+        with open(config_path, 'w') as f:
+            f.write(config_content)
+    except Exception as e:
+        print(f"\n❌ Failed to create config: {e}", file=sys.stderr)
+        return False
+
+    print(f"\n✅ Created {config_path.relative_to(loop_dir.parent)} with minimal settings", file=sys.stderr)
+    print(f"   Loop name '{loop_name}' is derived from folder name", file=sys.stderr)
+    print("   You can customize other settings by editing the config.", file=sys.stderr)
+    print("\nContinuing with loop execution...\n", file=sys.stderr)
+
+    return True
 
 
 def main():
@@ -363,6 +447,12 @@ def main():
         action='store_true',
         help='Display resolved configuration without executing the loop'
     )
+    initial_parser.add_argument(
+        '--show-execution',
+        action='store_true',
+        help='Show execution learning details (code generation, DSL, caching). '
+             'Default: only show domain learning progress.'
+    )
 
     # Parse just these arguments first
     initial_args, remaining_argv = initial_parser.parse_known_args()
@@ -391,8 +481,24 @@ def main():
         sys.exit(1)
 
     if not config_path.exists():
-        print(f"Error: Config file not found: {config_path}", file=sys.stderr)
-        sys.exit(1)
+        # Try to create config if we have a loop directory
+        if initial_args.loop_dir:
+            if create_minimal_config(initial_args.loop_dir):
+                # Config was created, check if it exists now
+                if not config_path.exists():
+                    # Try the standard location we just created
+                    config_path = initial_args.loop_dir / 'config' / 'ravl.yml'
+                    if not config_path.exists():
+                        print(f"Error: Config creation succeeded but file not found: {config_path}", file=sys.stderr)
+                        sys.exit(1)
+            else:
+                # User declined to create config
+                print(f"\nError: Config file required but not found: {config_path}", file=sys.stderr)
+                sys.exit(1)
+        else:
+            # No loop directory, can't offer to create config
+            print(f"Error: Config file not found: {config_path}", file=sys.stderr)
+            sys.exit(1)
 
     # Create runner and parse full arguments
     try:

@@ -60,8 +60,8 @@ No other setup needed - Hacker News RSS is public!
 ./ravl examples/tech_news_curator
 
 # Or from example directory
-cd docs/examples/tech_news_curator
-python3 ../../../common/llm/run_markdown_ravl.py ravl_loop.md
+cd examples/tech_news_curator
+python3 ../../common/llm/run_markdown_ravl.py ravl_loop.md
 ```
 
 ## Expected Output

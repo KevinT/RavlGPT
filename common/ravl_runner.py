@@ -556,6 +556,9 @@ class RAVLRunner:
                            help='Skip verify and learn phases')
         parser.add_argument('--timeout', type=int, default=300,
                            help='Timeout in seconds (default: 300)')
+        parser.add_argument('--show-execution', action='store_true',
+                           help='Show execution learning details (code generation, DSL, caching). '
+                                'Default: only show domain learning progress.')
         return parser
 
     @staticmethod

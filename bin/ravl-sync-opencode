@@ -39,7 +39,7 @@ sys.path.insert(0, str(_current / 'common' / 'cli'))
 from ravl_cli_base import RAVLCLIBase
 
 
-class RAVLSyncClaudeCommand(RAVLCLIBase):
+class RAVLSyncOpenCodeCommand(RAVLCLIBase):
     """Sync RAVL commands to OpenCode"""
 
     def __init__(self):
@@ -406,7 +406,7 @@ def main():
 
     args = parser.parse_args()
 
-    command = RAVLSyncClaudeCommand()
+    command = RAVLSyncOpenCodeCommand()
     command.run(args)
 
 

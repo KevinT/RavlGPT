@@ -30,9 +30,9 @@ You are executing the VERIFY phase of a RAVL loop following the RAVL protocol.
 
 {verify_instructions}
 
-## PREVIOUS OUTPUT TO VERIFY
+## CURRENT OUTPUT TO VERIFY
 
-{previous_action}
+{action_result}
 
 ## CURRENT STATE/CONTEXT
 
@@ -40,7 +40,7 @@ You are executing the VERIFY phase of a RAVL loop following the RAVL protocol.
 
 ## EVALUATION TASK
 
-Evaluate the previous output against each verification criterion.
+Evaluate the current output against each verification criterion.
 
 Respond in JSON format:
 ```json

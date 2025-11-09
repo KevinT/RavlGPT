@@ -66,6 +66,9 @@ class DSLInferenceEngine:
         # Load failure analysis for iterative learning
         dsl['failure_analysis'] = self._load_failure_analysis()
 
+        # Load warning history for code quality improvements
+        dsl['warning_history'] = self._load_warning_history()
+
         # Generate guidance for LLM based on analysis
         dsl['llm_guidance'] = self._generate_llm_guidance(dsl, verify_section)
 
@@ -392,6 +395,115 @@ class DSLInferenceEngine:
                 'recent_failures': []
             }
 
+    def _load_warning_history(self) -> Dict[str, Any]:
+        """
+        Load warning history from previous executions for code quality improvements.
+        Extracts deprecation warnings and suggests better alternatives.
+        """
+        if not self.learnings_dir.exists():
+            return {
+                'has_warnings': False,
+                'warning_patterns': {},
+                'recent_warnings': []
+            }
+
+        # Look in execution_learning/history for warnings
+        exec_learning_dir = self.learnings_dir.parent / 'execution_learning'
+        warnings_file = exec_learning_dir / 'history' / 'execution_warnings.jsonl'
+
+        if not warnings_file.exists():
+            return {
+                'has_warnings': False,
+                'warning_patterns': {},
+                'recent_warnings': []
+            }
+
+        # Load all warnings
+        try:
+            all_warnings = []
+            with open(warnings_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    try:
+                        entry = json.loads(line)
+                        all_warnings.append(entry)
+                    except json.JSONDecodeError:
+                        continue
+
+            if not all_warnings:
+                return {
+                    'has_warnings': False,
+                    'warning_patterns': {},
+                    'recent_warnings': []
+                }
+
+            # Aggregate warning patterns by deprecated API
+            warning_patterns = {}
+            for warning in all_warnings:
+                api = warning.get('api')
+                warning_type = warning.get('type')
+                message = warning.get('message')
+
+                if api and warning_type == 'deprecation':
+                    if api not in warning_patterns:
+                        warning_patterns[api] = {
+                            'count': 0,
+                            'type': warning_type,
+                            'message': message,
+                            'suggestion': self._get_deprecation_fix(api, message)
+                        }
+                    warning_patterns[api]['count'] += 1
+
+            # Get recent unique warnings (last 5)
+            recent_unique = []
+            seen_apis = set()
+            for warning in reversed(all_warnings):
+                api = warning.get('api') or warning.get('message')
+                if api and api not in seen_apis:
+                    recent_unique.append(warning)
+                    seen_apis.add(api)
+                    if len(recent_unique) >= 5:
+                        break
+
+            return {
+                'has_warnings': True,
+                'total_warnings': len(all_warnings),
+                'warning_patterns': warning_patterns,
+                'recent_warnings': list(reversed(recent_unique))
+            }
+
+        except Exception:
+            return {
+                'has_warnings': False,
+                'warning_patterns': {},
+                'recent_warnings': []
+            }
+
+    def _get_deprecation_fix(self, api: str, message: str) -> str:
+        """
+        Suggest a fix for common deprecation warnings
+
+        Args:
+            api: The deprecated API name
+            message: The deprecation warning message
+
+        Returns:
+            Suggested fix as a string
+        """
+        # Common deprecation patterns and their fixes
+        fixes = {
+            'datetime.datetime.utcnow()': 'Use datetime.now(timezone.utc) instead',
+            'datetime.utcnow()': 'Use datetime.now(timezone.utc) instead',
+            'datetime.utcfromtimestamp': 'Use datetime.fromtimestamp(ts, tz=timezone.utc) instead'
+        }
+
+        # Check for exact matches
+        for deprecated_api, fix in fixes.items():
+            if deprecated_api in api or deprecated_api in message:
+                return fix
+
+        # Default suggestion
+        return f"Avoid using {api} - check Python documentation for modern alternative"
+
     def _generate_llm_guidance(self, dsl: Dict[str, Any], verify_section: str) -> str:
         """
         Generate natural language guidance for the LLM based on inferred DSL
@@ -561,6 +673,21 @@ class DSLInferenceEngine:
                 if attempt['status'] == 'failed' and attempt['suggestions']:
                     for suggestion in attempt['suggestions']:
                         guidance_lines.append(f"- {suggestion}")
+
+        # Code quality warnings (deprecations, future warnings)
+        warning_history = dsl.get('warning_history', {})
+        if warning_history.get('has_warnings'):
+            guidance_lines.append("")
+            guidance_lines.append("# IMPORTANT: Code Quality Improvements:")
+            guidance_lines.append(f"Previous code generated {warning_history.get('total_warnings', 0)} warning(s).")
+            guidance_lines.append("Avoid these deprecated APIs:")
+
+            warning_patterns = warning_history.get('warning_patterns', {})
+            for api, pattern_info in warning_patterns.items():
+                count = pattern_info.get('count', 0)
+                suggestion = pattern_info.get('suggestion', 'Check documentation for modern alternative')
+                guidance_lines.append(f"- ❌ DO NOT USE: {api} (appeared {count}x)")
+                guidance_lines.append(f"  ✅ {suggestion}")
 
         # Add verification criteria
         guidance_lines.append("")

@@ -92,9 +92,9 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 ## Quick Start
 
 **New to RAVL?** Start with the examples:
-- [Habit Tracker](docs/examples/habit_tracker/) - Simple Python RAVL loop
-- [Weekly Reflection](docs/examples/weekly_reflection/) - Simple Markdown RAVL loop
-- [Examples Overview](docs/examples/README.md) - Detailed guide to both examples
+- [Habit Tracker](examples/habit_tracker/) - Simple Python RAVL loop
+- [Weekly Reflection](examples/weekly_reflection/) - Simple Markdown RAVL loop
+- [Examples Overview](examples/README.md) - Detailed guide to both examples
 
 **Using RAVL CLI:**
 ```bash
@@ -105,7 +105,7 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 ./ravl habit_tracker --mode fast
 
 # Clone a new loop from template
-./ravl-clone .ravl/docs/examples/habit_tracker ravl_loops/my_analytics
+./ravl-clone .ravl/examples/habit_tracker ravl_loops/my_analytics
 
 # Diagnose a failing loop
 ./ravl-health my_analytics
@@ -149,7 +149,7 @@ Store learning artifacts and virtual environments anywhere - see project documen
 - **[Framework Overview](docs/README.md)** - Architecture, philosophy, getting started
 - **[RAVL Protocol](docs/RAVL_PROTOCOL.md)** - Core four-phase specification
 - **[RAVL Vision](docs/RAVL_VISION.md)** - Design principles and philosophy
-- **[Examples](docs/examples/)** - Ready-to-run Python and Markdown examples
+- **[Examples](examples/)** - Ready-to-run Python and Markdown examples
 
 ### Advanced Topics
 - **[Mixins Guide](docs/MIXINS.md)** - Add reusable functionality to loops

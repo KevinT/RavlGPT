@@ -1,4 +1,3 @@
-name: devto_news
 description: Fetches Dev.to RSS feed
 type: child_example
 loop_type: markdown

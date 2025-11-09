@@ -85,7 +85,7 @@ class RAVLCloneCommand(RAVLCLIBase):
         self.project_root = self.find_project_root()
         self.ravl_dir = self.project_root / '.ravl'
         self.templates_dir = self.ravl_dir / 'templates'
-        self.examples_dir = self.ravl_dir / 'docs' / 'examples'
+        self.examples_dir = self.ravl_dir / 'examples'
         self.project_loops_dir = project_loops_dir if project_loops_dir else (self.project_root / 'ravl_loops')
 
     def run(self, args: argparse.Namespace):
@@ -498,40 +498,21 @@ class RAVLCloneCommand(RAVLCLIBase):
 
     def _reset_learning_state(self, loop_path: Path):
         """
-        Reset learning state for cloned loop while keeping model structure
+        Reset learning state for cloned loop by removing learnings directory
 
         Args:
             loop_path: Path to the cloned loop
         """
-        import yaml
+        import shutil
 
-        # Reset model files
-        for model_file in loop_path.rglob('**/learnings/model.yml'):
+        # Remove entire learnings directory for fresh start
+        learnings_dir = loop_path / 'learnings'
+        if learnings_dir.exists():
             try:
-                model = yaml.safe_load(model_file.read_text())
-                if model:
-                    # Reset learning counters and timestamps
-                    if 'last_learned' in model:
-                        model['last_learned'] = None
-                    if 'learning_iterations' in model:
-                        model['learning_iterations'] = 0
-                    if 'configuration_status' in model:
-                        model['configuration_status'] = 'unchecked'
-                    if 'last_config_check' in model:
-                        model['last_config_check'] = None
-
-                    # Write back
-                    yaml.dump(model, model_file.open('w'), default_flow_style=False)
+                shutil.rmtree(learnings_dir)
+                print(f"  [i]  Removed learnings for fresh start", file=sys.stderr)
             except Exception as e:
-                print(f"  ⚠️  Warning: Could not reset {model_file.relative_to(self.project_root)}: {e}", file=sys.stderr)
-
-        # Remove old learnings/gaps files (keep structure)
-        for gaps_dir in loop_path.rglob('**/learnings'):
-            for gaps_file in gaps_dir.glob('gaps_*'):
-                try:
-                    gaps_file.unlink()
-                except Exception as e:
-                    print(f"  ⚠️  Could not remove {gaps_file.name}: {e}", file=sys.stderr)
+                print(f"  ⚠️  Warning: Could not remove learnings: {e}", file=sys.stderr)
 
 
 def main():
