@@ -23,6 +23,7 @@ from typing import Dict, List, Any, Optional, Callable
 
 from utils.file_utils import load_yaml_file, save_yaml_file, find_timestamped_files
 from utils.constants import VERSION_INCREMENT, MODEL_PATTERN
+from utils.logging_utils import log_execution
 
 
 class BaseRAVLLoop:
@@ -77,17 +78,17 @@ class BaseRAVLLoop:
         if model_files:
             # Load the most recent timestamped model
             latest_model = model_files[0]
-            print(f"  ℹ️  {self.loop_name}: Loading model from {latest_model.name}", file=sys.stderr, flush=True)
+            log_execution(f"{self.loop_name}: Loading model from {latest_model.name}", status='info')
             return load_yaml_file(latest_model)
 
         # Fall back to non-timestamped model.yml if it exists
         model_data = load_yaml_file(self.model_path)
         if model_data is not None:
-            print(f"  ℹ️  {self.loop_name}: Loading model from model.yml", file=sys.stderr, flush=True)
+            log_execution(f"{self.loop_name}: Loading model from model.yml", status='info')
             return model_data
 
         # Return default model if no existing model found
-        print(f"  ℹ️  {self.loop_name}: No existing model found, initializing new model", file=sys.stderr, flush=True)
+        log_execution(f"{self.loop_name}: No existing model found, initializing new model", status='info')
         return default_model_factory()
 
     def _models_differ(self, model1: Dict[str, Any], model2: Dict[str, Any]) -> bool:
@@ -157,9 +158,9 @@ class BaseRAVLLoop:
             # Save to timestamped file
             save_yaml_file(timestamped_path, model, create_dirs=True)
 
-            print(f"  ✓ Model changed - saved to {timestamped_path.name}", file=sys.stderr, flush=True)
+            log_execution(f"Model changed - saved to {timestamped_path.name}", status='success')
         else:
-            print(f"  • Model unchanged - skipping timestamped save", file=sys.stderr, flush=True)
+            log_execution("Model unchanged - skipping timestamped save", status='info')
 
         # Always update model.yml with latest timestamps
         save_yaml_file(self.model_path, model, create_dirs=True)
@@ -204,7 +205,7 @@ class BaseRAVLLoop:
                 history.append(history_entry)
 
             except Exception as e:
-                print(f"  ⚠️  Could not load historical model {model_file.name}: {e}", file=sys.stderr)
+                log_execution(f"Could not load historical model {model_file.name}: {e}", status='error')
                 continue
 
         return history

@@ -136,7 +136,7 @@ class SimpleCodeExecutor:
             is_valid, issue = venv_manager.validate_venv()
             if not is_valid and venv_manager.exists():
                 # Venv exists but has wrong Python version - recreate it
-                print(f"  [i] Venv needs recreation: {issue}", file=sys.stderr)
+                log_execution(f"Venv needs recreation: {issue}", status='info')
                 delete_success, delete_error = venv_manager.delete()
                 if not delete_success:
                     return {
@@ -144,7 +144,7 @@ class SimpleCodeExecutor:
                         'error': f'Failed to delete incompatible venv: {delete_error}',
                         'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
                     }
-                print(f"  [i] Deleted incompatible venv, will recreate with correct Python", file=sys.stderr)
+                log_execution("Deleted incompatible venv, will recreate with correct Python", status='info')
 
             # Create venv if needed (with correct Python version)
             success, error = venv_manager.detect_or_create()
@@ -636,7 +636,7 @@ class MarkdownRAVLExecutor:
         - Child loops' learnings/ (if exist)
         - Sibling loops' learnings/ (if exist)
         """
-        print(f"  Reflecting...", file=sys.stderr)
+        log_message("Reflecting...", status='info')
 
         reflection = {
             'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -652,9 +652,9 @@ class MarkdownRAVLExecutor:
 
         # Report domain learning status to user
         if has_domain_learnings:
-            print(f"  [i]  Found domain learnings from previous runs", file=sys.stderr)
+            log_execution("Found domain learnings from previous runs", status='info', indent=4)
         else:
-            print(f"  [i]  No prior domain learnings (fresh start)", file=sys.stderr)
+            log_execution("No prior domain learnings (fresh start)", status='info', indent=4)
         
         # Synthesize domain guidance from this loop's learnings
         reflection['domain_guidance'] = self._synthesize_domain_context(
@@ -667,7 +667,7 @@ class MarkdownRAVLExecutor:
         if related_loops['parent']:
             parent_learnings_dir = related_loops['parent'] / 'learnings'
             reflection['learnings']['parent_loop'] = self._read_learnings_files(parent_learnings_dir)
-            print(f"  [i]  Found parent loop learnings", file=sys.stderr)
+            log_execution("Found parent loop learnings", status='info', indent=4)
 
         if related_loops['children']:
             reflection['learnings']['child_loops'] = {}
@@ -675,7 +675,7 @@ class MarkdownRAVLExecutor:
                 child_name = child_dir.name
                 child_learnings_dir = child_dir / 'learnings'
                 reflection['learnings']['child_loops'][child_name] = self._read_learnings_files(child_learnings_dir)
-            print(f"  [i]  Found {len(related_loops['children'])} child loop(s)", file=sys.stderr)
+            log_execution(f"Found {len(related_loops['children'])} child loop(s)", status='info', indent=4)
 
         if related_loops['siblings']:
             reflection['learnings']['sibling_loops'] = {}
@@ -683,7 +683,7 @@ class MarkdownRAVLExecutor:
                 sibling_name = sibling_dir.name
                 sibling_learnings_dir = sibling_dir / 'learnings'
                 reflection['learnings']['sibling_loops'][sibling_name] = self._read_learnings_files(sibling_learnings_dir)
-            print(f"  [i]  Found {len(related_loops['siblings'])} sibling loop(s)", file=sys.stderr)
+            log_execution(f"Found {len(related_loops['siblings'])} sibling loop(s)", status='info', indent=4)
 
         # Store reflection for lazy phase parsing (enhancement will use fresh domain_guidance)
         self._last_reflection = reflection
@@ -716,7 +716,7 @@ class MarkdownRAVLExecutor:
                 'verification_notes': {}
             }
 
-        print(f"  [•] Synthesizing domain context for ACT...", file=sys.stderr)
+        log_execution("Synthesizing domain context for ACT...", status='working')
 
         # Extract recent run insights from execution_learning/recent_attempts/attempt_N/
         execution_learning_data = learnings.get('subdirs', {}).get('execution_learning', {})
@@ -779,7 +779,7 @@ class MarkdownRAVLExecutor:
         try:
             domain_guidance = self._parse_json_response(llm_response)
         except Exception as e:
-            print(f"  [!] Warning: Could not parse domain guidance: {e}", file=sys.stderr)
+            log_message(f"Warning: Could not parse domain guidance: {e}", status='error')
             domain_guidance = {
                 'priority_focus': [],
                 'successful_patterns': [],
@@ -790,7 +790,7 @@ class MarkdownRAVLExecutor:
                 'error': f'Failed to parse guidance: {e}'
             }
 
-        print(f"  [✓] Domain context synthesized", file=sys.stderr)
+        log_execution("Domain context synthesized", status='success')
         return domain_guidance
 
     def act(self, reflection: Dict[str, Any]) -> Dict[str, Any]:
@@ -799,7 +799,7 @@ class MarkdownRAVLExecutor:
 
         For data ingestion loops: infers DSL, checks cache, and generates code accordingly
         """
-        print(f"  Acting...", file=sys.stderr)
+        log_message("Acting...", status='info')
 
         # Store reflection for LEARN phase synthesis
         self._last_reflection = reflection
@@ -860,7 +860,7 @@ class MarkdownRAVLExecutor:
         if action_result.get('output'):
             self._save_generated_code_artifacts(action_result['output'], timestamp)
 
-        print(f"  [✓] Action phase completed", file=sys.stderr)
+        log_execution("Action phase completed", status='success')
 
         # Check if verification criteria specifies additional file outputs
         additional_files = self._create_additional_outputs(
@@ -1075,7 +1075,7 @@ class MarkdownRAVLExecutor:
         Returns:
             Dict with 'execution' and 'domain' keys containing separate verification results
         """
-        print(f"  Verifying...", file=sys.stderr)
+        log_message("Verifying...", status='info')
 
         # EXECUTION VERIFICATION: Did code run successfully?
         execution_verification = self._verify_execution(action_result)
@@ -1200,7 +1200,7 @@ class MarkdownRAVLExecutor:
         """
         verify_instructions = self.phases.get('verify', '')
         if not verify_instructions:
-            print(f"  [i]  No verification criteria defined, skipping", file=sys.stderr)
+            log_execution("No verification criteria defined, skipping", status='info', indent=4)
             return {
                 'overall_passed': True,
                 'message': 'No verification criteria defined',
@@ -1208,7 +1208,7 @@ class MarkdownRAVLExecutor:
             }
 
         if not action_result:
-            print(f"  [i]  No action result to verify", file=sys.stderr)
+            log_execution("No action result to verify", status='info', indent=4)
             return {
                 'overall_passed': None,
                 'message': 'No action result available for verification',
@@ -1262,7 +1262,7 @@ class MarkdownRAVLExecutor:
 
         verification['timestamp'] = datetime.now(timezone.utc).isoformat()
 
-        print(f"  [✓] Verification complete", file=sys.stderr)
+        log_execution("Verification complete", status='success')
 
         return verification
 
@@ -1294,7 +1294,7 @@ class MarkdownRAVLExecutor:
 
         Splits learning into execution (infrastructure) and domain (problem space).
         """
-        print(f"  Learning...", file=sys.stderr)
+        log_message("Learning...", status='info')
 
         # EXECUTION LEARNING: How to make code work
         if 'execution' in verification:
@@ -1306,7 +1306,7 @@ class MarkdownRAVLExecutor:
         if 'domain' in verification:
             self._learn_domain(verification['domain'], action_result)
 
-        print(f"  [✓] Learning saved to execution_learning/ and loop_learning/", file=sys.stderr)
+        log_execution("Learning saved to execution_learning/ and loop_learning/", status='success')
 
     def _learn_execution(
         self,
@@ -1426,7 +1426,7 @@ class MarkdownRAVLExecutor:
         Returns:
             Dict with synthesized insights about domain effectiveness
         """
-        print(f"  [•] Synthesizing insights from full run...", file=sys.stderr)
+        log_execution("Synthesizing insights from full run...", status='working')
 
         # Truncate large outputs for LLM consumption
         reflection_summary = self._truncate_for_llm(reflection, max_length=2000)
@@ -1447,13 +1447,13 @@ class MarkdownRAVLExecutor:
         try:
             insights = self._parse_json_response(llm_response)
         except Exception as e:
-            print(f"  [!] Warning: Could not parse run insights: {e}", file=sys.stderr)
+            log_message(f"Warning: Could not parse run insights: {e}", status='error')
             insights = {
                 'error': 'Failed to parse insights',
                 'raw_response': llm_response[:500]
             }
 
-        print(f"  [✓] Run insights synthesized", file=sys.stderr)
+        log_execution("Run insights synthesized", status='success')
         return insights
 
     def _truncate_for_llm(self, data: Any, max_length: int = 2000) -> Any:
@@ -1547,22 +1547,22 @@ class MarkdownRAVLExecutor:
         with open(metrics_file, 'w', encoding='utf-8') as f:
             yaml.dump(metrics, f, default_flow_style=False, sort_keys=False)
 
-        print(f"  [✓] Metrics: {passed_runs}/{total_runs} passed ({success_rate:.1%})", file=sys.stderr)
+        log_execution(f"Metrics: {passed_runs}/{total_runs} passed ({success_rate:.1%})", status='success')
         
         # Display current verification details if provided and failed
         if current_verification and not current_verification.get('overall_passed', False):
             criteria_results = current_verification.get('criteria_results', [])
             if criteria_results:
-                print(f"\n  📋 Current Verification Details:", file=sys.stderr)
+                log_message("\n📋 Current Verification Details:", status='info')
                 for i, criterion in enumerate(criteria_results, 1):
                     status = "✓" if criterion.get('passed', False) else "✗"
-                    print(f"     {status} [{i}] {criterion.get('criterion', 'Unknown criterion')}", file=sys.stderr)
+                    log_message(f"  {status} [{i}] {criterion.get('criterion', 'Unknown criterion')}", status='info', indent=4)
                     if not criterion.get('passed', False) and criterion.get('explanation'):
                         # Truncate long explanations for console readability
                         explanation = criterion['explanation']
                         if len(explanation) > 100:
                             explanation = explanation[:100] + "..."
-                        print(f"         {explanation}", file=sys.stderr)
+                        log_message(explanation, status='info', indent=8)
 
     def _process_run_child_directives(self, act_instructions: str) -> Tuple[str, Dict[str, Any]]:
         """
@@ -1630,7 +1630,7 @@ class MarkdownRAVLExecutor:
                 f.write(llm_output)
 
             created_files.append(str(output_file.relative_to(self.loop_dir)))
-            print(f"  [✓] Additional output saved to {output_file.relative_to(self.loop_dir)}", file=sys.stderr)
+            log_execution(f"Additional output saved to {output_file.relative_to(self.loop_dir)}", status='success')
 
         return created_files
 
@@ -1834,11 +1834,11 @@ def main():
         context_vars=context_vars
     )
 
-    print("=" * 80, file=sys.stderr)
-    print(f"Markdown RAVL Executor", file=sys.stderr)
-    print(f"Loop: {loop_dir.name}", file=sys.stderr)
-    print(f"Context: {context_vars}", file=sys.stderr)
-    print("=" * 80, file=sys.stderr)
+    log_message("=" * 80, status='info', indent=0)
+    log_message("Markdown RAVL Executor", status='info', indent=0)
+    log_message(f"Loop: {loop_dir.name}", status='info', indent=0)
+    log_message(f"Context: {context_vars}", status='info', indent=0)
+    log_message("=" * 80, status='info', indent=0)
 
     # Execute RAVL cycle
     reflection = executor.reflect()
@@ -1855,9 +1855,9 @@ def main():
         verification = executor.verify(previous_action, reflection)
         executor.learn(verification, action_result)
 
-    print("=" * 80, file=sys.stderr)
-    print("[✓] Markdown RAVL loop completed", file=sys.stderr)
-    print("=" * 80, file=sys.stderr)
+    log_message("=" * 80, status='info', indent=0)
+    log_message("[✓] Markdown RAVL loop completed", status='success', indent=0)
+    log_message("=" * 80, status='info', indent=0)
 
 
 if __name__ == '__main__':

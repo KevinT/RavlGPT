@@ -26,6 +26,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, Optional, TextIO, Callable, List
 
 from utils.constants import DEFAULT_EXECUTION_TIMEOUT, MODEL_PATTERN
+from utils.logging_utils import log_message
 
 
 class TeeLogger:
@@ -88,7 +89,7 @@ class RAVLRunner:
                                 value = value[1:-1]
                             env_vars[key.strip()] = value
             except Exception as e:
-                print(f"  ⚠️  Warning: Could not load .env file: {e}", file=sys.stderr)
+                log_message(f"Warning: Could not load .env file: {e}", status='error')
 
         return env_vars
 
@@ -614,9 +615,9 @@ class RAVLRunner:
     @staticmethod
     def print_banner(message: str, emoji: str = "✅"):
         """Print a formatted banner message"""
-        print("\n" + "="*80, file=sys.stderr)
-        print(f"{emoji} {message}", file=sys.stderr)
-        print("="*80, file=sys.stderr)
+        log_message("\n" + "="*80, status='info', indent=0)
+        log_message(f"{emoji} {message}", status='info', indent=0)
+        log_message("="*80, status='info', indent=0)
 
     @staticmethod
     def print_summary(findings: Dict[str, Any], duration: float, loop_name: str, log_file: Optional[Path] = None):
@@ -630,24 +631,24 @@ class RAVLRunner:
             log_file: Optional log file path
         """
         RAVLRunner.print_banner(f"{loop_name} completed successfully")
-        print(f"   Duration: {duration:.1f}s", file=sys.stderr)
+        log_message(f"Duration: {duration:.1f}s", status='info', indent=3)
 
         # Print loop-specific counts
         if 'summary' in findings:
             summary = findings['summary']
-            print(f"   Total issues: {summary.get('total_issues', 0)}", file=sys.stderr)
-            print(f"   Coherence score: {summary.get('overall_coherence_score', 'N/A')}", file=sys.stderr)
+            log_message(f"Total issues: {summary.get('total_issues', 0)}", status='info', indent=3)
+            log_message(f"Coherence score: {summary.get('overall_coherence_score', 'N/A')}", status='info', indent=3)
         elif 'gaps_found' in findings:
-            print(f"   Gaps found: {len(findings['gaps_found'])}", file=sys.stderr)
+            log_message(f"Gaps found: {len(findings['gaps_found'])}", status='info', indent=3)
         elif 'drift_findings' in findings:
-            print(f"   Drift findings: {len(findings['drift_findings'])}", file=sys.stderr)
+            log_message(f"Drift findings: {len(findings['drift_findings'])}", status='info', indent=3)
         elif 'gaps' in findings:
-            print(f"   Gaps found: {len(findings['gaps'])}", file=sys.stderr)
+            log_message(f"Gaps found: {len(findings['gaps'])}", status='info', indent=3)
 
         if log_file:
-            print(f"   Log file: {log_file.name}", file=sys.stderr)
+            log_message(f"Log file: {log_file.name}", status='info', indent=3)
 
-        print("="*80, file=sys.stderr)
+        log_message("="*80, status='info', indent=0)
 
     @staticmethod
     def handle_error(exception: Exception, tee_logger: Optional[TeeLogger] = None):
@@ -659,10 +660,10 @@ class RAVLRunner:
             tee_logger: Optional TeeLogger to close
         """
         if isinstance(exception, KeyboardInterrupt):
-            print("\n\n⚠️  Interrupted by user", file=sys.stderr)
+            log_message("\n\n⚠️  Interrupted by user", status='error', indent=0)
             exit_code = 1
         else:
-            print(f"\n\n❌ ERROR: {exception}", file=sys.stderr)
+            log_message(f"\n\n❌ ERROR: {exception}", status='error', indent=0)
             import traceback
             traceback.print_exc(file=sys.stderr)
             exit_code = 1
