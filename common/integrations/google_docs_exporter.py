@@ -9,7 +9,7 @@ Inherits from GoogleAPIsMixin to access Google Docs service.
 
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any
 
 
@@ -78,7 +78,7 @@ class GoogleDocsExporter:
         return {
             'text': markdown_content,
             'title': document.get('title', ''),
-            'last_modified': document.get('modifiedTime', datetime.utcnow().isoformat() + '+00:00'),
+            'last_modified': document.get('modifiedTime', datetime.now(timezone.utc).isoformat() + '+00:00'),
             'doc_id': doc_id
         }
 

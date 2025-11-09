@@ -22,7 +22,7 @@ import sys
 import time
 import os
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, TextIO, Callable, List
 
 from utils.constants import DEFAULT_EXECUTION_TIMEOUT, MODEL_PATTERN
@@ -530,7 +530,7 @@ class RAVLRunner:
             TeeLogger instance
         """
         log_dir.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.utcnow().strftime('%Y-%m-%dT%H-%M-%S')
+        timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H-%M-%S')
         log_file = log_dir / f'{timestamp}_{loop_name}_run.log'
 
         tee_logger = TeeLogger(log_file, sys.stderr)

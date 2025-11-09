@@ -65,7 +65,7 @@ class AnthropicProvider(LLMProvider):
 
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
         if max_tokens is None:
-            max_tokens = get_max_tokens('default', 8192)
+            max_tokens = get_max_tokens('default')
 
         try:
             response = self.client.messages.create(
@@ -104,7 +104,7 @@ class OpenAIProvider(LLMProvider):
 
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
         if max_tokens is None:
-            max_tokens = get_max_tokens('default', 8192)
+            max_tokens = get_max_tokens('default')
 
         try:
             response = self.client.chat.completions.create(
@@ -144,7 +144,7 @@ class GoogleProvider(LLMProvider):
 
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
         if max_tokens is None:
-            max_tokens = get_max_tokens('default', 8192)
+            max_tokens = get_max_tokens('default')
 
         try:
             response = self.client.generate_content(
@@ -177,7 +177,7 @@ class OllamaProvider(LLMProvider):
 
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
         if max_tokens is None:
-            max_tokens = get_max_tokens('default', 8192)
+            max_tokens = get_max_tokens('default')
 
         import requests
 

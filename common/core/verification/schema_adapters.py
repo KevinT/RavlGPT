@@ -36,7 +36,7 @@ This code:
 import os
 import json
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import requests
 
@@ -156,7 +156,7 @@ print(f"DEBUG: Extracted {{len(activities)}} activities from Notion")
 
 # Step 5: Create output with metadata
 output_data = {{
-    "timestamp": datetime.utcnow().isoformat() + "Z",
+    "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
     "record_count": len(activities),
     "data_changed": True,
     "activities": activities,

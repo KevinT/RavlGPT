@@ -303,7 +303,7 @@ class DataIngressExecutor:
         )
 
         print("  • Calling LLM to generate integration code...", file=sys.stderr)
-        response = self.llm_provider.generate(prompt, max_tokens=get_max_tokens('data_ingress_code_generation', 8192))
+        response = self.llm_provider.generate(prompt, max_tokens=get_max_tokens('data_ingress_code_generation'))
 
         # Extract Python code from response
         code = self._extract_python_code(response)

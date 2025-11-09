@@ -14,7 +14,7 @@ import re
 import sys
 import json
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
@@ -533,7 +533,7 @@ class GoogleDocsRevisionTracker:
                 'doc_id': doc_id,
                 'mode': 'full_lineage',
                 'revision_count': len(revisions_metadata),
-                'tracked_at': datetime.utcnow().isoformat() + '+00:00',
+                'tracked_at': datetime.now(timezone.utc).isoformat() + '+00:00',
                 'revisions_folder': f"{document_name}.revisions",
                 'revisions': [
                     {
@@ -558,7 +558,7 @@ class GoogleDocsRevisionTracker:
                 'doc_id': doc_id,
                 'mode': 'simple',
                 'revision_count': len(revisions_metadata),
-                'tracked_at': datetime.utcnow().isoformat() + '+00:00',
+                'tracked_at': datetime.now(timezone.utc).isoformat() + '+00:00',
                 'revisions': revisions_metadata
             }
             lineage_file.write_text(json.dumps(lineage_content) + '\n', encoding='utf-8')

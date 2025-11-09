@@ -9,6 +9,8 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
 
+from utils.constants import DEFAULT_MAX_TOKENS
+
 
 # Cache to avoid reloading config on every call
 _config_cache: Optional[Dict[str, Any]] = None
@@ -39,7 +41,7 @@ def load_framework_config() -> Dict[str, Any]:
     return _config_cache
 
 
-def get_max_tokens(key: str, default: int = 8192) -> int:
+def get_max_tokens(key: str, default: int = DEFAULT_MAX_TOKENS) -> int:
     """
     Get max_tokens for specific use case from framework config
 

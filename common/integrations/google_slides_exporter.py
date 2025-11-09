@@ -8,7 +8,7 @@ Inherits from GoogleAPIsMixin to access Google Slides service.
 """
 
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List
 
 
@@ -71,7 +71,7 @@ class GoogleSlidesExporter:
         markdown_content = self._convert_presentation_to_markdown(presentation)
 
         # Get modification time from Drive API (Slides API doesn't provide it)
-        last_modified = datetime.utcnow().isoformat() + '+00:00'
+        last_modified = datetime.now(timezone.utc).isoformat() + '+00:00'
         try:
             if self.loop.google_drive_service:
                 file_metadata = self.loop.google_drive_service.files().get(

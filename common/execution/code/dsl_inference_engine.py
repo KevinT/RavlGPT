@@ -609,7 +609,7 @@ class DSLInferenceEngine:
         # LLM API calling guidance
         if act_req.get('needs_llm_calls'):
             # Get recommended token limit for user-generated LLM calls
-            recommended_tokens = get_max_tokens('default', 8192)
+            recommended_tokens = get_max_tokens('default')
             guidance_lines.append("")
             guidance_lines.append("# REQUIRED: LLM API Calls:")
             guidance_lines.append("- YOU MUST use framework LLM provider (automatic logging and error handling)")

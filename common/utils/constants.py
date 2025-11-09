@@ -22,6 +22,9 @@ CONTEXT_DOCUMENTATION_CACHE_TTL = 7 * 24 * 60 * 60  # 1 week in seconds
 LLAMA_INDEX_CACHE_TTL_SECONDS = 7 * 24 * 60 * 60  # 1 week
 DEFAULT_SUGGEST_ITERATIONS = 10
 
+# LLM settings
+DEFAULT_MAX_TOKENS = 8192  # Default token limit for LLM responses
+
 # Child loop discovery
 CHILD_LOOP_BATCH_SIZE = 5
 

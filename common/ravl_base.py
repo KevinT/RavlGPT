@@ -151,7 +151,7 @@ class BaseRAVLLoop:
                     pass
 
             # Generate timestamped filename
-            timestamp = datetime.utcnow().strftime('%Y-%m-%d-%H%M%S')
+            timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d-%H%M%S')
             timestamped_path = self.model_path.parent / f'model-{timestamp}.yml'
 
             # Save to timestamped file
