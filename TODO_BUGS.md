@@ -1,8 +1,8 @@
+- --list should separate out framework loops from examples
+
 - claude ravl agent never seems to invoke.
 
 - Real-time output streaming for generated code (print statements visible during execution, better UX for long-running operations)
-
-- it looks like loops are being flagged as failing even when they pass - check the verifications system
 
 - read_parent_model and read_sibling_model are incorrect, they use parent.parent mechanism to find learning
 	- parent_model_path = self.model_path.parent.parent.parent / 'learnings' / 'model.yml'

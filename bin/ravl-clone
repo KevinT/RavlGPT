@@ -96,7 +96,22 @@ class RAVLCloneCommand(RAVLCLIBase):
             args: Parsed command-line arguments
         """
         source_name = args.loop_name
-        new_name = args.new_name if hasattr(args, 'new_name') and args.new_name else source_name
+
+        # Determine new name - strip example prefix if no custom name provided
+        if hasattr(args, 'new_name') and args.new_name:
+            # User provided explicit name - use as-is
+            new_name = args.new_name
+        else:
+            # No custom name - auto-strip example_n_ prefix from source
+            base_source_name = source_name.split('/')[-1]  # Get last segment for nested paths
+            stripped_name = self._strip_example_prefix(base_source_name)
+            # Reconstruct full path if source was nested
+            if '/' in source_name:
+                parent_parts = source_name.split('/')[:-1]
+                new_name = '/'.join(parent_parts + [stripped_name])
+            else:
+                new_name = stripped_name
+
         target_dir = args.target if hasattr(args, 'target') and args.target else None
         description = args.description if hasattr(args, 'description') and args.description else None
 
@@ -182,7 +197,12 @@ class RAVLCloneCommand(RAVLCLIBase):
         if parent_segments:
             print(f"   Nested under: {'/'.join(parent_segments)}", file=sys.stderr)
         if source_name != loop_name:
-            print(f"   Renamed to: {loop_name}", file=sys.stderr)
+            # Check if this was auto-stripping
+            source_base = source_name.split('/')[-1]
+            if re.match(r'^example_\d+_', source_base) and not (hasattr(args, 'new_name') and args.new_name):
+                print(f"   Auto-stripped prefix: {source_base} → {loop_name}", file=sys.stderr)
+            else:
+                print(f"   Renamed to: {loop_name}", file=sys.stderr)
 
         try:
             # Check if source has nested loops (is a parent loop)
@@ -388,6 +408,28 @@ class RAVLCloneCommand(RAVLCLIBase):
     def _is_valid_loop_name(self, name: str) -> bool:
         """Check if loop name is valid snake_case"""
         return bool(re.match(r'^[a-z][a-z0-9_]*$', name))
+
+    def _strip_example_prefix(self, name: str) -> str:
+        """
+        Strip example_n_ prefix from loop name if present
+
+        Args:
+            name: Original loop name (e.g., 'example_1_rugby_tips')
+
+        Returns:
+            Name with prefix removed (e.g., 'rugby_tips')
+
+        Examples:
+            'example_1_rugby_tips' -> 'rugby_tips'
+            'example_2_simple_learning_loop' -> 'simple_learning_loop'
+            'tech_news_curator' -> 'tech_news_curator' (unchanged)
+        """
+        import re
+        # Match example_N_ where N is one or more digits
+        match = re.match(r'^example_\d+_(.+)$', name)
+        if match:
+            return match.group(1)
+        return name
 
     def _build_nested_path(self, base_path: Path, parent_segments: list[str], loop_name: str) -> Path:
         """
