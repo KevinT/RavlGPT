@@ -42,6 +42,7 @@ sys.path.insert(0, str(_common_dir / 'utils'))
 
 from credential_validator import CredentialValidator
 from error_semantic_analyzer import ErrorSemanticAnalyzer
+from logging_utils import log_execution, log_message
 
 
 class DataIngressExecutor:
@@ -259,7 +260,7 @@ class DataIngressExecutor:
         with open(history_file, 'w') as f:
             json.dump(strategy, f, indent=2)
 
-        print(f"  ✓ Saved strategy to {strategy_file.name}", file=sys.stderr)
+        log_execution(f"Saved strategy to {strategy_file.name}", status='success')
 
     def generate_code_from_llm(
         self,
@@ -302,7 +303,7 @@ class DataIngressExecutor:
             failure_context=failure_context
         )
 
-        print("  • Calling LLM to generate integration code...", file=sys.stderr)
+        log_execution("Calling LLM to generate integration code...", status='working')
         response = self.llm_provider.generate(prompt, max_tokens=get_max_tokens('data_ingress_code_generation'))
 
         # Extract Python code from response
@@ -357,11 +358,11 @@ class DataIngressExecutor:
         required_creds = CredentialValidator.detect_required_credentials(code_clean)
         creds_valid, creds_message, missing_vars = CredentialValidator.validate_credentials(required_creds)
 
-        print(f"  {creds_message}", file=sys.stderr)
+        log_execution(creds_message, status='info')
 
         if not creds_valid:
             error_msg = CredentialValidator.get_missing_credentials_error(missing_vars, required_creds)
-            print(error_msg, file=sys.stderr)
+            log_message(error_msg, status='error')
             return {
                 'success': False,
                 'error': f'Missing credentials: {", ".join(missing_vars)}',
@@ -556,7 +557,7 @@ class DataIngressExecutor:
         Returns:
             Result dict with all execution details
         """
-        print("  🔄 Starting data ingestion workflow", file=sys.stderr)
+        log_execution("Starting data ingestion workflow", status='working')
 
         result = {
             'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -570,7 +571,7 @@ class DataIngressExecutor:
 
         try:
             # Step 1: Extract requirements
-            print("  • Extracting ACT section...", file=sys.stderr)
+            log_execution("Extracting ACT section...", status='working')
             act = self.extract_act_section()
             verify_rules = self.extract_verify_section()
 
@@ -582,16 +583,16 @@ class DataIngressExecutor:
             result['verify_rules_count'] = len(verify_rules)
 
             # Step 2: Load or generate strategy
-            print("  • Loading strategy...", file=sys.stderr)
+            log_execution("Loading strategy...", status='working')
             strategy = self.get_current_strategy()
 
             if strategy and not strategy.get('cache_expired'):
-                print(f"  ✓ Using cached strategy (last used: {strategy.get('last_used', 'unknown')})", file=sys.stderr)
+                log_execution(f"Using cached strategy (last used: {strategy.get('last_used', 'unknown')})", status='success')
                 code = strategy['code']
                 result['strategy_loaded'] = True
                 result['strategy_reused'] = True
             else:
-                print("  • No cached strategy, generating new one...", file=sys.stderr)
+                log_execution("No cached strategy, generating new one...", status='working')
                 # Fetch Context7 docs (simplified - in real impl would use fetching logic)
                 context7_docs = self._fetch_context7_docs()
 
@@ -608,7 +609,7 @@ class DataIngressExecutor:
             result['code_hash'] = hashlib.md5(code.encode()).hexdigest()
 
             # Step 3: Execute code
-            print("  • Executing integration code...", file=sys.stderr)
+            log_execution("Executing integration code...", status='working')
             exec_result = self.execute_code(code, timeout=300)
 
             if not exec_result['success']:
@@ -619,7 +620,7 @@ class DataIngressExecutor:
                 # Record failure
                 self._record_failure(exec_result['error'], code)
 
-                print(f"  ❌ Execution failed: {exec_result['error'][:100]}", file=sys.stderr)
+                log_message(f"Execution failed: {exec_result['error'][:100]}", status='error')
                 return result
 
             result['code_executed'] = True
@@ -627,7 +628,7 @@ class DataIngressExecutor:
             result['data'] = exec_result['data']
 
             # Step 4: Verify output
-            print("  • Verifying output...", file=sys.stderr)
+            log_execution("Verifying output...", status='working')
             verified, metrics = self.verify_output(exec_result['data'], verify_rules)
 
             result['verified'] = verified
@@ -635,7 +636,7 @@ class DataIngressExecutor:
             result['success'] = verified
 
             if verified:
-                print(f"  ✓ Output verified successfully", file=sys.stderr)
+                log_execution("Output verified successfully", status='success')
 
                 # Save successful strategy
                 if not strategy or strategy.get('cache_expired'):
@@ -659,13 +660,13 @@ class DataIngressExecutor:
                 if failure_file.exists():
                     failure_file.unlink()
             else:
-                print(f"  ❌ Output verification failed: {metrics}", file=sys.stderr)
+                log_message(f"Output verification failed: {metrics}", status='error')
 
             return result
 
         except Exception as e:
             result['error'] = str(e)
-            print(f"  ❌ Workflow error: {str(e)}", file=sys.stderr)
+            log_message(f"Workflow error: {str(e)}", status='error')
             return result
 
     def _fetch_context7_docs(self) -> str:
@@ -679,12 +680,12 @@ class DataIngressExecutor:
 
         # Check cache first
         if cache_file.exists() and self._is_context7_cache_fresh():
-            print("  • Using cached Context7 docs", file=sys.stderr)
+            log_execution("Using cached Context7 docs", status='info')
             with open(cache_file, 'r') as f:
                 return f.read()
 
         # Fetch from Context7
-        print("  • Fetching from Context7...", file=sys.stderr)
+        log_execution("Fetching from Context7...", status='working')
         docs_path = self.config.get('context7_docs_path', '')
 
         try:
@@ -700,11 +701,11 @@ class DataIngressExecutor:
             with open(cache_file, 'w') as f:
                 f.write(docs)
 
-            print(f"  ✓ Cached {len(docs)} chars from Context7", file=sys.stderr)
+            log_execution(f"Cached {len(docs)} chars from Context7", status='success')
             return docs
 
         except Exception as e:
-            print(f"  ⚠️  Context7 fetch failed: {e}, using empty docs", file=sys.stderr)
+            log_message(f"Context7 fetch failed: {e}, using empty docs", status='error')
             return f"API Endpoint: {self.config.get('api_endpoint', '')}\nAuth: {self.config.get('api_auth_method', '')}"
 
     def _load_failure_history(self) -> List[Dict]:
