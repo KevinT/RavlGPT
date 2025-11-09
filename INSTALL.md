@@ -62,7 +62,7 @@ No setup needed - runs locally.
 ./ravl --list
 
 # Clone and customize an example
-./ravl-clone example_1_rugby_tips my_tips
+./ravl --clone example_1_rugby_tips my_tips
 ./ravl my_tips
 ```
 

@@ -8,10 +8,10 @@ Self-healing data ingestion loop template for automatically generating, testing,
 
 ```bash
 # Clone to create my_api loop
-./.ravl/bin/ravl-clone data_ingress my_api
+./ravl --clone data_ingress_template my_api
 
 # Clone and rename in one step
-./.ravl/bin/ravl-clone data_ingress my_hibob_employees
+./ravl --clone data_ingress_template my_hibob_employees
 ```
 
 This creates a new loop directory with:
@@ -71,7 +71,7 @@ This creates a new loop directory with:
 4. **Run the loop**:
    ```bash
    cd /path/to/repo
-   ./.ravl/bin/ravl my_api --mode fast
+   ./ravl my_api --mode fast
    ```
 
 ## What Happens
@@ -166,16 +166,11 @@ cat ravl_loops/my_api/learnings/current_strategy.json | jq '{endpoint, consecuti
 cat ravl_loops/my_api/learnings/failure_history.json
 ```
 
-## Real Example
-
-See `ravl_loops/hibob_api_ingestion/` for a working example integrating with HiBob HR API.
-
 ## Learn More
 
-- [User Guide](../../docs/data-ingress.md)
-- [Quick Start](../../QUICKSTART_DATA_INGRESS.md)
-- [Implementation Details](../../docs/data-ingress-implementation.md)
-- [Summary](../../SELF_HEALING_DATA_INGRESS_SUMMARY.md)
+- **[GUIDE.md](GUIDE.md)** - Comprehensive user guide for this template
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide for this template
+- **[IMPLEMENTATION.md](IMPLEMENTATION.md)** - Implementation details
 
 ## Key Points
 
@@ -194,10 +189,7 @@ See `ravl_loops/hibob_api_ingestion/` for a working example integrating with HiB
 
 ## Support
 
-Check the full documentation at `.ravl/docs/data-ingress.md` for:
-- Complete user guide
-- Troubleshooting
-- FAQ
-- Best practices
-- Performance considerations
-- Security details
+Check the template documentation for:
+- **GUIDE.md** - Complete user guide, troubleshooting, FAQ, and best practices
+- **QUICKSTART.md** - Fast setup instructions
+- **IMPLEMENTATION.md** - Technical implementation details

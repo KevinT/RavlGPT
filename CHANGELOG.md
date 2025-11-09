@@ -8,6 +8,16 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 
 ## November 2025
 
+### Installation & Setup
+- One-command installation via curl (no manual setup required)
+- Comprehensive installation guide with prerequisites and troubleshooting
+- Simplified getting started experience
+
+### Reliability & Self-Healing
+- Intelligent cache invalidation: loops automatically detect when cached code is causing repeated failures and regenerate it
+- Framework now distinguishes between code logic issues vs transient failures for smarter recovery
+- Reduced "stuck loop" scenarios where the same broken code runs repeatedly
+
 ### Execution & Output Improvements
 - Real-time output streaming for generated code (print statements visible during execution, better UX for long-running operations)
 - Self-healing execution failure tracking and cache invalidation (loops recover from failures automatically)

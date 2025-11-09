@@ -27,9 +27,9 @@ emoji: ➿
 Default type. Requires `ravl_loop.py` implementation.
 
 ```yaml
-name: habit_tracker
-description: Track daily habits
-emoji: ✅
+name: github_trending_tracker
+description: Track GitHub trending repositories
+emoji: ⭐
 ```
 
 ### Markdown Loops
@@ -37,9 +37,9 @@ emoji: ✅
 For LLM-interpreted markdown-based loops.
 
 ```yaml
-name: weekly_reflection
-description: Weekly reflection loop
-emoji: ➿
+name: tech_news_curator
+description: Curate and score tech news stories
+emoji: 📰
 type: markdown
 markdown_file: ravl_loop.md
 ```

@@ -8,19 +8,21 @@ Self-healing data ingress loops use LLMs and Context7 API documentation to autom
 
 ## Quick Start
 
-### 1. Create Your Loop Directory
+### 1. Clone the Template
 
 ```bash
-mkdir -p ravl_loops/my_api_integration/config
+./ravl --clone data_ingress_template my_api_integration
 ```
 
-### 2. Copy and Customize Config
+This creates:
+- `ravl_loops/my_api_integration/` directory
+- `config/ravl.yml` configuration template
+- `ravl_loop.md` loop definition template
+- Documentation files
 
-```bash
-cp .ravl/templates/data-ingress-config.yml ravl_loops/my_api_integration/config/ravl.yml
-```
+### 2. Customize Config
 
-Edit `config/ravl.yml`:
+Edit `ravl_loops/my_api_integration/config/ravl.yml`:
 ```yaml
 name: my_api_integration
 api_endpoint: https://api.example.com/v1
@@ -28,11 +30,9 @@ api_auth_method: Bearer
 context7_docs_path: /websites/api_example_com/llms.txt
 ```
 
-### 3. Copy and Customize Loop Definition
+### 3. Customize Loop Definition
 
-```bash
-cp .ravl/templates/data-ingress-ravl_loop.md ravl_loops/my_api_integration/ravl_loop.md
-```
+Edit `ravl_loops/my_api_integration/ravl_loop.md`:
 
 Edit `ravl_loop.md` - fill in only:
 

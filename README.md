@@ -50,13 +50,14 @@ RAVL comes with a set of powerful helper commands:
 
 | Command | Description |
 |---------|-------------|
-| `ravl {loop name}` | Run a RAVL loop. Use `--help` for options |
-| `ravl-list` | List all project RAVLs with last execution times |
-| `ravl-clone {source} {dest}` | Clone a RAVL from existing loop or template |
-| `ravl-clean {loop name}` | Remove all learning artifacts (keeps code) |
-| `ravl-health {loop name}` | Diagnose why a RAVL is failing (LLM-based) |
-| `ravl-sync-claude` | Install `/ravl-*` slash commands in Claude Code |
-| `ravl-sync-opencode` | Install `/ravl-*` slash commands in Opencode |
+| `./ravl {loop name}` | Run a RAVL loop. Use `--help` for options |
+| `./ravl --list` | List all project RAVLs with last execution times |
+| `./ravl --clone {source} {dest}` | Clone a RAVL from existing loop or template |
+| `./ravl --clean {loop name}` | Remove all learning artifacts (keeps code) |
+| `./ravl --execution-health {loop}` | Diagnose execution/code generation issues |
+| `./ravl --loop-health {loop}` | Diagnose domain learning issues |
+| `.ravl/bin/ravl-sync-claude` | Install `/ravl-*` slash commands in Claude Code |
+| `.ravl/bin/ravl-sync-opencode` | Install `/ravl-*` slash commands in Opencode |
 
 **Quick Access via Wrapper:**
 
@@ -104,26 +105,29 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 ## Quick Start
 
 **New to RAVL?** Start with the examples:
-- [Habit Tracker](examples/habit_tracker/) - Simple Python RAVL loop
-- [Weekly Reflection](examples/weekly_reflection/) - Simple Markdown RAVL loop
-- [Examples Overview](examples/README.md) - Detailed guide to both examples
+- [Rugby Tips](examples/example_1_rugby_tips/) - Simple Markdown RAVL loop
+- [Simple Learning Loop](examples/example_2_simple_learning_loop/) - Demonstrates basic learning patterns
+- [Examples Overview](examples/README.md) - Detailed guide to all examples
 
 **Using RAVL CLI:**
 ```bash
 # List all loops in your project
-./ravl-list
+./ravl --list
 
 # Run a loop
-./ravl habit_tracker --mode fast
+./ravl example_1_rugby_tips --mode fast
 
 # Clone a new loop from template
-./ravl-clone .ravl/examples/habit_tracker ravl_loops/my_analytics
+./ravl --clone empty_loop_template ravl_loops/my_analytics
 
-# Diagnose a failing loop
-./ravl-health my_analytics
+# Diagnose a failing loop (execution issues)
+./ravl --execution-health my_analytics
+
+# Diagnose loop health (domain learning issues)
+./ravl --loop-health my_analytics
 
 # Clean learning artifacts to start fresh
-./ravl-clean my_analytics
+./ravl --clean my_analytics
 ```
 
 ## 🔧 Key Framework Features
@@ -170,9 +174,9 @@ Store learning artifacts and virtual environments anywhere - see project documen
 - **[Prompt Templates](docs/llm/PROMPTS.md)** - Prompt template system
 
 ### Templates
-- **[Data Ingestion](templates/data_ingress/)** - Self-healing API integration template
-- **[Strategic Coherence](templates/strategic_coherence/)** - Parent/child coordination template
-- **[Empty Loop](templates/empty_loop/)** - Minimal starter template
+- **[Data Ingestion](templates/data_ingress_template/)** - Self-healing API integration template
+- **[Strategic Coherence](templates/strategic_coherence_template/)** - Parent/child coordination template
+- **[Empty Loop](templates/empty_loop_template/)** - Minimal starter template
 
 ## 📄 License
 

@@ -6,70 +6,82 @@ Progressive examples demonstrating the RAVL framework from simple to advanced.
 
 These examples are designed to be studied in order, building from basic concepts to advanced patterns:
 
-1. **hello_ravl_py** & **hello_ravl_md** - Learn the basics (5 min each)
-2. **tech_news_curator** - Understand markdown loops (15 min)
-3. **github_trending_tracker** - Master API integration (20 min)
-4. **tech_news_dashboard** - Advanced delegation (30 min)
+1. **example_1_rugby_tips** - Simplest markdown loop (5 min)
+2. **example_2_simple_learning_loop** - Understanding learning (15 min)
+3. **tech_news_curator** - Data ingestion patterns (15 min)
+4. **github_trending_tracker** - API integration in Python (20 min)
+5. **communication_learner** - Multi-dimensional optimization (25 min)
+6. **tech_news_dashboard** - Advanced orchestration (30 min)
 
 ---
 
-## 1. Hello RAVL - Your First Loop (Python & Markdown)
+## 1. Rugby Tips - Your First Loop
 
-The absolute simplest RAVL loops - same behavior, two implementations!
-
-### 1a. Hello RAVL (Python)
-
-**Path**: `hello_ravl_py/`
-**Type**: Python class-based
-**Level**: Beginner
-**Time**: 5 minutes
-
-#### What You'll Learn
-- The four RAVL phases (Reflect → Act → Verify → Learn)
-- How Python loops are structured
-- Model persistence with timestamps
-- Basic verification patterns
-
-#### Run It
-```bash
-./ravl examples/hello_ravl_py
-```
-
-[Read full documentation →](hello_ravl_py/README.md)
-
-### 1b. Hello RAVL (Markdown)
-
-**Path**: `hello_ravl_md/`
-**Type**: Markdown with code generation
+**Path**: `example_1_rugby_tips/`
+**Type**: Markdown
 **Level**: Beginner
 **Time**: 5 minutes
 **Prerequisites**: ANTHROPIC_API_KEY
 
-#### What You'll Learn
+### What You'll Learn
 - How markdown loops work (describe WHAT, not HOW)
 - Framework generates Python code from your description
-- Code caching (reuses successful code)
-- Compare: ~200 lines Python vs ~60 lines markdown!
+- Basic RAVL phases (Reflect → Act → Verify → Learn)
+- File-based outputs
 
-#### Run It
+### What It Does
+Tracks Springbok rugby game results, analyzes player performance, and generates coaching tips for Rassie (the coach). Stores results in JSON and creates markdown coaching tips.
+
+### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl examples/hello_ravl_md
+./ravl example_1_rugby_tips
 ```
 
-[Read full documentation →](hello_ravl_md/README.md)
-
-### Key Concepts (Both)
-- RAVL protocol basics
-- Model loading/saving
-- Verification as learning signal
-- Statistical tracking
-
-**Start with Python version** to understand structure, then **try Markdown version** to see framework magic!
+### Key Concepts
+- Markdown loop structure
+- Simple Act phase (data gathering + analysis)
+- File-based persistence
+- Conditional outputs (only generate tips if new games found)
 
 ---
 
-## 2. Tech News Curator - Markdown Loops
+## 2. Simple Learning Loop - Environment Explorer
+
+**Path**: `example_2_simple_learning_loop/`
+**Type**: Markdown
+**Level**: Beginner
+**Time**: 15 minutes
+**Prerequisites**: ANTHROPIC_API_KEY
+
+### What You'll Learn
+- How loops evolve across multiple runs
+- Strategic learning (not just data collection)
+- Knowledge persistence and accumulation
+- Progressive sophistication
+
+### What It Does
+Starts with zero knowledge and explores its environment. Each run decides what to explore next based on previous learning. Builds a knowledge map that gets strategically smarter over time.
+
+### Run It
+```bash
+export ANTHROPIC_API_KEY="your-key"
+./ravl example_2_simple_learning_loop
+./ravl example_2_simple_learning_loop  # Run multiple times to see learning!
+./ravl example_2_simple_learning_loop
+```
+
+### Key Concepts
+- Learning accumulation across runs
+- Strategic exploration (not random)
+- Model-driven decision making
+- Evolution from naive to sophisticated
+
+**Important**: Run this example 3-5 times to see how it learns and evolves!
+
+---
+
+## 3. Tech News Curator - Data Ingestion
 
 **Path**: `tech_news_curator/`
 **Type**: Markdown
@@ -78,11 +90,10 @@ export ANTHROPIC_API_KEY="your-key"
 **Prerequisites**: ANTHROPIC_API_KEY
 
 ### What You'll Learn
-- Markdown-based loop definitions (describe WHAT, not HOW)
-- LLM-powered code generation from natural language
 - Self-healing data ingestion (handles format changes)
+- LLM-powered content scoring
 - Code caching (reuses verified code)
-- Domain learning (what makes content valuable)
+- Dual learning spaces (execution + domain)
 
 ### What It Does
 Fetches Hacker News RSS, uses LLM to score stories by technical depth, practical applicability, and novelty. Returns top 10 curated stories.
@@ -90,7 +101,7 @@ Fetches Hacker News RSS, uses LLM to score stories by technical depth, practical
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl examples/tech_news_curator
+./ravl tech_news_curator
 ```
 
 ### Key Concepts
@@ -101,11 +112,9 @@ export ANTHROPIC_API_KEY="your-key"
   - Domain learning: What makes good content
 - LLM synthesis for curation
 
-[Read full documentation →](tech_news_curator/README.md)
-
 ---
 
-## 3. GitHub Trending Tracker - API Integration
+## 4. GitHub Trending Tracker - API Integration
 
 **Path**: `github_trending_tracker/`
 **Type**: Python
@@ -118,14 +127,14 @@ export ANTHROPIC_API_KEY="your-key"
 - Handling rate limits and API errors gracefully
 - Exponential moving average for pattern learning
 - Multi-layer verification (API + data quality)
-- Execution vs domain learning separation
+- Python loop structure
 
 ### What It Does
 Tracks GitHub trending repositories (recently created, high stars). Analyzes trending patterns in languages, topics, and stars. Learns patterns using 70/30 exponential moving average.
 
 ### Run It
 ```bash
-./ravl examples/github_trending_tracker
+./ravl github_trending_tracker
 ```
 
 ### Key Concepts
@@ -134,12 +143,47 @@ Tracks GitHub trending repositories (recently created, high stars). Analyzes tre
 - EMA learning (70% history + 30% current)
 - Hierarchical verification layers
 - Data quality thresholds
-
-[Read full documentation →](github_trending_tracker/README.md)
+- Python class-based loop implementation
 
 ---
 
-## 4. Tech News Dashboard - Delegation
+## 5. Communication Learner - Multi-Dimensional Optimization
+
+**Path**: `communication_learner/`
+**Type**: Markdown
+**Level**: Advanced
+**Time**: 25 minutes
+**Prerequisites**: ANTHROPIC_API_KEY, Understanding of example_2
+
+### What You'll Learn
+- Multi-dimensional optimization (4 scoring dimensions)
+- Exploration vs exploitation tradeoffs
+- Strategic hypothesis formation and testing
+- Plateau detection and breaking
+- Meta-learning (learning how to learn better)
+
+### What It Does
+Discovers effective communication strategies through experimentation. Optimizes across clarity, engagement, completeness, and memorability. Forms hypotheses, tests them, and learns from results.
+
+### Run It
+```bash
+export ANTHROPIC_API_KEY="your-key"
+./ravl communication_learner
+./ravl communication_learner  # Run 5-10 times to see evolution!
+```
+
+### Key Concepts
+- Multi-dimensional optimization vs pass/fail
+- Exploration vs exploitation balance
+- Hypothesis-driven learning
+- Pattern recognition across dimensions
+- Sophisticated meta-strategy evolution
+
+**Important**: Run 5-10 times to watch strategy evolution from exploration to exploitation!
+
+---
+
+## 6. Tech News Dashboard - Orchestration
 
 **Path**: `tech_news_dashboard/`
 **Type**: Parent + 3 Children (Markdown)
@@ -166,7 +210,7 @@ Parent aggregates results, identifies cross-source topics, detects emerging tren
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl examples/tech_news_dashboard
+./ravl tech_news_dashboard
 ```
 
 ### Key Concepts
@@ -178,19 +222,18 @@ export ANTHROPIC_API_KEY="your-key"
   - Parent: Cross-source meta-patterns
 - Graceful child failure handling
 
-[Read full documentation →](tech_news_dashboard/README.md)
-
 ---
 
 ## Quick Comparison
 
-| Example | Type | Loops | External APIs | Learning Spaces | Complexity |
-|---------|------|-------|---------------|-----------------|------------|
-| hello_ravl_py | Python | 1 | 0 | 1 (domain) | Minimal |
-| hello_ravl_md | Markdown | 1 | 0 | 2 (execution + domain) | Minimal |
-| tech_news_curator | Markdown | 1 | 1 (RSS) | 2 (execution + domain) | Low |
-| github_trending_tracker | Python | 1 | 1 (GitHub) | 2 (execution + domain) | Medium |
-| tech_news_dashboard | Markdown | 4 (1+3) | 3 (RSS feeds) | 2×4 (hierarchical) | High |
+| Example | Type | Loops | External APIs | Learning Complexity | Time |
+|---------|------|-------|---------------|-------------------|------|
+| rugby_tips | Markdown | 1 | 0 | Basic | 5 min |
+| simple_learning_loop | Markdown | 1 | 0 | Strategic | 15 min |
+| tech_news_curator | Markdown | 1 | 1 (RSS) | Dual-space | 15 min |
+| github_trending_tracker | Python | 1 | 1 (GitHub) | EMA patterns | 20 min |
+| communication_learner | Markdown | 1 | 0 | Multi-dimensional | 25 min |
+| tech_news_dashboard | Markdown | 4 (1+3) | 3 (RSS feeds) | Hierarchical | 30 min |
 
 ---
 
@@ -203,7 +246,7 @@ export ANTHROPIC_API_KEY="your-key"
 - Building production systems
 - Want to use mixins for shared functionality
 
-**Examples**: hello_ravl_py, github_trending_tracker
+**Example**: github_trending_tracker
 
 ### Use Markdown When:
 - Primarily data ingestion or LLM analysis
@@ -212,38 +255,7 @@ export ANTHROPIC_API_KEY="your-key"
 - Self-healing is more important than control
 - Non-programmers building loops
 
-**Examples**: hello_ravl_md, tech_news_curator, tech_news_dashboard
-
----
-
-## Key Framework Features Demonstrated
-
-### Across All Examples
-
-| Feature | hello_py | hello_md | curator | tracker | dashboard |
-|---------|----------|----------|---------|---------|-----------|
-| **Core RAVL** | | | | | |
-| Reflect phase | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Act phase | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Verify phase | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Learn phase | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Model persistence | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Advanced** | | | | | |
-| Markdown loops | - | ✅ | ✅ | - | ✅ |
-| Python loops | ✅ | - | - | ✅ | - |
-| LLM code generation | - | ✅ | ✅ | - | ✅ |
-| Self-healing | - | ✅ | ✅ | ✅ | ✅ |
-| API integration | - | - | ✅ | ✅ | ✅ |
-| Code caching | - | ✅ | ✅ | - | ✅ |
-| **Learning** | | | | | |
-| Domain learning | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Execution learning | - | ✅ | ✅ | ✅ | ✅ |
-| Hierarchical learning | - | - | - | - | ✅ |
-| EMA pattern tracking | - | - | - | ✅ | - |
-| **Orchestration** | | | | | |
-| Delegation | - | - | - | - | ✅ |
-| Real-time streaming | - | - | - | - | ✅ |
-| Meta-synthesis | - | - | - | - | ✅ |
+**Examples**: rugby_tips, simple_learning_loop, tech_news_curator, communication_learner, tech_news_dashboard
 
 ---
 
@@ -316,33 +328,29 @@ else:
 ### From Framework Root
 
 ```bash
-# Simple Python starter
-./ravl examples/hello_ravl_py
-
 # Simple markdown starter (requires ANTHROPIC_API_KEY)
-./ravl examples/hello_ravl_md
+./ravl example_1_rugby_tips
+
+# Learning evolution demo (requires ANTHROPIC_API_KEY, run multiple times!)
+./ravl example_2_simple_learning_loop
 
 # Markdown loop with RSS (requires ANTHROPIC_API_KEY)
-./ravl examples/tech_news_curator
+./ravl tech_news_curator
 
-# API integration
-./ravl examples/github_trending_tracker
+# API integration (Python)
+./ravl github_trending_tracker
+
+# Advanced learning (requires ANTHROPIC_API_KEY, run 5-10 times!)
+./ravl communication_learner
 
 # Orchestration (requires ANTHROPIC_API_KEY)
-./ravl examples/tech_news_dashboard
+./ravl tech_news_dashboard
 ```
 
-### From Examples Directory
-
+**Note**: Framework auto-strips `example_N_` prefix when running, so you can also use:
 ```bash
-cd .ravl/examples
-
-# Run Python example directly
-cd hello_ravl_py && python3 ravl_loop.py
-
-# Or use framework CLI
-../../bin/ravl hello_ravl_py
-../../bin/ravl hello_ravl_md
+./ravl rugby_tips
+./ravl simple_learning_loop
 ```
 
 ---
@@ -362,10 +370,10 @@ example_name/
 │       ├── model.yml             # Current model
 │       └── model-{timestamp}.yml # Historical snapshots
 ├── output/                        # Generated outputs
-└── README.md                      # Documentation
+└── README.md                      # Documentation (some examples)
 ```
 
-Delegation examples add:
+Orchestration examples add:
 ```
 parent_loop/
 ├── ravl_loops/                    # Children
@@ -380,28 +388,28 @@ parent_loop/
 
 ### After Examples
 
-1. **Explore Templates**: See `.ravl/templates/` for production-ready loop templates
+1. **Explore Templates**: See `templates/` for production-ready loop templates
 2. **Read Framework Docs**:
-   - [RAVL_PROTOCOL.md](../RAVL_PROTOCOL.md) - Deep dive into phases
-   - [RAVL_VISION.md](../RAVL_VISION.md) - Design principles
-   - [CHANGELOG.md](../../CHANGELOG.md) - Feature history
-3. **Real-World Loops**: Check project's `ravl_loops/` for production examples
+   - [RAVL_PROTOCOL.md](../docs/RAVL_PROTOCOL.md) - Deep dive into phases
+   - [RAVL_VISION.md](../docs/RAVL_VISION.md) - Design principles
+   - [CHANGELOG.md](../CHANGELOG.md) - Feature history
+3. **Real-World Loops**: Check project's `ravl_loops/` for production examples (if any)
 4. **Build Your Own**: Start with an example as template
 
 ### Creating Your Loop
 
 ```bash
-# Option 1: Clone an example (Python)
-cp -r .ravl/examples/hello_ravl_py ravl_loops/my_loop
+# Option 1: Clone an example (simplest)
+./ravl --clone example_1_rugby_tips ravl_loops/my_markdown_loop
 
-# Option 2: Clone an example (Markdown)
-cp -r .ravl/examples/hello_ravl_md ravl_loops/my_loop
+# Option 2: Clone learning example
+./ravl --clone example_2_simple_learning_loop ravl_loops/my_learner
 
 # Option 3: Use framework templates
-./.ravl/bin/ravl-clone data_ingress_template my_api_loop
+./ravl --clone empty_loop_template ravl_loops/my_loop
 
 # Edit and run
-vim ravl_loops/my_loop/ravl_loop.py  # or .md
+vim ravl_loops/my_loop/ravl_loop.md  # or .py
 ./ravl my_loop
 ```
 
@@ -410,8 +418,8 @@ vim ravl_loops/my_loop/ravl_loop.py  # or .md
 ## Learning Resources
 
 - **Visual Learner?** Watch the real-time output as loops execute
-- **Code Learner?** Read `hello_ravl_py/ravl_loop.py` - heavily commented
-- **Markdown Learner?** Read `hello_ravl_md/ravl_loop.md` - plain language specs
+- **Code Learner?** Read `github_trending_tracker/ravl_loop.py` - Python implementation
+- **Markdown Learner?** Read `example_1_rugby_tips/ravl_loop.md` - plain language specs
 - **Concept Learner?** Read example READMEs for detailed explanations
 - **Hands-On Learner?** Modify examples and see what breaks
 
@@ -424,7 +432,7 @@ vim ravl_loops/my_loop/ravl_loop.py  # or .md
 export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
-Required for: tech_news_curator, tech_news_dashboard
+Required for: rugby_tips, simple_learning_loop, tech_news_curator, communication_learner, tech_news_dashboard
 
 ### GitHub rate limit (403)
 GitHub allows 60 requests/hour without auth. Wait an hour or add token:
@@ -433,7 +441,7 @@ export GITHUB_TOKEN="ghp_..."
 ```
 
 ### Code generation fails
-- Check internet connection (needs to fetch API docs from Context7)
+- Check internet connection (markdown loops need LLM access)
 - Verify ANTHROPIC_API_KEY is valid
 - Check `learnings/execution_learning/` for error details
 
@@ -446,7 +454,7 @@ export GITHUB_TOKEN="ghp_..."
 
 ## Questions?
 
-- Check individual example READMEs for detailed docs
-- Review framework documentation in `.ravl/docs/`
-- Look at production loops in project's `ravl_loops/`
-- Read RAVL protocol specification: [RAVL_PROTOCOL.md](../RAVL_PROTOCOL.md)
+- Check individual example READMEs for detailed docs (where available)
+- Review framework documentation in `docs/`
+- Look at production loops in project's `ravl_loops/` (if any)
+- Read RAVL protocol specification: [RAVL_PROTOCOL.md](../docs/RAVL_PROTOCOL.md)

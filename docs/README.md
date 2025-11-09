@@ -10,13 +10,14 @@ This directory contains the **RAVL framework** - reusable infrastructure for bui
 
 1. **[RAVL Vision](RAVL_VISION.md)** - Why RAVL exists: Design principles, philosophy, end-state goals
 2. **[RAVL Protocol](RAVL_PROTOCOL.md)** - How RAVL works: The four phases (Reflect → Act → Verify → Learn)
-3. **[Examples](examples/)** - See working implementations:
-   - [Habit Tracker](examples/habit_tracker/) - Python-based RAVL loop
-   - [Weekly Reflection](examples/weekly_reflection/) - Markdown-based RAVL loop
+3. **[Examples](../examples/)** - See working implementations:
+   - [Rugby Tips](../examples/example_1_rugby_tips/) - Simple Markdown RAVL loop
+   - [Simple Learning Loop](../examples/example_2_simple_learning_loop/) - Demonstrates basic learning patterns
+   - [Tech News Curator](../examples/tech_news_curator/) - Multi-source aggregation with nested loops
 4. **[Templates](../templates/)** - Ready-to-use blueprints:
-   - [Data Ingestion](../templates/data_ingress/) - Auto-generate API integration code
-   - [Strategic Coherence](../templates/strategic_coherence/) - Parent/child coordination pattern
-   - [Empty Loop](../templates/empty_loop/) - Minimal starter template
+   - [Data Ingestion](../templates/data_ingress_template/) - Auto-generate API integration code
+   - [Strategic Coherence](../templates/strategic_coherence_template/) - Parent/child coordination pattern
+   - [Empty Loop](../templates/empty_loop_template/) - Minimal starter template
 
 **Advanced Features?**
 
@@ -33,8 +34,8 @@ This directory contains the **RAVL framework** - reusable infrastructure for bui
 **Using Templates?**
 
 See each template's own documentation for full details:
-- [Data Ingestion Guide](../templates/data_ingress/README.md) - API data ingestion loops
-- [Strategic Coherence Guide](../templates/strategic_coherence/config/ravl.yml) - Multi-agent coordination
+- [Data Ingestion Guide](../templates/data_ingress_template/README.md) - API data ingestion loops
+- [Strategic Coherence Guide](../templates/strategic_coherence_template/config/ravl.yml) - Multi-agent coordination
 
 ## Architecture Philosophy
 
@@ -83,15 +84,17 @@ project/                              # Your project repository
 │   │   ├── RAVL_VISION.md           # Design philosophy and principles
 │   │   ├── RAVL_PROTOCOL.md         # Detailed protocol specification
 │   │   ├── MIXINS.md                # Mixin system guide
-│   │   ├── examples/                # 🎯 Ready-to-run example loops
-│   │   │   ├── README.md            # Examples overview
-│   │   │   ├── habit_tracker/       # Python RAVL example
-│   │   │   └── weekly_reflection/   # Markdown RAVL example
 │   │   └── llm/                     # LLM infrastructure docs
 │   │       └── README.md            # LLM-based loops guide
+│   ├── examples/                    # 🎯 Ready-to-run example loops
+│   │   ├── README.md                # Examples overview
+│   │   ├── example_1_rugby_tips/    # Simple Markdown RAVL
+│   │   ├── example_2_simple_learning_loop/ # Learning patterns demo
+│   │   └── tech_news_curator/       # Multi-loop orchestration
 │   ├── templates/                   # 📝 Starter blueprints (ready to clone and customize)
-│   │   ├── data_ingress/            # Self-healing API data ingestion
-│   │   └── strategic_coherence/     # Parent + children coordination pattern
+│   │   ├── data_ingress_template/   # Self-healing API data ingestion
+│   │   ├── strategic_coherence_template/ # Parent + children coordination pattern
+│   │   └── empty_loop_template/     # Minimal starter
 │   ├── bin/                         # CLI commands
 │   │   ├── ravl                     # Main RAVL runner
 │   │   ├── ravl-list                # List all loops
