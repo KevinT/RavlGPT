@@ -76,7 +76,8 @@ class GoogleSlidesExporter:
             if self.loop.google_drive_service:
                 file_metadata = self.loop.google_drive_service.files().get(
                     fileId=pres_id,
-                    fields='modifiedTime'
+                    fields='modifiedTime',
+                    supportsAllDrives=True
                 ).execute()
                 last_modified = file_metadata.get('modifiedTime', last_modified)
         except Exception:

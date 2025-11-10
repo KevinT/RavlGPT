@@ -67,7 +67,8 @@ class GoogleSheetsAnalyzer:
             # Detect file type using Drive API
             file_metadata = self.loop.google_drive_service.files().get(
                 fileId=spreadsheet_id,
-                fields='mimeType,name,modifiedTime'
+                fields='mimeType,name,modifiedTime',
+                supportsAllDrives=True
             ).execute()
 
             mime_type = file_metadata.get('mimeType')
@@ -184,7 +185,10 @@ class GoogleSheetsAnalyzer:
                 )
 
             # Download Excel file as binary
-            request = self.loop.google_drive_service.files().get_media(fileId=spreadsheet_id)
+            request = self.loop.google_drive_service.files().get_media(
+                fileId=spreadsheet_id,
+                supportsAllDrives=True
+            )
             excel_bytes = request.execute()
 
             # Parse with openpyxl
