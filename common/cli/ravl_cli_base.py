@@ -9,6 +9,12 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Add utils to path for logging
+_utils_dir = Path(__file__).parent.parent / 'utils'
+if str(_utils_dir) not in sys.path:
+    sys.path.insert(0, str(_utils_dir))
+from logging_utils import log_message
+
 
 class RAVLCLIBase:
     """Base class with shared utilities for RAVL CLI tools"""
@@ -42,27 +48,27 @@ class RAVLCLIBase:
     @staticmethod
     def print_success(message: str):
         """Print success message with ✅"""
-        print(f"✅ {message}", file=sys.stderr)
+        log_message(f"✅ {message}", status='success', indent=0)
 
     @staticmethod
     def print_error(message: str):
         """Print error message with ❌"""
-        print(f"❌ {message}", file=sys.stderr)
+        log_message(f"❌ {message}", status='error', indent=0)
 
     @staticmethod
     def print_warning(message: str):
         """Print warning message with ⚠️"""
-        print(f"⚠️  {message}", file=sys.stderr)
+        log_message(f"⚠️  {message}", status='error', indent=0)
 
     @staticmethod
     def print_info(message: str):
         """Print info message with ℹ️"""
-        print(f"ℹ️  {message}", file=sys.stderr)
+        log_message(f"ℹ️  {message}", status='info', indent=0)
 
     @staticmethod
     def print_header(message: str, emoji: str = "📚"):
         """Print header message"""
-        print(f"\n{emoji} {message}\n", file=sys.stderr)
+        log_message(f"\n{emoji} {message}\n", status='info', indent=0)
 
     @staticmethod
     def format_emoji(config: dict) -> str:
