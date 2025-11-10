@@ -19,10 +19,9 @@ from typing import Optional, List, Tuple
 # Import Python version validator
 import sys as _sys
 _parent_dir = Path(__file__).parent.parent
-_sys.path.insert(0, str(_parent_dir / 'utils'))
-_sys.path.insert(0, str(_parent_dir / 'config'))
-from python_validator import find_required_python, get_venv_python_version, check_python_compatibility
-from config_loader import load_framework_config
+_sys.path.insert(0, str(_parent_dir))
+from utils.python_validator import find_required_python, get_venv_python_version, check_python_compatibility
+from config.config_loader import load_framework_config
 
 
 class VenvManager:

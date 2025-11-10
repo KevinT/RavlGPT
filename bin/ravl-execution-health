@@ -37,9 +37,9 @@ project_root = _framework_dir.parent
 loop_name = sys.argv[1]
 
 # Validate that the loop exists before running health check
-sys.path.insert(0, str(_framework_dir / "common" / "cli"))
+sys.path.insert(0, str(_framework_dir / "common"))
 try:
-    from loop_discovery import LoopDiscovery
+    from cli.loop_discovery import LoopDiscovery
 
     discovery = LoopDiscovery(project_root)
 

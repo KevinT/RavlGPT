@@ -41,15 +41,13 @@ from typing import Dict, Any, Optional
 _current = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_current / 'common'))
 sys.path.insert(0, str(_current / 'common' / 'cli'))
-sys.path.insert(0, str(_current / 'common' / 'utils'))
-sys.path.insert(0, str(_current / 'common' / 'core'))
 
 from ravl_cli_base import RAVLCLIBase
 from loop_discovery import LoopDiscovery
 from ravl_runner import RAVLRunner
 from config_display import ConfigDisplay
-from constants import DEFAULT_EXECUTION_TIMEOUT
-from initialization_failure_tracker import InitializationFailureTracker
+from utils.constants import DEFAULT_EXECUTION_TIMEOUT
+from core.initialization_failure_tracker import InitializationFailureTracker
 
 # Show helpful message if called directly (not via wrapper)
 def _show_wrapper_hint():

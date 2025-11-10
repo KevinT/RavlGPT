@@ -12,12 +12,10 @@ from pathlib import Path
 # Add framework common directory to path
 _script_dir = Path(__file__).parent
 _common_dir = _script_dir.parent / 'common'
-sys.path.insert(0, str(_common_dir / 'execution'))
-sys.path.insert(0, str(_common_dir / 'config'))
-sys.path.insert(0, str(_common_dir / 'utils'))
+sys.path.insert(0, str(_common_dir))
 
-from venv_manager import VenvManager
-from config_loader import load_framework_config
+from execution.venv_manager import VenvManager
+from config.config_loader import load_framework_config
 
 def main():
     """Create framework venv if it doesn't exist"""
