@@ -20,6 +20,12 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Add utils to path for logging
+_utils_dir = Path(__file__).parent.parent / 'utils'
+if str(_utils_dir) not in sys.path:
+    sys.path.insert(0, str(_utils_dir))
+from logging_utils import log_execution
+
 # Try to import Google API libraries
 try:
     from google.oauth2 import service_account
@@ -149,7 +155,7 @@ class GoogleAPIsMixin:
                 cred_file,
                 scopes=scopes
             )
-            print(f"  🔐  Using service account credentials from {cred_file}", file=sys.stderr)
+            log_execution(f"Using service account credentials from {cred_file}", status='info')
         except Exception as e:
             raise Exception(f"Error loading service account credentials from {cred_file}: {e}")
 
@@ -187,7 +193,7 @@ class GoogleAPIsMixin:
                 credentials_path,
                 scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
             )
-            print(f"  🔐  Using explicit credentials path", file=sys.stderr)
+            log_execution(f"Using explicit credentials path", status='info')
 
         # Option 2: GOOGLE_APPLICATION_CREDENTIALS (file path)
         elif os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
@@ -197,7 +203,7 @@ class GoogleAPIsMixin:
                     key_path,
                     scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
                 )
-                print(f"  🔐  Using GOOGLE_APPLICATION_CREDENTIALS", file=sys.stderr)
+                log_execution(f"Using GOOGLE_APPLICATION_CREDENTIALS", status='info')
 
         # Option 3: GOOGLE_SERVICE_ACCOUNT_KEY (JSON content as string)
         elif os.environ.get('GOOGLE_SERVICE_ACCOUNT_KEY'):
@@ -207,7 +213,7 @@ class GoogleAPIsMixin:
                 key_json,
                 scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
             )
-            print(f"  🔐  Using GOOGLE_SERVICE_ACCOUNT_KEY", file=sys.stderr)
+            log_execution(f"Using GOOGLE_SERVICE_ACCOUNT_KEY", status='info')
 
         # Option 4: gcloud application default credentials
         else:
@@ -218,7 +224,7 @@ class GoogleAPIsMixin:
                         gcloud_default,
                         scopes=['https://www.googleapis.com/auth/admin.directory.user.readonly']
                     )
-                    print(f"  🔐  Using gcloud application default credentials", file=sys.stderr)
+                    log_execution(f"Using gcloud application default credentials", status='info')
                 except Exception:
                     # File exists but is not a service account key (likely user credentials)
                     # This is fine - we'll fall through to the error below
@@ -238,4 +244,4 @@ class GoogleAPIsMixin:
 
         self.google_workspace_service = build('admin', 'directory_v1', credentials=credentials)
 
-        print(f"  ✓ Initialized Google Workspace Admin SDK", file=sys.stderr)
+        log_execution(f"Initialized Google Workspace Admin SDK", status='success')

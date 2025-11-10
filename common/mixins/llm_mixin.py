@@ -16,6 +16,13 @@ import os
 import sys
 import json
 from typing import Any
+from pathlib import Path
+
+# Add utils to path for logging
+_utils_dir = Path(__file__).parent.parent / 'utils'
+if str(_utils_dir) not in sys.path:
+    sys.path.insert(0, str(_utils_dir))
+from logging_utils import log_execution
 
 
 class LLMMixin:
@@ -45,16 +52,16 @@ class LLMMixin:
         loop_name = getattr(self, 'loop_name', 'RAVL Loop')
 
         if os.environ.get("ANTHROPIC_API_KEY"):
-            print(f"  ℹ️  {loop_name}: Auto-detected Anthropic API key", file=sys.stderr, flush=True)
+            log_execution(f"{loop_name}: Auto-detected Anthropic API key", status='info')
             return LLMProviderFactory.create_provider("anthropic")
         elif os.environ.get("OPENAI_API_KEY"):
-            print(f"  ℹ️  {loop_name}: Auto-detected OpenAI API key", file=sys.stderr, flush=True)
+            log_execution(f"{loop_name}: Auto-detected OpenAI API key", status='info')
             return LLMProviderFactory.create_provider("openai")
         elif os.environ.get("GOOGLE_API_KEY"):
-            print(f"  ℹ️  {loop_name}: Auto-detected Google API key", file=sys.stderr, flush=True)
+            log_execution(f"{loop_name}: Auto-detected Google API key", status='info')
             return LLMProviderFactory.create_provider("google")
         else:
-            print(f"  ℹ️  {loop_name}: No API keys found, trying local Ollama", file=sys.stderr, flush=True)
+            log_execution(f"{loop_name}: No API keys found, trying local Ollama", status='info')
             return LLMProviderFactory.create_provider("ollama")
 
     def extract_json(self, response_text: str) -> Any:
@@ -85,7 +92,7 @@ class LLMMixin:
             return json.loads(response_text)
 
         except Exception as e:
-            print(f"  ⚠️  JSON extraction failed: {e}", file=sys.stderr)
-            print(f"  Response text: {response_text[:500]}", file=sys.stderr)
+            log_execution(f"JSON extraction failed: {e}", status='error')
+            log_execution(f"Response text: {response_text[:500]}", status='error')
             # Return empty structure based on what's likely in the response
             return {} if '{' in response_text else []
