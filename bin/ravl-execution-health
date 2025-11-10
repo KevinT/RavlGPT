@@ -82,7 +82,7 @@ except Exception as e:
 ravl_cmd = [
     str(_framework_dir / "bin" / "ravl"),
     "health_checks/execution_health_check",
-    # Note: Don't use --quiet so diagnostics are printed
+    "--quiet"  # Suppress framework banners, show only health diagnostics
 ]
 
 # Pass through remaining arguments

@@ -238,3 +238,105 @@ class BaseRAVLLoop:
         """
         parent_model_path = self.model_path.parent.parent.parent / 'learnings' / 'model.yml'
         return load_yaml_file(parent_model_path)
+
+    # ==================== EXECUTION METADATA ====================
+
+    def initialize_execution_learning(self):
+        """
+        Initialize execution_learning directory structure.
+
+        Creates:
+        - execution_learning/
+        - execution_learning/history/
+        - execution_learning/current_state/
+
+        Call this during loop initialization to ensure directories exist.
+        """
+        exec_learning_dir = self.learning_path / 'execution_learning'
+        exec_learning_dir.mkdir(parents=True, exist_ok=True)
+
+        history_dir = exec_learning_dir / 'history'
+        history_dir.mkdir(exist_ok=True)
+
+        current_state_dir = exec_learning_dir / 'current_state'
+        current_state_dir.mkdir(exist_ok=True)
+
+    def write_execution_metadata(self, metadata: Dict[str, Any]):
+        """
+        Write execution metadata to execution_learning/.
+
+        Writes to:
+        - execution_learning/latest_run.json (current run)
+        - execution_learning/history/runs.jsonl (appends to history)
+        - execution_learning/current_state/execution_metadata.json (aggregated stats)
+
+        Args:
+            metadata: Dictionary containing execution metadata (timestamps, errors, performance, etc.)
+        """
+        import json
+
+        exec_learning_dir = self.learning_path / 'execution_learning'
+
+        # Ensure directories exist
+        self.initialize_execution_learning()
+
+        # Write latest run
+        latest_run_file = exec_learning_dir / 'latest_run.json'
+        with open(latest_run_file, 'w', encoding='utf-8') as f:
+            json.dump(metadata, f, indent=2, default=str)
+
+        # Append to history
+        history_file = exec_learning_dir / 'history' / 'runs.jsonl'
+        with open(history_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(metadata, default=str) + '\n')
+
+        # Update aggregated metadata
+        self._update_aggregated_execution_metadata(metadata)
+
+    def _update_aggregated_execution_metadata(self, latest_metadata: Dict[str, Any]):
+        """
+        Update aggregated execution metadata with exponential moving average.
+
+        Args:
+            latest_metadata: Latest execution metadata
+        """
+        import json
+
+        exec_learning_dir = self.learning_path / 'execution_learning'
+        current_state_file = exec_learning_dir / 'current_state' / 'execution_metadata.json'
+
+        # Load existing aggregated metadata
+        if current_state_file.exists():
+            with open(current_state_file, 'r', encoding='utf-8') as f:
+                aggregated = json.load(f)
+        else:
+            aggregated = {
+                'total_runs': 0,
+                'successful_runs': 0,
+                'failed_runs': 0,
+                'average_duration_seconds': 0.0,
+                'last_updated': None
+            }
+
+        # Update counts
+        aggregated['total_runs'] += 1
+        if latest_metadata.get('success', False):
+            aggregated['successful_runs'] += 1
+        else:
+            aggregated['failed_runs'] += 1
+
+        # Update average duration (exponential moving average: 70% history, 30% current)
+        if 'duration_seconds' in latest_metadata:
+            if aggregated['average_duration_seconds'] == 0:
+                aggregated['average_duration_seconds'] = latest_metadata['duration_seconds']
+            else:
+                aggregated['average_duration_seconds'] = (
+                    0.7 * aggregated['average_duration_seconds'] +
+                    0.3 * latest_metadata['duration_seconds']
+                )
+
+        aggregated['last_updated'] = latest_metadata.get('timestamp', datetime.now(timezone.utc).isoformat())
+
+        # Write updated aggregated metadata
+        with open(current_state_file, 'w', encoding='utf-8') as f:
+            json.dump(aggregated, f, indent=2, default=str)

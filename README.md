@@ -2,6 +2,8 @@
 
 **RAVL (Reflect-Act-Verify-Learn)** is an AI-native architecture for defining autonomous agentic loops that can continuously learn and improve with each iteration.
 
+**This is pre-release software.** There are no guarantees of non-breaking changes. If the most recent version is not working, fall back to a tag or contact the authors.
+
 📚 **[→ Read the Full Documentation](docs/README.md)** for architecture, philosophy, and detailed guides.
 
 ## 🚀 Installation

@@ -550,13 +550,84 @@ class RAVLUniversalRunner(RAVLCLIBase):
                 if temp_config_file.exists():
                     temp_config_file.unlink()
 
-            # Execute RAVL phases
+            # Execute RAVL phases with execution metadata tracking
             previous_findings = self._load_previous_findings(wrapper_loop_dir)
 
-            reflection = loop_instance.reflect()
-            action_result = loop_instance.act(reflection)
-            verification_result = loop_instance.verify(action_result, reflection)
-            loop_instance.learn(verification_result, action_result)
+            # Initialize execution_learning directory
+            if hasattr(loop_instance, 'initialize_execution_learning'):
+                loop_instance.initialize_execution_learning()
+
+            # Track execution metadata
+            from datetime import datetime, timezone
+            import time
+            import traceback
+
+            execution_metadata = {
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'loop_name': wrapper_config.get('description', wrapper_loop_dir.name),
+                'phases': {},
+                'success': False,
+                'error': None
+            }
+
+            start_time = time.time()
+
+            try:
+                # REFLECT phase
+                phase_start = time.time()
+                reflection = loop_instance.reflect()
+                execution_metadata['phases']['reflect'] = {
+                    'duration_seconds': time.time() - phase_start,
+                    'success': True
+                }
+
+                # ACT phase
+                phase_start = time.time()
+                action_result = loop_instance.act(reflection)
+                execution_metadata['phases']['act'] = {
+                    'duration_seconds': time.time() - phase_start,
+                    'success': True
+                }
+
+                # VERIFY phase
+                phase_start = time.time()
+                verification_result = loop_instance.verify(action_result, reflection)
+                execution_metadata['phases']['verify'] = {
+                    'duration_seconds': time.time() - phase_start,
+                    'success': True
+                }
+
+                # LEARN phase
+                phase_start = time.time()
+                loop_instance.learn(verification_result, action_result)
+                execution_metadata['phases']['learn'] = {
+                    'duration_seconds': time.time() - phase_start,
+                    'success': True
+                }
+
+                execution_metadata['success'] = True
+
+            except Exception as e:
+                execution_metadata['success'] = False
+                execution_metadata['error'] = {
+                    'type': type(e).__name__,
+                    'message': str(e),
+                    'traceback': traceback.format_exc()
+                }
+                raise  # Re-raise after recording
+
+            finally:
+                # Record total duration
+                execution_metadata['duration_seconds'] = time.time() - start_time
+
+                # Write execution metadata if loop supports it
+                if hasattr(loop_instance, 'write_execution_metadata'):
+                    try:
+                        loop_instance.write_execution_metadata(execution_metadata)
+                    except Exception as meta_error:
+                        # Don't fail the loop if metadata writing fails
+                        if not args.quiet:
+                            print(f"Warning: Could not write execution metadata: {meta_error}", file=sys.stderr)
 
             # Display completion message
             if not args.quiet:
