@@ -180,8 +180,19 @@ class SimpleCodeExecutor:
                 env = venv_manager.get_environment_vars()
                 env['PYTHONUNBUFFERED'] = '1'
 
-                # Load .env file from project root and add to environment
+                # Provide loop directories to generated code
+                # Resolve learnings directory using same logic as main executor
                 from ravl_runner import RAVLRunner
+                learnings_dir = RAVLRunner.resolve_learning_path(
+                    loop_dir=self.loop_dir,
+                    loop_config=config,
+                    cli_learning_path=None,
+                    project_root=self.project_root
+                )
+                env['RAVL_LEARNINGS_DIR'] = str(learnings_dir)
+                env['RAVL_LOOP_DIR'] = str(self.loop_dir)
+
+                # Load .env file from project root and add to environment
                 project_root = self.project_root
                 env_vars = RAVLRunner.load_env_file(project_root)
                 env.update(env_vars)

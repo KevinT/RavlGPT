@@ -34,6 +34,33 @@ Write code that accomplishes the domain task. If execution fails (auth errors, i
 
 {act_instructions}
 
+## CRITICAL: Accessing Loop Directories
+
+**YOUR CODE RUNS IN A TEMPORARY DIRECTORY** - you MUST use environment variables to find loop directories.
+
+**CORRECT method (YOU MUST USE THIS):**
+
+```python
+import os
+from pathlib import Path
+
+# Get loop directories from environment (set by framework)
+learnings_dir = Path(os.environ.get('RAVL_LEARNINGS_DIR'))
+loop_dir = Path(os.environ.get('RAVL_LOOP_DIR'))
+
+# Use these paths for reading/writing loop data
+current_state_file = learnings_dir / 'current_state' / 'last_exploration.json'
+model_file = learnings_dir / 'model.yml'
+config_file = loop_dir / 'config' / 'ravl.yml'
+```
+
+**WRONG methods (DO NOT USE):**
+- `project_root / '.ravl' / 'current_state'` ❌ (hardcoded path - wrong location)
+- `Path(__file__).parent / 'learnings'` ❌ (resolves to temp dir, not loop dir)
+- Searching for `.ravl/` directory markers ❌ (may find wrong location)
+
+**Why this matters**: Your code is executed in an isolated temporary directory. The framework provides the correct learnings and loop directory paths via environment variables. These paths work correctly regardless of loop structure (nested loops, custom learnings paths, etc.).
+
 ## CONTEXT FROM REFLECTION
 
 {context_summary}
