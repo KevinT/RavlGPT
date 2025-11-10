@@ -7,3 +7,6 @@
 dist/
 build/
 *.egg-info/
+
+# Personal notes
+docs/WIP/*.md
