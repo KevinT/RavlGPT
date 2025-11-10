@@ -345,8 +345,6 @@ class LoopDiscovery:
                 config_file = wrapper_dir / config_file
 
             if not config_file.exists():
-                import sys
-                from pathlib import Path
                 _utils_dir = Path(__file__).parent.parent / 'utils'
                 if str(_utils_dir) not in sys.path:
                     sys.path.insert(0, str(_utils_dir))
