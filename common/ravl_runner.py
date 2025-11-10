@@ -615,9 +615,14 @@ class RAVLRunner:
     @staticmethod
     def print_banner(message: str, emoji: str = "✅"):
         """Print a formatted banner message"""
-        log_message("\n" + "="*80, status='info', indent=0)
+        # Print blank line
+        log_message("", status='info', indent=0)
+        # Print top separator directly without [i] prefix
+        print("="*80, file=sys.stderr, flush=True)
+        # Print message with [i] prefix
         log_message(f"{emoji} {message}", status='info', indent=0)
-        log_message("="*80, status='info', indent=0)
+        # Print bottom separator directly without [i] prefix
+        print("="*80, file=sys.stderr, flush=True)
 
     @staticmethod
     def print_summary(findings: Dict[str, Any], duration: float, loop_name: str, log_file: Optional[Path] = None):
