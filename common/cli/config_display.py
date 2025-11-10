@@ -11,6 +11,8 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
+from utils.logging_utils import log_message
+
 
 class ConfigDisplay:
     """Display comprehensive configuration information for RAVL loops"""
@@ -54,9 +56,9 @@ class ConfigDisplay:
         emoji = loop_config.get('emoji', '➿')
         name = loop_config.get('description', loop_dir.name)
 
-        print(f"\n{'='*80}", file=sys.stderr)
-        print(f"{emoji} Configuration Report: {name}", file=sys.stderr)
-        print(f"{'='*80}\n", file=sys.stderr)
+        log_message(f"\n{'='*80}", status='info', indent=0)
+        log_message(f"{emoji} Configuration Report: {name}", status='info', indent=0)
+        log_message(f"{'='*80}\n", status='info', indent=0)
 
         # Section 1: Configuration Resolution
         ConfigDisplay._show_configuration_resolution(
@@ -82,7 +84,7 @@ class ConfigDisplay:
         # Section 7: Suggested Run Command
         ConfigDisplay._show_suggested_command(args, loop_config)
 
-        print(f"\n{'='*80}\n", file=sys.stderr)
+        log_message(f"\n{'='*80}\n", status='info', indent=0)
 
     @staticmethod
     def _show_configuration_resolution(
@@ -94,49 +96,49 @@ class ConfigDisplay:
         venv_path_source: str
     ):
         """Display configuration resolution section"""
-        print("📍 Configuration Resolution", file=sys.stderr)
-        print(f"{'─'*80}", file=sys.stderr)
+        log_message("📍 Configuration Resolution", status='info', indent=0)
+        log_message(f"{'─'*80}", status='info', indent=0)
 
         # Loop Directory
-        print(f"\n  Loop Directory:", file=sys.stderr)
-        print(f"    Source:  {loop_dir_source}", file=sys.stderr)
-        print(f"    Path:    {loop_dir}", file=sys.stderr)
-        print(f"    Status:  {'✅ Exists' if loop_dir.exists() else '❌ Not found'}", file=sys.stderr)
+        log_message(f"\n  Loop Directory:", status='info', indent=0)
+        log_message(f"    Source:  {loop_dir_source}", status='info', indent=0)
+        log_message(f"    Path:    {loop_dir}", status='info', indent=0)
+        log_message(f"    Status:  {'✅ Exists' if loop_dir.exists() else '❌ Not found'}", status='info', indent=0)
 
         # Learning Path
-        print(f"\n  Learning Path:", file=sys.stderr)
-        print(f"    Source:  {learning_path_source}", file=sys.stderr)
-        print(f"    Path:    {learning_path}", file=sys.stderr)
-        print(f"    Status:  {'✅ Exists' if learning_path.exists() else '⚠️  Will be created'}", file=sys.stderr)
+        log_message(f"\n  Learning Path:", status='info', indent=0)
+        log_message(f"    Source:  {learning_path_source}", status='info', indent=0)
+        log_message(f"    Path:    {learning_path}", status='info', indent=0)
+        log_message(f"    Status:  {'✅ Exists' if learning_path.exists() else '⚠️  Will be created'}", status='info', indent=0)
 
         # Venv Path
-        print(f"\n  Virtual Environment:", file=sys.stderr)
-        print(f"    Source:  {venv_path_source}", file=sys.stderr)
-        print(f"    Path:    {venv_path}", file=sys.stderr)
-        print(f"    Status:  {'✅ Exists' if venv_path.exists() else '⚠️  Will be created'}", file=sys.stderr)
-        print()
+        log_message(f"\n  Virtual Environment:", status='info', indent=0)
+        log_message(f"    Source:  {venv_path_source}", status='info', indent=0)
+        log_message(f"    Path:    {venv_path}", status='info', indent=0)
+        log_message(f"    Status:  {'✅ Exists' if venv_path.exists() else '⚠️  Will be created'}", status='info', indent=0)
+        log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_loop_configuration(loop_dir: Path, loop_config: Dict[str, Any]):
         """Display loop configuration section"""
-        print("🔧 Loop Configuration", file=sys.stderr)
-        print(f"{'─'*80}", file=sys.stderr)
+        log_message("🔧 Loop Configuration", status='info', indent=0)
+        log_message(f"{'─'*80}", status='info', indent=0)
 
         # Detect loop type
         is_markdown = (loop_dir / 'ravl_loop.md').exists()
         is_python = (loop_dir / 'ravl_loop.py').exists()
         loop_type = 'Markdown' if is_markdown else ('Python' if is_python else 'Unknown')
 
-        print(f"\n  Name:         {loop_config.get('name', loop_dir.name)}", file=sys.stderr)
-        print(f"  Description:  {loop_config.get('description', 'N/A')}", file=sys.stderr)
-        print(f"  Emoji:        {loop_config.get('emoji', '➿')}", file=sys.stderr)
-        print(f"  Type:         {loop_type}", file=sys.stderr)
+        log_message(f"\n  Name:         {loop_config.get('name', loop_dir.name)}", status='info', indent=0)
+        log_message(f"  Description:  {loop_config.get('description', 'N/A')}", status='info', indent=0)
+        log_message(f"  Emoji:        {loop_config.get('emoji', '➿')}", status='info', indent=0)
+        log_message(f"  Type:         {loop_type}", status='info', indent=0)
 
         if not is_markdown:
-            print(f"  Class:        {loop_config.get('class_name', 'N/A')}", file=sys.stderr)
-            print(f"  Module:       {loop_config.get('module', 'ravl_loop')}", file=sys.stderr)
+            log_message(f"  Class:        {loop_config.get('class_name', 'N/A')}", status='info', indent=0)
+            log_message(f"  Module:       {loop_config.get('module', 'ravl_loop')}", status='info', indent=0)
 
-        print()
+        log_message("", status='info', indent=0)
 
         # Template variables for markdown loops
         if is_markdown and 'template_variables' in loop_config:
@@ -145,10 +147,10 @@ class ConfigDisplay:
     @staticmethod
     def _show_template_variables(template_vars: Dict[str, Any]):
         """Display template variables for markdown loops"""
-        print("  Template Variables:", file=sys.stderr)
+        log_message("  Template Variables:", status='info', indent=0)
 
         if not template_vars:
-            print("    (none)", file=sys.stderr)
+            log_message("    (none)", status='info', indent=0)
             return
 
         for var_name, var_config in template_vars.items():
@@ -159,28 +161,28 @@ class ConfigDisplay:
             req_marker = '(required)' if required else '(optional)'
             default_str = f", default: {default}" if default else ""
 
-            print(f"    • {var_name} {req_marker}{default_str}", file=sys.stderr)
+            log_message(f"    • {var_name} {req_marker}{default_str}", status='info', indent=0)
             if description:
-                print(f"      {description}", file=sys.stderr)
-        print()
+                log_message(f"      {description}", status='info', indent=0)
+        log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_execution_parameters(args: Any):
         """Display execution parameters section"""
-        print("⚙️  Execution Parameters", file=sys.stderr)
-        print(f"{'─'*80}", file=sys.stderr)
-        print(f"\n  Mode:          {args.mode}", file=sys.stderr)
-        print(f"  Deep Learning: {'❌ Disabled (--no-deep-learning)' if args.no_deep_learning else '✅ Enabled'}", file=sys.stderr)
-        print(f"  Timeout:       {args.timeout} seconds", file=sys.stderr)
-        print(f"  Quiet Mode:    {'✅ Enabled' if args.quiet else '❌ Disabled'}", file=sys.stderr)
-        print()
+        log_message("⚙️  Execution Parameters", status='info', indent=0)
+        log_message(f"{'─'*80}", status='info', indent=0)
+        log_message(f"\n  Mode:          {args.mode}", status='info', indent=0)
+        log_message(f"  Deep Learning: {'❌ Disabled (--no-deep-learning)' if args.no_deep_learning else '✅ Enabled'}", status='info', indent=0)
+        log_message(f"  Timeout:       {args.timeout} seconds", status='info', indent=0)
+        log_message(f"  Quiet Mode:    {'✅ Enabled' if args.quiet else '❌ Disabled'}", status='info', indent=0)
+        log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_environment_variables():
         """Display RAVL-related environment variables"""
-        print("🌍 Environment Variables", file=sys.stderr)
-        print(f"{'─'*80}", file=sys.stderr)
-        print()
+        log_message("🌍 Environment Variables", status='info', indent=0)
+        log_message(f"{'─'*80}", status='info', indent=0)
+        log_message("", status='info', indent=0)
 
         found_any = False
         for var_name in ConfigDisplay.RAVL_ENV_VARS:
@@ -192,20 +194,20 @@ class ConfigDisplay:
                     display_value = f"{value[:20]}... (truncated)"
                 else:
                     display_value = value
-                print(f"  ✅ {var_name}", file=sys.stderr)
-                print(f"     {display_value}", file=sys.stderr)
+                log_message(f"  ✅ {var_name}", status='info', indent=0)
+                log_message(f"     {display_value}", status='info', indent=0)
 
         if not found_any:
-            print("  (no RAVL environment variables set)", file=sys.stderr)
+            log_message("  (no RAVL environment variables set)", status='info', indent=0)
 
-        print()
+        log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_loaded_config_files(project_root: Path, loop_dir: Path):
         """Display which config files were loaded"""
-        print("📄 Loaded Configuration Files", file=sys.stderr)
-        print(f"{'─'*80}", file=sys.stderr)
-        print()
+        log_message("📄 Loaded Configuration Files", status='info', indent=0)
+        log_message(f"{'─'*80}", status='info', indent=0)
+        log_message("", status='info', indent=0)
 
         config_files = [
             (project_root / '.ravl' / 'config' / 'ravl.yml', 'Framework defaults'),
@@ -221,47 +223,47 @@ class ConfigDisplay:
 
         for config_path, description in config_files:
             if config_path.exists():
-                print(f"  ✅ {description}", file=sys.stderr)
-                print(f"     {config_path}", file=sys.stderr)
+                log_message(f"  ✅ {description}", status='info', indent=0)
+                log_message(f"     {config_path}", status='info', indent=0)
             else:
-                print(f"  ⚪ {description} (not found)", file=sys.stderr)
+                log_message(f"  ⚪ {description} (not found)", status='info', indent=0)
 
-        print()
+        log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_dependencies_whitelist(project_root: Path, loop_dir: Path, loop_config: Dict[str, Any]):
         """Display allowed dependencies"""
-        print("📦 Dependency Whitelist", file=sys.stderr)
-        print(f"{'─'*80}", file=sys.stderr)
-        print()
+        log_message("📦 Dependency Whitelist", status='info', indent=0)
+        log_message(f"{'─'*80}", status='info', indent=0)
+        log_message("", status='info', indent=0)
 
         # Check if whitelist is in loop config
         allowed_deps = loop_config.get('allowed_dependencies', {})
 
         if allowed_deps:
-            print(f"  Found {len(allowed_deps)} approved packages in loop config:", file=sys.stderr)
+            log_message(f"  Found {len(allowed_deps)} approved packages in loop config:", status='info', indent=0)
             for pkg_name, constraints in list(allowed_deps.items())[:5]:  # Show first 5
                 if isinstance(constraints, dict):
                     min_ver = constraints.get('min_version', '')
                     max_ver = constraints.get('max_version', '')
                     version_str = f" ({min_ver} - {max_ver})" if min_ver or max_ver else ""
-                    print(f"    • {pkg_name}{version_str}", file=sys.stderr)
+                    log_message(f"    • {pkg_name}{version_str}", status='info', indent=0)
                 else:
-                    print(f"    • {pkg_name}", file=sys.stderr)
+                    log_message(f"    • {pkg_name}", status='info', indent=0)
 
             if len(allowed_deps) > 5:
-                print(f"    ... and {len(allowed_deps) - 5} more", file=sys.stderr)
+                log_message(f"    ... and {len(allowed_deps) - 5} more", status='info', indent=0)
         else:
-            print("  No loop-specific whitelist. Inheriting from project/framework defaults.", file=sys.stderr)
+            log_message("  No loop-specific whitelist. Inheriting from project/framework defaults.", status='info', indent=0)
 
-        print()
+        log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_suggested_command(args: Any, loop_config: Dict[str, Any]):
         """Display suggested run command"""
-        print("🚀 Ready to Run", file=sys.stderr)
-        print(f"{'─'*80}", file=sys.stderr)
-        print()
+        log_message("🚀 Ready to Run", status='info', indent=0)
+        log_message(f"{'─'*80}", status='info', indent=0)
+        log_message("", status='info', indent=0)
 
         # Build command
         cmd_parts = ['./ravl', args.loop]
@@ -284,5 +286,5 @@ class ConfigDisplay:
         if hasattr(args, 'loop_dir') and args.loop_dir:
             cmd_parts.append(f'--loop-dir {args.loop_dir}')
 
-        print(f"  Command: {' '.join(cmd_parts)}", file=sys.stderr)
-        print()
+        log_message(f"  Command: {' '.join(cmd_parts)}", status='info', indent=0)
+        log_message("", status='info', indent=0)
