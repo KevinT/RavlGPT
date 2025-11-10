@@ -509,6 +509,72 @@ class MarkdownRAVLExecutor:
 
         return False
 
+    def _should_skip_cache(self) -> Tuple[bool, str]:
+        """
+        Determine if code caching should be skipped
+
+        Checks three sources (in order of priority):
+        1. Config flag: code_generation.cache_code = false
+        2. LEARN recommendation: regeneration_recommendation.json
+        3. Domain verification: Recent verifications recommend regeneration
+
+        Returns:
+            Tuple of (skip_cache: bool, reason: str)
+        """
+        # Check 1: Config flag (explicit control)
+        code_gen_config = self.config.get('code_generation', {})
+        cache_enabled = code_gen_config.get('cache_code', True)
+
+        if not cache_enabled:
+            reason = code_gen_config.get('cache_reason', 'Config disables code caching')
+            return (True, reason)
+
+        # Check 2: LEARN's regeneration recommendation
+        execution_learning_dir = self.learnings_dir / 'execution_learning'
+        recommendation_file = execution_learning_dir / 'current_state' / 'regeneration_recommendation.json'
+
+        if recommendation_file.exists():
+            try:
+                with open(recommendation_file, 'r', encoding='utf-8') as f:
+                    recommendation = json.load(f)
+
+                if recommendation.get('recommend_regeneration', False):
+                    reason = recommendation.get('rationale', 'LEARN phase recommends code regeneration')
+                    return (True, f"LEARN recommends regeneration: {reason[:80]}")
+            except (IOError, json.JSONDecodeError):
+                pass
+
+        # Check 3: Domain verification pattern (fallback - same as cache_manager logic)
+        loop_learning_dir = self.learnings_dir / 'loop_learning'
+        if loop_learning_dir.exists():
+            recent_attempts_dir = loop_learning_dir / 'recent_attempts'
+            if recent_attempts_dir.exists():
+                domain_attempt_dirs = sorted(
+                    [d for d in recent_attempts_dir.iterdir() if d.is_dir() and d.name.startswith('attempt_')],
+                    key=lambda d: int(d.name.split('_')[1])
+                )
+
+                # Check last 3 domain verifications
+                regeneration_recommendations = 0
+                for attempt_dir in domain_attempt_dirs[-3:]:
+                    domain_verification_file = attempt_dir / 'domain_verification.json'
+                    if domain_verification_file.exists():
+                        try:
+                            with open(domain_verification_file, 'r', encoding='utf-8') as f:
+                                verification = json.load(f)
+
+                            if verification.get('recommend_code_regeneration', False):
+                                regeneration_recommendations += 1
+                        except (IOError, json.JSONDecodeError):
+                            continue
+
+                # If 2+ recent verifications recommend regeneration
+                if regeneration_recommendations >= 2:
+                    return (True, f"Domain verification pattern: {regeneration_recommendations}/3 recent runs recommend regeneration")
+
+        # Default: don't skip cache
+        return (False, "")
+
     def _get_available_notion_credentials(self) -> List[str]:
         """Get list of available Notion credential environment variable names"""
         import os
@@ -734,6 +800,13 @@ class MarkdownRAVLExecutor:
                 reflection['learnings']['sibling_loops'][sibling_name] = self._read_learnings_files(sibling_learnings_dir)
             log_execution(f"Found {len(related_loops['siblings'])} sibling loop(s)", status='info', indent=4)
 
+        # Check if code caching should be skipped
+        skip_cache, skip_reason = self._should_skip_cache()
+        if skip_cache:
+            reflection['skip_cache'] = True
+            reflection['skip_cache_reason'] = skip_reason
+            log_execution(f"Cache will be skipped: {skip_reason}", status='info', indent=4)
+
         # Store reflection for lazy phase parsing (enhancement will use fresh domain_guidance)
         self._last_reflection = reflection
 
@@ -936,8 +1009,12 @@ class MarkdownRAVLExecutor:
         """
         timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
 
-        # Check for cached verified code
-        cache_result = self._check_code_cache()
+        # Check if caching should be skipped (from REFLECT phase)
+        skip_cache = reflection.get('skip_cache', False)
+        skip_reason = reflection.get('skip_cache_reason', '')
+
+        # Check for cached verified code (unless skipping)
+        cache_result = None if skip_cache else self._check_code_cache()
         if cache_result:
             cached_code, cached_dsl = cache_result
             log_execution("Using cached verified code - executing...")
@@ -1355,6 +1432,32 @@ class MarkdownRAVLExecutor:
         if 'domain' in verification:
             self._learn_domain(verification['domain'], action_result)
 
+        # REGENERATION ANALYSIS: Should code be regenerated next run?
+        # Only analyze if we're generating code (not for pure markdown loops)
+        if self._should_attempt_code_generation() and self._last_reflection and 'execution' in verification and 'domain' in verification:
+            log_execution("Analyzing code regeneration need...", status='working')
+            regeneration_analysis = self._analyze_regeneration_need(
+                reflection=self._last_reflection,
+                action_result=action_result,
+                execution_verification=verification['execution'],
+                domain_verification=verification['domain']
+            )
+
+            # Save recommendation for next REFLECT to read
+            execution_learning_dir = self.learnings_dir / 'execution_learning'
+            current_state_dir = execution_learning_dir / 'current_state'
+            current_state_dir.mkdir(parents=True, exist_ok=True)
+
+            recommendation_file = current_state_dir / 'regeneration_recommendation.json'
+            with open(recommendation_file, 'w', encoding='utf-8') as f:
+                json.dump(regeneration_analysis, f, indent=2)
+
+            if regeneration_analysis.get('recommend_regeneration', False):
+                rationale = regeneration_analysis.get('rationale', 'See regeneration_recommendation.json')
+                log_execution(f"💡 Regeneration recommended: {rationale[:80]}", status='info')
+            else:
+                log_execution("✓ Code is working well - will reuse if successful", status='success')
+
         log_execution("Learning saved to execution_learning/ and loop_learning/", status='success')
 
     def _learn_execution(
@@ -1454,6 +1557,105 @@ class MarkdownRAVLExecutor:
             'pass_rate': passed_count / total_count if total_count > 0 else 0.0,
             'overall_passed': verification.get('overall_passed', False)
         }
+
+    def _analyze_regeneration_need(
+        self,
+        reflection: Dict[str, Any],
+        action_result: Dict[str, Any],
+        execution_verification: Dict[str, Any],
+        domain_verification: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Use LLM to analyze whether code should be regenerated on next run
+
+        Analyzes loop definition, current run outcomes, and execution history
+        to determine if fresh code generation would improve results.
+
+        Args:
+            reflection: Output from REFLECT phase
+            action_result: Output from ACT phase
+            execution_verification: Execution verification results
+            domain_verification: Domain verification results
+
+        Returns:
+            Dict with regeneration recommendation and rationale
+        """
+        # Get act and verify sections from loop definition
+        act_instructions = self.phases.get('act', '')
+        verify_instructions = self.phases.get('verify', '')
+
+        # Build execution history summary
+        execution_learning_dir = self.learnings_dir / 'execution_learning'
+        recent_attempts_dir = execution_learning_dir / 'recent_attempts'
+
+        history_parts = []
+        if recent_attempts_dir.exists():
+            attempt_dirs = sorted(
+                [d for d in recent_attempts_dir.iterdir() if d.is_dir() and d.name.startswith('attempt_')],
+                key=lambda d: int(d.name.split('_')[1])
+            )
+
+            history_parts.append(f"Total attempts: {len(attempt_dirs)}")
+
+            # Summarize last 5 attempts
+            for attempt_dir in attempt_dirs[-5:]:
+                attempt_num = attempt_dir.name
+                result_file = attempt_dir / 'execution_result.json'
+                if result_file.exists():
+                    try:
+                        with open(result_file, 'r', encoding='utf-8') as f:
+                            result = json.load(f)
+                        passed = result.get('passed', False)
+                        status = "✓ PASSED" if passed else "✗ FAILED"
+                        history_parts.append(f"{attempt_num}: {status}")
+                    except (IOError, json.JSONDecodeError):
+                        history_parts.append(f"{attempt_num}: Unknown")
+
+            # Check if using cached code
+            current_state_dir = execution_learning_dir / 'current_state'
+            verified_code_file = current_state_dir / 'verified_code.py'
+            if verified_code_file.exists():
+                history_parts.append("\n⚠️  Currently using CACHED CODE (same code across runs)")
+
+        execution_history = "\n".join(history_parts) if history_parts else "No execution history available"
+
+        # Truncate summaries for LLM
+        reflection_summary = self._truncate_for_llm(reflection, max_length=1000)
+        action_summary = self._truncate_for_llm(action_result, max_length=1000)
+        verification_summary = {
+            'execution': execution_verification,
+            'domain': domain_verification
+        }
+        verification_summary = self._truncate_for_llm(verification_summary, max_length=1000)
+
+        # Load and format prompt
+        prompt = self._load_prompt(
+            'learn_regeneration_analysis',
+            act_instructions=act_instructions,
+            verify_instructions=verify_instructions,
+            reflection_summary=json.dumps(reflection_summary, indent=2),
+            action_summary=json.dumps(action_summary, indent=2),
+            verification_summary=json.dumps(verification_summary, indent=2),
+            execution_history=execution_history
+        )
+
+        llm_response = self.llm.complete(prompt, max_tokens=get_max_tokens('regeneration_analysis', 2048))
+
+        # Parse JSON response
+        try:
+            analysis = self._parse_json_response(llm_response)
+        except Exception as e:
+            log_message(f"Warning: Could not parse regeneration analysis: {e}", status='error')
+            analysis = {
+                'recommend_regeneration': False,
+                'rationale': f'Failed to parse analysis: {e}',
+                'error': str(e)
+            }
+
+        # Add timestamp
+        analysis['timestamp'] = datetime.now(timezone.utc).isoformat()
+
+        return analysis
 
     def _synthesize_run_insights(
         self,
