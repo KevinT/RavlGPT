@@ -2,7 +2,7 @@
 """
 Google Sheets Analyzer Workflow
 
-Handles extraction and analysis of data from Google Sheets.
+Handles extraction and analysis of data from Google Sheets and Excel files.
 
 Inherits from GoogleAPIsMixin to access Google Sheets service.
 """
@@ -11,6 +11,7 @@ import re
 import sys
 from datetime import datetime
 from typing import Dict, Any, List
+from io import BytesIO
 
 
 class GoogleSheetsAnalyzer:
@@ -63,6 +64,42 @@ class GoogleSheetsAnalyzer:
         spreadsheet_id = spreadsheet_id_match.group(1)
 
         try:
+            # Detect file type using Drive API
+            file_metadata = self.loop.google_drive_service.files().get(
+                fileId=spreadsheet_id,
+                fields='mimeType,name,modifiedTime'
+            ).execute()
+
+            mime_type = file_metadata.get('mimeType')
+
+            # Branch based on file type
+            if mime_type == 'application/vnd.google-apps.spreadsheet':
+                # Native Google Sheets - use Sheets API
+                return self._fetch_native_sheets(spreadsheet_id, file_metadata)
+            elif mime_type in [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',  # .xlsx
+                'application/vnd.ms-excel'  # .xls
+            ]:
+                # Excel file - download and parse with openpyxl
+                return self._fetch_excel_file(spreadsheet_id, file_metadata)
+            else:
+                raise ValueError(f"Unsupported spreadsheet MIME type: {mime_type}")
+
+        except Exception as e:
+            raise Exception(f"Failed to fetch spreadsheet: {e}")
+
+    def _fetch_native_sheets(self, spreadsheet_id: str, file_metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Fetch native Google Sheets using Sheets API.
+
+        Args:
+            spreadsheet_id: The spreadsheet ID
+            file_metadata: File metadata from Drive API
+
+        Returns:
+            Dict with text, title, last_modified, spreadsheet_id, sheets
+        """
+        try:
             # Get spreadsheet metadata and all sheets
             spreadsheet = self.loop.google_sheets_service.spreadsheets().get(
                 spreadsheetId=spreadsheet_id
@@ -71,10 +108,8 @@ class GoogleSheetsAnalyzer:
             title = spreadsheet.get('properties', {}).get('title', 'Untitled Spreadsheet')
             sheets = spreadsheet.get('sheets', [])
 
-            # Note: Sheets API does not provide modification timestamps
-            # Drive API may not have access to personal drive files even when Sheets API does
-            # Set to None to be explicit that this information is unavailable
-            last_modified = None
+            # Get modification timestamp from Drive API metadata
+            last_modified = file_metadata.get('modifiedTime')
 
             # Fetch data for each sheet
             sheets_data = []
@@ -125,7 +160,116 @@ class GoogleSheetsAnalyzer:
             }
 
         except Exception as e:
-            raise Exception(f"Failed to fetch spreadsheet: {e}")
+            raise Exception(f"Failed to fetch native Google Sheets: {e}")
+
+    def _fetch_excel_file(self, spreadsheet_id: str, file_metadata: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Fetch Excel file (.xlsx/.xls) from Google Drive and parse with openpyxl.
+
+        Args:
+            spreadsheet_id: The file ID in Google Drive
+            file_metadata: File metadata from Drive API
+
+        Returns:
+            Dict with text, title, last_modified, spreadsheet_id, sheets
+        """
+        try:
+            # Import openpyxl
+            try:
+                import openpyxl
+            except ImportError:
+                raise Exception(
+                    "openpyxl is required to parse Excel files. "
+                    "Add it to allowed_dependencies in config/ravl.yml"
+                )
+
+            # Download Excel file as binary
+            request = self.loop.google_drive_service.files().get_media(fileId=spreadsheet_id)
+            excel_bytes = request.execute()
+
+            # Parse with openpyxl
+            workbook = openpyxl.load_workbook(BytesIO(excel_bytes), read_only=True, data_only=True)
+
+            title = file_metadata.get('name', 'Untitled Spreadsheet')
+            last_modified = file_metadata.get('modifiedTime')
+
+            # Extract data from all sheets
+            sheets_data = []
+            for sheet_name in workbook.sheetnames:
+                worksheet = workbook[sheet_name]
+
+                # Convert worksheet to 2D array of values, filtering empty rows
+                values = []
+                for row in worksheet.iter_rows(values_only=True):
+                    # Convert None to empty string and all values to strings
+                    row_values = [str(cell) if cell is not None else '' for cell in row]
+
+                    # Skip completely empty rows
+                    if not self._is_empty_row(row_values):
+                        values.append(row_values)
+
+                # Trim trailing empty columns from all rows
+                if values:
+                    values = self._trim_empty_columns(values)
+
+                sheets_data.append({
+                    'title': sheet_name,
+                    'sheet_id': None,  # Excel doesn't have sheet IDs
+                    'values': values
+                })
+
+            workbook.close()
+
+            # Convert to markdown
+            markdown_text = self._sheets_to_markdown(title, sheets_data)
+
+            return {
+                'text': markdown_text,
+                'title': title,
+                'last_modified': last_modified,
+                'spreadsheet_id': spreadsheet_id,
+                'sheets': sheets_data
+            }
+
+        except Exception as e:
+            raise Exception(f"Failed to fetch Excel file: {e}")
+
+    def _is_empty_row(self, row: List[str]) -> bool:
+        """
+        Check if a row contains only empty or whitespace strings.
+
+        Args:
+            row: List of cell values as strings
+
+        Returns:
+            True if row is completely empty, False otherwise
+        """
+        return all(cell.strip() == '' for cell in row)
+
+    def _trim_empty_columns(self, values: List[List[str]]) -> List[List[str]]:
+        """
+        Remove trailing empty columns from all rows in a dataset.
+
+        Args:
+            values: 2D list of cell values
+
+        Returns:
+            2D list with trailing empty columns removed
+        """
+        if not values:
+            return values
+
+        # Find the maximum column index that contains non-empty data
+        max_col_with_data = 0
+        for row in values:
+            for i, cell in enumerate(row):
+                if cell.strip() != '':
+                    max_col_with_data = max(max_col_with_data, i)
+
+        # Trim all rows to max_col_with_data + 1 (convert index to count)
+        trimmed_values = [row[:max_col_with_data + 1] for row in values]
+
+        return trimmed_values
 
     def export_as_markdown(self, url: str) -> str:
         """
