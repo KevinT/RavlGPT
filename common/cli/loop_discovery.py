@@ -133,7 +133,7 @@ class LoopDiscovery:
         raise ValueError(
             f"Loop not found: {identifier}\n"
             f"  Searched in: {', '.join(searched) if searched else 'ravl_loops/'}\n"
-            f"  Try: ravl-list to see available loops"
+            f"  Try: ./ravl --list to see available loops"
         )
 
     def load_config(self, loop_dir: Path) -> Dict[str, Any]:
@@ -541,7 +541,22 @@ class LoopDiscovery:
 
     def _is_loop_dir(self, path: Path) -> bool:
         """Check if directory contains a RAVL loop implementation"""
-        return (path / 'ravl_loop.py').exists() or (path / 'ravl_loop.md').exists()
+        # Check if directory has a loop file
+        has_loop_file = (path / 'ravl_loop.py').exists() or (path / 'ravl_loop.md').exists()
+
+        if not has_loop_file:
+            return False
+
+        # Exclude learnings subdirectories (contain artifacts, not actual loops)
+        # e.g., loop/learnings/current_state/ravl_loop.md is an artifact
+        if 'learnings' in path.parts:
+            # Check if this is a subdirectory under learnings
+            for i, part in enumerate(path.parts):
+                if part == 'learnings' and i < len(path.parts) - 1:
+                    # This path is inside a learnings directory
+                    return False
+
+        return True
 
     def is_example_loop(self, loop_path: Path) -> bool:
         """
