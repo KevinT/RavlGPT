@@ -18,6 +18,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 
+# Add utils to path for logging
+import sys
+from pathlib import Path
+_utils_dir = Path(__file__).parent.parent / 'utils'
+if str(_utils_dir) not in sys.path:
+    sys.path.insert(0, str(_utils_dir))
+from logging_utils import log_execution, log_message
+
 
 class GoogleDocsRevisionTracker:
     """
@@ -128,11 +136,11 @@ class GoogleDocsRevisionTracker:
             ).execute()
 
             revisions = results.get('revisions', [])
-            print(f"  • Fetched {len(revisions)} revisions for document {doc_id}", file=sys.stderr)
+            log_execution(f"Fetched {len(revisions)} revisions for document {doc_id}", status='success')
             return revisions
 
         except Exception as e:
-            print(f"  ⚠️  Error fetching revisions: {e}", file=sys.stderr)
+            log_execution(f"Error fetching revisions: {e}", status='error')
             raise
 
     def export_revision(self, doc_id: str, revision_id: str, max_retries: int = 3) -> str:
@@ -196,7 +204,7 @@ class GoogleDocsRevisionTracker:
                     if attempt < max_retries - 1:
                         # Exponential backoff: 1s, 8s, 16s
                         wait_time = 4 ** attempt
-                        print(f"  ⚠️  {error_msg}, retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})", file=sys.stderr)
+                        log_execution(f"{error_msg}, retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})", status='working')
                         time.sleep(wait_time)
                         continue
                     else:
@@ -210,10 +218,10 @@ class GoogleDocsRevisionTracker:
                 if attempt < max_retries - 1:
                     # Exponential backoff for general errors too
                     wait_time = 4 ** attempt
-                    print(f"  ⚠️  Error exporting revision {revision_id}: {e}, retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})", file=sys.stderr)
+                    log_execution(f"Error exporting revision {revision_id}: {e}, retrying in {wait_time}s (attempt {attempt + 1}/{max_retries})", status='working')
                     time.sleep(wait_time)
                 else:
-                    print(f"  ⚠️  Error exporting revision {revision_id}: {e}", file=sys.stderr)
+                    log_execution(f"Error exporting revision {revision_id}: {e}", status='error')
 
         # All retries exhausted
         raise last_error if last_error else Exception(f"Failed to export revision {revision_id}")
@@ -280,11 +288,11 @@ class GoogleDocsRevisionTracker:
                             if revision_id:
                                 saved_revision_ids.add(revision_id)
                     except json.JSONDecodeError:
-                        print(f"  ⚠️  Could not parse metadata line: {line[:100]}", file=sys.stderr)
+                        log_execution(f"Could not parse metadata line: {line[:100]}", status='error')
                         continue
 
         except Exception as e:
-            print(f"  ⚠️  Could not read metadata file: {e}", file=sys.stderr)
+            log_execution(f"Could not read metadata file: {e}", status='error')
 
         return saved_revision_ids
 
@@ -367,7 +375,7 @@ class GoogleDocsRevisionTracker:
         # Load saved revision IDs from metadata.jsonl (source of truth)
         metadata_file = Path(metadata_path) if metadata_path else output_path / f"{document_name}.metadata.jsonl"
         saved_revision_ids = self._load_saved_revision_ids_from_metadata(metadata_file)
-        print(f"  • Previously saved revisions from metadata: {len(saved_revision_ids)}", file=sys.stderr)
+        log_execution(f"Previously saved revisions from metadata: {len(saved_revision_ids)}", status='info')
 
         # Get next sequence number from metadata.jsonl (source of truth)
         # If metadata doesn't exist, starts from 1 (ensures consistent numbering on fresh start)
@@ -384,7 +392,7 @@ class GoogleDocsRevisionTracker:
 
             # Skip if this revision_id has already been saved
             if revision_id in saved_revision_ids:
-                print(f"  ✓ Revision {revision_id} already saved", file=sys.stderr)
+                log_execution(f"Revision {revision_id} already saved", status='info')
                 continue
 
             # Format: {timestamp}-{seq}.md
@@ -424,13 +432,13 @@ class GoogleDocsRevisionTracker:
 
                 saved_revision_ids.add(revision_id)
                 next_seq += 1
-                print(f"  ✓ Saved revision {seq_str}: {rev_file.name}", file=sys.stderr)
+                log_execution(f"Saved revision {seq_str}: {rev_file.name}", status='success')
 
                 # Add delay between requests to avoid rate limiting (except for last revision)
                 if i < len(revisions_metadata) - 1:
                     time.sleep(0.5)  # 500ms delay between revisions
             except Exception as e:
-                print(f"  ⚠️  Failed to save revision {seq_str}: {e}", file=sys.stderr)
+                log_execution(f"Failed to save revision {seq_str}: {e}", status='error')
 
         # Build the revisions_exported structure for metadata
         revisions_exported = {}
@@ -440,9 +448,9 @@ class GoogleDocsRevisionTracker:
                 'last_sequence': last_sequence,
                 'revision_mappings': revision_mappings
             }
-            print(f"  • Exported {len(revision_mappings)} new revisions (seq {first_sequence}-{last_sequence})", file=sys.stderr)
+            log_execution(f"Exported {len(revision_mappings)} new revisions (seq {first_sequence}-{last_sequence})", status='success')
         else:
-            print(f"  • No new revisions to export", file=sys.stderr)
+            log_execution(f"No new revisions to export", status='info')
 
         return {
             'files_created': files_created,
@@ -485,7 +493,7 @@ class GoogleDocsRevisionTracker:
         revisions = self.fetch_revisions(doc_id, max_count)
 
         if not revisions:
-            print(f"  ⚠️  No revisions found for document", file=sys.stderr)
+            log_execution(f"No revisions found for document", status='error')
             return {
                 'mode': 'simple' if not full_lineage else 'full_lineage',
                 'revision_count': 0,
@@ -522,9 +530,9 @@ class GoogleDocsRevisionTracker:
                     content = self.export_revision(doc_id, rev_metadata['id'])
                     rev_file.write_text(content, encoding='utf-8')
                     files_created.append(str(rev_file))
-                    print(f"  ✓ Exported revision {rev_number} to {rev_file.name}", file=sys.stderr)
+                    log_execution(f"Exported revision {rev_number} to {rev_file.name}", status='success')
                 except Exception as e:
-                    print(f"  ⚠️  Failed to export revision {rev_number}: {e}", file=sys.stderr)
+                    log_execution(f"Failed to export revision {rev_number}: {e}", status='error')
 
             # Create .jsonl index file
             index_file = output_path / f"{document_name}.revisions.jsonl"
@@ -548,7 +556,7 @@ class GoogleDocsRevisionTracker:
             }
             index_file.write_text(json.dumps(index_content) + '\n', encoding='utf-8')
             files_created.append(str(index_file))
-            print(f"  ✓ Created revision index: {index_file.name}", file=sys.stderr)
+            log_execution(f"Created revision index: {index_file.name}", status='success')
 
         else:
             # Simple mode: all metadata in single .jsonl
@@ -563,7 +571,7 @@ class GoogleDocsRevisionTracker:
             }
             lineage_file.write_text(json.dumps(lineage_content) + '\n', encoding='utf-8')
             files_created.append(str(lineage_file))
-            print(f"  ✓ Created revision tracking: {lineage_file.name}", file=sys.stderr)
+            log_execution(f"Created revision tracking: {lineage_file.name}", status='success')
 
         return {
             'mode': 'simple' if not full_lineage else 'full_lineage',
