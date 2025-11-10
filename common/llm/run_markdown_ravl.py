@@ -40,6 +40,7 @@ from ravl_runner import RAVLRunner
 from execution.markdown.markdown_ravl_executor import MarkdownRAVLExecutor
 from constants import DEFAULT_EXECUTION_TIMEOUT
 from file_utils import load_yaml_file
+from logging_utils import log_message
 
 # Add CLI directory to path for ConfigDisplay
 sys.path.insert(0, str(_script_dir.parent / 'cli'))
@@ -179,10 +180,10 @@ class ConfigBasedRAVLRunner:
         context_vars = self.extract_template_vars(args)
 
         # Display startup info
-        print(f"➿ {self.config.get('description', loop_name)} starting...", file=sys.stderr)
+        log_message(f"➿ {self.config.get('description', loop_name)} starting...", status='info', indent=0)
         for var_name, var_value in context_vars.items():
-            print(f"   {var_name}: {var_value}", file=sys.stderr)
-        print(f"   Mode: {args.mode}", file=sys.stderr)
+            log_message(f"   {var_name}: {var_value}", status='info', indent=0)
+        log_message(f"   Mode: {args.mode}", status='info', indent=0)
 
         start_time = time.time()
 
@@ -219,7 +220,7 @@ class ConfigBasedRAVLRunner:
 
             # Calculate duration
             duration = time.time() - start_time
-            print(f"\n   ✓ Completed at {duration:.1f}s", file=sys.stderr)
+            log_message(f"\n   ✓ Completed at {duration:.1f}s", status='success', indent=0)
 
             # ===== Step 2: ACT =====
             RAVLRunner.print_banner("Step 2 of 4: [A]CT", "")
@@ -227,7 +228,7 @@ class ConfigBasedRAVLRunner:
 
             # Calculate duration
             duration = time.time() - start_time
-            print(f"\n   ✓ Completed at {duration:.1f}s", file=sys.stderr)
+            log_message(f"\n   ✓ Completed at {duration:.1f}s", status='success', indent=0)
 
             # ===== Step 3: VERIFY =====
             if not args.no_deep_learning:
@@ -239,27 +240,27 @@ class ConfigBasedRAVLRunner:
 
                 # Calculate duration
                 duration = time.time() - start_time
-                print(f"\n   ✓ Completed at {duration:.1f}s", file=sys.stderr)
+                log_message(f"\n   ✓ Completed at {duration:.1f}s", status='success', indent=0)
 
                 RAVLRunner.print_banner("Step 4 of 4: [L]EARN", "")
                 executor.learn(verification, action_result)
 
                 # Calculate duration
                 duration = time.time() - start_time
-                print(f"\n   ✓ Completed at {duration:.1f}s", file=sys.stderr)
+                log_message(f"\n   ✓ Completed at {duration:.1f}s", status='success', indent=0)
 
             # Show interpretation summary if LLM interpreted the loop
             if executor.used_interpretation:
                 RAVLRunner.print_banner("INTERPRETATION APPLIED", "📚")
-                print(f"   Your free-form markdown was structured into RAVL phases", file=sys.stderr)
-                print(f"", file=sys.stderr)
-                print(f"   Review:  cat {learnings_dir.name}/current_state/ravl_loop_enhanced.md", file=sys.stderr)
-                print(f"   Learn:   .ravl/docs/free_form_interpretation.md", file=sys.stderr)
-                print(f"", file=sys.stderr)
-                print(f"   To refine for future runs:", file=sys.stderr)
-                print(f"     1. Review the enhanced version", file=sys.stderr)
-                print(f"     2. Update ravl_loop.md with any tweaks", file=sys.stderr)
-                print(f"     3. Next run will use your updated structure", file=sys.stderr)
+                log_message(f"   Your free-form markdown was structured into RAVL phases", status='info', indent=0)
+                log_message(f"", status='info', indent=0)
+                log_message(f"   Review:  cat {learnings_dir.name}/current_state/ravl_loop_enhanced.md", status='info', indent=0)
+                log_message(f"   Learn:   .ravl/docs/free_form_interpretation.md", status='info', indent=0)
+                log_message(f"", status='info', indent=0)
+                log_message(f"   To refine for future runs:", status='info', indent=0)
+                log_message(f"     1. Review the enhanced version", status='info', indent=0)
+                log_message(f"     2. Update ravl_loop.md with any tweaks", status='info', indent=0)
+                log_message(f"     3. Next run will use your updated structure", status='info', indent=0)
 
             # Check if verification failed and suggest diagnostician
             verification_passed = (
@@ -270,19 +271,19 @@ class ConfigBasedRAVLRunner:
 
             if not args.no_deep_learning and verification and not verification.get("overall_passed", False):
                 RAVLRunner.print_banner("VERIFICATION FAILED", "⚠️")
-                print(f"   The loop ran but didn't meet all verification criteria.", file=sys.stderr)
+                log_message(f"   The loop ran but didn't meet all verification criteria.", status='error', indent=0)
 
                 # Display detailed verification criteria results
                 domain_verification = verification.get('domain', {})
                 criteria_results = domain_verification.get('criteria_results', [])
 
                 if criteria_results:
-                    print(f"", file=sys.stderr)
-                    print(f"   📋 Verification Details:", file=sys.stderr)
+                    log_message(f"", status='info', indent=0)
+                    log_message(f"   📋 Verification Details:", status='info', indent=0)
                     for i, criterion in enumerate(criteria_results, 1):
                         status = "✓" if criterion.get('passed', False) else "✗"
                         criterion_name = criterion.get('criterion', 'Unknown criterion')
-                        print(f"      {status} [{i}] {criterion_name}", file=sys.stderr)
+                        log_message(f"      {status} [{i}] {criterion_name}", status='info', indent=0)
 
                         # Show explanation for failed criteria
                         if not criterion.get('passed', False) and criterion.get('explanation'):
@@ -290,24 +291,24 @@ class ConfigBasedRAVLRunner:
                             # Truncate long explanations for readability
                             if len(explanation) > 100:
                                 explanation = explanation[:100] + "..."
-                            print(f"          {explanation}", file=sys.stderr)
+                            log_message(f"          {explanation}", status='error', indent=0)
 
-                print(f"", file=sys.stderr)
-                print(f"   Understand config and get diagnostic suggestions:", file=sys.stderr)
-                print(f"     ravl {loop_name} --show-config # shows settings", file=sys.stderr)
-                print(f"     ravl {loop_name} --show-execution # shows execution steps", file=sys.stderr)
-                print(f"     ravl --loop-health {loop_name} # loop agentic health", file=sys.stderr)
-                print(f"     ravl --execution-health {loop_name} # loop execution health", file=sys.stderr)
-                print(f"", file=sys.stderr)
+                log_message(f"", status='info', indent=0)
+                log_message(f"   Understand config and get diagnostic suggestions:", status='info', indent=0)
+                log_message(f"     ravl {loop_name} --show-config # shows settings", status='info', indent=0)
+                log_message(f"     ravl {loop_name} --show-execution # shows execution steps", status='info', indent=0)
+                log_message(f"     ravl --loop-health {loop_name} # loop agentic health", status='info', indent=0)
+                log_message(f"     ravl --execution-health {loop_name} # loop execution health", status='info', indent=0)
+                log_message(f"", status='info', indent=0)
 
             # Success/completion summary
             completion_status = "completed successfully" if verification_passed else "completed with errors"
             RAVLRunner.print_banner(f"{loop_name} {completion_status}", "🏁")
-            print(f"   Duration: {duration:.1f}s", file=sys.stderr)
+            log_message(f"   Duration: {duration:.1f}s", status='info', indent=0)
             for var_name, var_value in context_vars.items():
-                print(f"   {var_name}: {var_value}", file=sys.stderr)
-            print(f"   Output: {action_result.get('output_file', 'N/A')}", file=sys.stderr)
-            print("=" * 80, file=sys.stderr)
+                log_message(f"   {var_name}: {var_value}", status='info', indent=0)
+            log_message(f"   Output: {action_result.get('output_file', 'N/A')}", status='info', indent=0)
+            log_message("=" * 80, status='info', indent=0)
 
             # Close logger
             tee_logger.close()
@@ -330,28 +331,28 @@ def create_minimal_config(loop_dir: Path) -> bool:
     # Determine loop name from folder
     loop_name = loop_dir.name
 
-    print(f"\n⚠️  No config file found for loop '{loop_name}'", file=sys.stderr)
-    print("", file=sys.stderr)
+    log_message(f"\n⚠️  No config file found for loop '{loop_name}'", status='error', indent=0)
+    log_message("", status='info', indent=0)
 
     # Interactive prompt
     try:
         response = input("Would you like to create a minimal config? (y/n): ").strip().lower()
     except (EOFError, KeyboardInterrupt):
-        print("\n❌ Config creation cancelled", file=sys.stderr)
+        log_message("\n❌ Config creation cancelled", status='error', indent=0)
         return False
 
     if response != 'y':
-        print("\nℹ️  To create a config manually, create config/ravl.yml with:", file=sys.stderr)
-        print("    description: Your loop description", file=sys.stderr)
-        print("    loop_type: markdown  # or python", file=sys.stderr)
+        log_message("\nℹ️  To create a config manually, create config/ravl.yml with:", status='info', indent=0)
+        log_message("    description: Your loop description", status='info', indent=0)
+        log_message("    loop_type: markdown  # or python", status='info', indent=0)
         return False
 
     # Prompt for description
-    print("", file=sys.stderr)
+    log_message("", status='info', indent=0)
     try:
         description = input("Enter a description (or press Enter for default): ").strip()
     except (EOFError, KeyboardInterrupt):
-        print("\n❌ Config creation cancelled", file=sys.stderr)
+        log_message("\n❌ Config creation cancelled", status='error', indent=0)
         return False
 
     if not description:
@@ -405,13 +406,13 @@ loop_type: {loop_type}
         with open(config_path, 'w') as f:
             f.write(config_content)
     except Exception as e:
-        print(f"\n❌ Failed to create config: {e}", file=sys.stderr)
+        log_message(f"\n❌ Failed to create config: {e}", status='error', indent=0)
         return False
 
-    print(f"\n✅ Created {config_path.relative_to(loop_dir.parent)} with minimal settings", file=sys.stderr)
-    print(f"   Loop name '{loop_name}' is derived from folder name", file=sys.stderr)
-    print("   You can customize other settings by editing the config.", file=sys.stderr)
-    print("\nContinuing with loop execution...\n", file=sys.stderr)
+    log_message(f"\n✅ Created {config_path.relative_to(loop_dir.parent)} with minimal settings", status='success', indent=0)
+    log_message(f"   Loop name '{loop_name}' is derived from folder name", status='info', indent=0)
+    log_message("   You can customize other settings by editing the config.", status='info', indent=0)
+    log_message("\nContinuing with loop execution...\n", status='info', indent=0)
 
     return True
 
@@ -473,11 +474,11 @@ def main():
         if not config_path.exists():
             config_path = initial_args.loop_dir / 'config.yml'
     else:
-        print("Error: Must specify either --config or --loop-dir", file=sys.stderr)
-        print("", file=sys.stderr)
-        print("Usage:", file=sys.stderr)
-        print("  python3 run_markdown_ravl.py --loop-dir path/to/loop [options]", file=sys.stderr)
-        print("  python3 run_markdown_ravl.py --config path/to/config.yml [options]", file=sys.stderr)
+        log_message("Error: Must specify either --config or --loop-dir", status='error', indent=0)
+        log_message("", status='info', indent=0)
+        log_message("Usage:", status='info', indent=0)
+        log_message("  python3 run_markdown_ravl.py --loop-dir path/to/loop [options]", status='info', indent=0)
+        log_message("  python3 run_markdown_ravl.py --config path/to/config.yml [options]", status='info', indent=0)
         sys.exit(1)
 
     if not config_path.exists():
@@ -489,15 +490,15 @@ def main():
                     # Try the standard location we just created
                     config_path = initial_args.loop_dir / 'config' / 'ravl.yml'
                     if not config_path.exists():
-                        print(f"Error: Config creation succeeded but file not found: {config_path}", file=sys.stderr)
+                        log_message(f"Error: Config creation succeeded but file not found: {config_path}", status='error', indent=0)
                         sys.exit(1)
             else:
                 # User declined to create config
-                print(f"\nError: Config file required but not found: {config_path}", file=sys.stderr)
+                log_message(f"\nError: Config file required but not found: {config_path}", status='error', indent=0)
                 sys.exit(1)
         else:
             # No loop directory, can't offer to create config
-            print(f"Error: Config file not found: {config_path}", file=sys.stderr)
+            log_message(f"Error: Config file not found: {config_path}", status='error', indent=0)
             sys.exit(1)
 
     # Create runner and parse full arguments
@@ -570,7 +571,7 @@ def main():
         runner.run(args)
 
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        log_message(f"Error: {e}", status='error', indent=0)
         import traceback
         traceback.print_exc(file=sys.stderr)
         sys.exit(1)
