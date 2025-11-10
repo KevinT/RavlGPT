@@ -129,7 +129,13 @@ class LoopContextBuilder:
                     pass
 
         except Exception as e:
-            print(f"  [i] Error reading learnings: {str(e)[:100]}", file=sys.stderr)
+            from pathlib import Path
+            _utils_dir = Path(__file__).parent.parent.parent / 'utils'
+            import sys
+            if str(_utils_dir) not in sys.path:
+                sys.path.insert(0, str(_utils_dir))
+            from logging_utils import log_execution
+            log_execution(f"Error reading learnings: {str(e)[:100]}", status='error')
 
         return learnings
 

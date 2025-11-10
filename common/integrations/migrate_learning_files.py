@@ -99,7 +99,13 @@ def migrate_learning_directory(learnings_dir: Path, dry_run: bool = False) -> No
             print(f"  ✓ Archived {len(old_files)} legacy files")
 
     except Exception as e:
-        print(f"  ✗ Error during migration: {e}", file=sys.stderr)
+        from pathlib import Path
+        _utils_dir = Path(__file__).parent.parent / 'utils'
+        import sys
+        if str(_utils_dir) not in sys.path:
+            sys.path.insert(0, str(_utils_dir))
+        from logging_utils import log_execution
+        log_execution(f"Error during migration: {e}", status='error')
         raise
 
 

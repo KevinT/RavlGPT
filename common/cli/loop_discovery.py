@@ -346,8 +346,13 @@ class LoopDiscovery:
 
             if not config_file.exists():
                 import sys
-                print(f"  ⚠️  Config file not found: {config_file}", file=sys.stderr)
-                print(f"      Specified in: {wrapper_dir.name}/config/ravl.yml", file=sys.stderr)
+                from pathlib import Path
+                _utils_dir = Path(__file__).parent.parent / 'utils'
+                if str(_utils_dir) not in sys.path:
+                    sys.path.insert(0, str(_utils_dir))
+                from logging_utils import log_execution
+                log_execution(f"Config file not found: {config_file}", status='error')
+                log_execution(f"Specified in: {wrapper_dir.name}/config/ravl.yml", status='error')
                 continue
 
             # Load and merge config file

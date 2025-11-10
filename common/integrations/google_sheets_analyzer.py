@@ -99,7 +99,13 @@ class GoogleSheetsAnalyzer:
                     })
 
                 except Exception as e:
-                    print(f"      ⚠️  Could not fetch data for sheet '{sheet_title}': {e}", file=sys.stderr)
+                    from pathlib import Path
+                    _utils_dir = Path(__file__).parent.parent / 'utils'
+                    import sys
+                    if str(_utils_dir) not in sys.path:
+                        sys.path.insert(0, str(_utils_dir))
+                    from logging_utils import log_execution
+                    log_execution(f"Could not fetch data for sheet '{sheet_title}': {e}", status='error')
                     sheets_data.append({
                         'title': sheet_title,
                         'sheet_id': sheet_id,

@@ -91,14 +91,20 @@ class GoogleWorkspaceUserFetcher:
                 all_users.extend(users)
                 page_count += 1
 
-                print(f"  • Fetched page {page_count}: {len(users)} users", file=sys.stderr)
+                from pathlib import Path
+                _utils_dir = Path(__file__).parent.parent / 'utils'
+                import sys
+                if str(_utils_dir) not in sys.path:
+                    sys.path.insert(0, str(_utils_dir))
+                from logging_utils import log_execution
+                log_execution(f"Fetched page {page_count}: {len(users)} users", status='info')
 
                 # Check if there are more pages
                 page_token = response.get('nextPageToken')
                 if not page_token:
                     break
 
-            print(f"  ✓ Total users fetched: {len(all_users)}", file=sys.stderr)
+            log_execution(f"Total users fetched: {len(all_users)}", status='success')
 
             return {
                 'users': all_users,
@@ -109,5 +115,5 @@ class GoogleWorkspaceUserFetcher:
             }
 
         except Exception as e:
-            print(f"  ⚠️  Google Workspace API request failed: {e}", file=sys.stderr)
+            log_execution(f"Google Workspace API request failed: {e}", status='error')
             raise

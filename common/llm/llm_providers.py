@@ -300,5 +300,6 @@ if __name__ == '__main__':
         provider = LLMProviderFactory.create_provider(provider_type)
         test_provider(provider)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
+        from logging_utils import log_message
+        log_message(f"Error: {e}", status='error', indent=0)
         sys.exit(1)
