@@ -28,8 +28,8 @@ Each run builds on previous learning. The loop becomes more sophisticated.
 ## How to Run
 
 ```bash
-# From framework root (will clone to ravl_loops/ on first run)
-./ravl simple_learning_loop
+# From framework root (will clone to project/ravl_loops/simple_learning_loop on first run)
+./ravl example_2_simple_learning_loop
 
 # Watch multiple runs to see learning
 ./ravl simple_learning_loop

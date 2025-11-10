@@ -45,7 +45,7 @@ Based on your reflection, explore one aspect of your environment.
 - Document what you find clearly
 - Focus on your chosen area
 
-**Save your findings to**: `output/exploration_log.md` (append mode)
+**Save your findings to**: `{loop learnings dir}/output/exploration_log.md` (append mode)
 
 **Format your entry as**:
 ```
