@@ -67,8 +67,16 @@ class RAVLCLIBase:
 
     @staticmethod
     def print_header(message: str, emoji: str = "📚"):
-        """Print header message"""
-        log_message(f"\n{emoji} {message}\n", status='info', indent=0)
+        """Print header message without status prefix"""
+        # Print blank line before header
+        print("", file=sys.stderr, flush=True)
+        # Print header directly without [i] prefix
+        if emoji:
+            print(f" {emoji} {message}", file=sys.stderr, flush=True)
+        else:
+            print(f" {message}", file=sys.stderr, flush=True)
+        # Print blank line after header
+        print("", file=sys.stderr, flush=True)
 
     @staticmethod
     def format_emoji(config: dict) -> str:

@@ -111,6 +111,11 @@ def log_message(message: str, status: str = 'info', indent: int = 2, file=None):
     if file is None:
         file = sys.stderr
 
+    # For empty or whitespace-only messages, print blank line without prefix
+    if not message or message.isspace():
+        print("", file=file, flush=True)
+        return
+
     symbol = STATUS_SYMBOLS.get(status, '[i]')
     indent_str = ' ' * indent
     print(f"{indent_str}{symbol} {message}", file=file, flush=True)

@@ -590,10 +590,13 @@ class LoopDiscovery:
         # Recursively find all ravl_loop.py and ravl_loop.md files
         for search_dir in search_dirs:
             for ravl_loop_file in search_dir.rglob('ravl_loop.py'):
-                loop_dirs.append(ravl_loop_file.parent)
+                parent_dir = ravl_loop_file.parent
+                if self._is_loop_dir(parent_dir):
+                    loop_dirs.append(parent_dir)
             for ravl_loop_file in search_dir.rglob('ravl_loop.md'):
-                if ravl_loop_file.parent not in loop_dirs:
-                    loop_dirs.append(ravl_loop_file.parent)
+                parent_dir = ravl_loop_file.parent
+                if parent_dir not in loop_dirs and self._is_loop_dir(parent_dir):
+                    loop_dirs.append(parent_dir)
 
         return sorted(loop_dirs)
 
