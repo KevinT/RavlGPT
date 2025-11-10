@@ -13,6 +13,12 @@ import json
 from pathlib import Path
 from typing import Dict, Tuple, Any, Optional
 
+# Add utils to path for logging
+_utils_dir = Path(__file__).parent.parent.parent / 'utils'
+if str(_utils_dir) not in sys.path:
+    sys.path.insert(0, str(_utils_dir))
+from logging_utils import log_execution, log_message
+
 
 class ChildLoopExecutor:
     """
@@ -69,14 +75,14 @@ class ChildLoopExecutor:
             child_name = parts[0]
             child_args = parts[1:] if len(parts) > 1 else []
 
-            print(f"\n  ▶️  Running child loop: {child_name}", file=sys.stderr)
+            log_message(f"\n  ▶️  Running child loop: {child_name}", status='info', indent=0)
 
             # Find child loop directory
             child_dir = self.loop_dir / 'ravl_loops' / child_name
 
             if not child_dir.exists():
                 error_msg = f"Child loop not found: {child_name} at {child_dir}"
-                print(f"  ⚠️  {error_msg}", file=sys.stderr)
+                log_message(f"  ⚠️  {error_msg}", status='error', indent=0)
                 replacement = f"**Error:** {error_msg}"
                 processed_instructions = processed_instructions.replace(full_match, replacement)
                 continue
@@ -111,18 +117,19 @@ class ChildLoopExecutor:
                 result_summary = f"✓ {child_name} executed successfully" if result.returncode == 0 else f"✗ {child_name} failed"
                 processed_instructions = processed_instructions.replace(full_match, result_summary)
 
-                print(f"  [{'✓' if result.returncode == 0 else '✗'}] {child_name}: {result_summary}", file=sys.stderr)
+                status = 'success' if result.returncode == 0 else 'error'
+                log_message(f"  [{'✓' if result.returncode == 0 else '✗'}] {child_name}: {result_summary}", status=status, indent=0)
 
             except subprocess.TimeoutExpired:
                 error_msg = f"Child loop {child_name} execution timed out"
-                print(f"  ✗ {error_msg}", file=sys.stderr)
+                log_message(f"  ✗ {error_msg}", status='error', indent=0)
                 child_results[child_name] = {'success': False, 'error': 'timeout'}
                 replacement = f"**Error:** {error_msg}"
                 processed_instructions = processed_instructions.replace(full_match, replacement)
 
             except Exception as e:
                 error_msg = f"Child loop execution failed: {str(e)[:100]}"
-                print(f"  ✗ {error_msg}", file=sys.stderr)
+                log_message(f"  ✗ {error_msg}", status='error', indent=0)
                 child_results[child_name] = {'success': False, 'error': str(e)[:100]}
                 replacement = f"**Error:** {error_msg}"
                 processed_instructions = processed_instructions.replace(full_match, replacement)
@@ -185,9 +192,9 @@ class ChildLoopExecutor:
                             f.write(llm_response)
 
                     additional_files[filename] = str(output_file.name)
-                    print(f"  [✓] Created additional output: {output_file.name}", file=sys.stderr)
+                    log_execution(f"Created additional output: {output_file.name}", status='success')
 
                 except Exception as e:
-                    print(f"  [i] Failed to create output file {filename}: {str(e)[:100]}", file=sys.stderr)
+                    log_execution(f"Failed to create output file {filename}: {str(e)[:100]}", status='error')
 
         return additional_files if additional_files else None
