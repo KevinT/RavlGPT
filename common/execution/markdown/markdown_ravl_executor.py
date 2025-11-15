@@ -788,28 +788,42 @@ class MarkdownRAVLExecutor:
         )
 
         # Discover and read related loops
+        log_execution("Discovering related loops...", status='debug', indent=4)
         related_loops = self._discover_related_loops()
 
         if related_loops['parent']:
             parent_learnings_dir = related_loops['parent'] / 'learnings'
             reflection['learnings']['parent_loop'] = self._read_learnings_files(parent_learnings_dir)
-            log_execution("Found parent loop learnings", status='info', indent=4)
+            log_execution(f"Found parent loop learnings: {related_loops['parent'].name}", status='info', indent=4)
+            log_execution(f"  Parent learning path: {parent_learnings_dir}", status='debug', indent=6)
 
         if related_loops['children']:
             reflection['learnings']['child_loops'] = {}
+            child_names = []
             for child_dir in related_loops['children']:
                 child_name = child_dir.name
+                child_names.append(child_name)
                 child_learnings_dir = child_dir / 'learnings'
                 reflection['learnings']['child_loops'][child_name] = self._read_learnings_files(child_learnings_dir)
-            log_execution(f"Found {len(related_loops['children'])} child loop(s)", status='info', indent=4)
+                log_execution(f"  Child: {child_name} at {child_learnings_dir}", status='debug', indent=6)
+            log_execution(f"Found {len(related_loops['children'])} child loop(s): {', '.join(child_names)}", status='info', indent=4)
 
         if related_loops['siblings']:
             reflection['learnings']['sibling_loops'] = {}
+            sibling_names = []
             for sibling_dir in related_loops['siblings']:
                 sibling_name = sibling_dir.name
+                sibling_names.append(sibling_name)
                 sibling_learnings_dir = sibling_dir / 'learnings'
                 reflection['learnings']['sibling_loops'][sibling_name] = self._read_learnings_files(sibling_learnings_dir)
-            log_execution(f"Found {len(related_loops['siblings'])} sibling loop(s)", status='info', indent=4)
+                log_execution(f"  Sibling: {sibling_name} at {sibling_learnings_dir}", status='debug', indent=6)
+            log_execution(f"Found {len(related_loops['siblings'])} sibling loop(s): {', '.join(sibling_names)}", status='info', indent=4)
+        else:
+            # Check if this is a top-level parent (would explain no siblings)
+            from core.learning.learning_access_helper import LearningAccessHelper
+            helper = LearningAccessHelper(self.loop_dir, self.learnings_dir)
+            if helper.is_top_level_parent():
+                log_execution("This is a top-level parent (isolated from other top-level parents)", status='debug', indent=4)
 
         # Check if code caching should be skipped
         skip_cache, skip_reason = self._should_skip_cache()

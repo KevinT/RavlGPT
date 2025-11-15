@@ -10,5 +10,11 @@ Manages the Learn phase with separate execution and domain learning:
 from .learning_manager import create_learning_managers
 from .execution_learning_manager import ExecutionLearningManager
 from .loop_learning_manager import LoopLearningManager
+from .learning_access_helper import LearningAccessHelper
 
-__all__ = ['create_learning_managers', 'ExecutionLearningManager', 'LoopLearningManager']
+__all__ = [
+    'create_learning_managers',
+    'ExecutionLearningManager',
+    'LoopLearningManager',
+    'LearningAccessHelper'
+]

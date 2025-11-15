@@ -10,6 +10,7 @@ import json
 import sys
 from pathlib import Path
 from typing import Dict, List, Any
+from core.learning.learning_access_helper import LearningAccessHelper
 
 
 class LoopContextBuilder:
@@ -34,9 +35,12 @@ class LoopContextBuilder:
         self.loop_dir = loop_dir
         self.learnings_dir = learnings_dir
 
-    def discover_related_loops(self) -> Dict[str, List[Path]]:
+    def discover_related_loops(self, exclude_top_level_parents: bool = True) -> Dict[str, List[Path]]:
         """
         Discover parent, child, and sibling loops based on directory structure
+
+        Args:
+            exclude_top_level_parents: If True, top-level parents won't see other top-level parents as siblings
 
         Returns dict with 'parent', 'children', 'siblings' keys
         """
@@ -45,6 +49,10 @@ class LoopContextBuilder:
             'children': [],
             'siblings': []
         }
+
+        # Create helper for top-level detection
+        helper = LearningAccessHelper(self.loop_dir, self.learnings_dir)
+        is_top_level_parent = helper.is_top_level_parent()
 
         # Determine loop type based on directory structure
         is_child_loop = self.loop_dir.parent.name == 'ravl_loops'
@@ -69,6 +77,15 @@ class LoopContextBuilder:
                 if (sibling.is_dir() and
                     sibling != self.loop_dir and
                     (sibling / 'config' / 'ravl.yml').exists()):
+
+                    # Check if we should exclude top-level parent siblings
+                    if exclude_top_level_parents and is_top_level_parent:
+                        # Check if sibling is also a top-level parent
+                        sibling_helper = LearningAccessHelper(sibling, sibling / 'learnings')
+                        if sibling_helper.is_top_level_parent():
+                            # Both are top-level parents - enforce isolation
+                            continue
+
                     result['siblings'].append(sibling)
 
         return result

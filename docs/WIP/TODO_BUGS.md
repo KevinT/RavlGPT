@@ -6,11 +6,13 @@
 
 - claude ravl agent in .claude of DigitalTerrain never seems to invoke.
 
-- read_parent_model and read_sibling_model are incorrect, they use parent.parent mechanism to find learning
-	- parent_model_path = self.model_path.parent.parent.parent / 'learnings' / 'model.yml'
-
 - ravl protocol not being provided to loop enhancer:
 	- protocol_file = self.loop_dir.parent.parent.parent / '.ravl' / 'docs' / 'RAVL_PROTOCOL.md'
+
+- FIXED: read_parent_model() and read_sibling_model() used hardcoded parent.parent navigation
+	- Didn't respect configurable learning paths
+	- Now use LearningAccessHelper with proper path resolution
+	- Backward compatible with legacy behavior if loop_dir not provided
 
 - Fix github action error in sand-strategy project- https://github.com/Sand-EnterpriseAI/sand-strategy/actions/runs/18549268840/job/52873503259
 

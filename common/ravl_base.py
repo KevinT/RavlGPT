@@ -24,6 +24,7 @@ from typing import Dict, List, Any, Optional, Callable
 from utils.file_utils import load_yaml_file, save_yaml_file, find_timestamped_files
 from utils.constants import VERSION_INCREMENT, MODEL_PATTERN
 from utils.logging_utils import log_execution
+from core.learning.learning_access_helper import LearningAccessHelper
 
 
 class BaseRAVLLoop:
@@ -40,7 +41,7 @@ class BaseRAVLLoop:
     - Inherit from mixins for additional functionality
     """
 
-    def __init__(self, model_path: Path, loop_name: str, learning_path: Optional[Path] = None):
+    def __init__(self, model_path: Path, loop_name: str, learning_path: Optional[Path] = None, loop_dir: Optional[Path] = None):
         """
         Initialize base RAVL loop
 
@@ -48,6 +49,7 @@ class BaseRAVLLoop:
             model_path: Path to model.yml file (relative to learning_path)
             loop_name: Name of the loop (for logging)
             learning_path: Optional override for learning directory. If provided, model_path is resolved relative to this path
+            loop_dir: Optional path to loop directory (where config/ravl.yml lives). Required for cross-loop learning access
         """
         # If learning_path is provided, resolve model_path relative to it
         if learning_path is not None:
@@ -58,6 +60,8 @@ class BaseRAVLLoop:
             self.model_path = Path(model_path)
 
         self.loop_name = loop_name
+        self.loop_dir = Path(loop_dir) if loop_dir else None
+        self._learning_access_helper = None  # Lazy-initialized
 
     # ==================== MODEL PERSISTENCE ====================
 
@@ -212,11 +216,30 @@ class BaseRAVLLoop:
 
     # ==================== CROSS-LOOP COMMUNICATION ====================
 
+    @property
+    def learning_access_helper(self) -> Optional[LearningAccessHelper]:
+        """
+        Get learning access helper (lazy-initialized)
+
+        Returns:
+            LearningAccessHelper instance or None if loop_dir not provided
+        """
+        if self._learning_access_helper is None and self.loop_dir is not None:
+            self._learning_access_helper = LearningAccessHelper(
+                self.loop_dir,
+                self.learning_path,
+                debug=False  # Set to True for verbose path resolution logging
+            )
+        return self._learning_access_helper
+
     def read_sibling_model(self, sibling_name: str) -> Optional[Dict[str, Any]]:
         """
         Read a sibling loop's model (read-only)
 
         Implements "read-anywhere" part of "read-anywhere, write-own" pattern.
+
+        Uses LearningAccessHelper for proper path resolution with configurable learning paths.
+        Falls back to legacy hardcoded navigation if loop_dir not provided.
 
         Args:
             sibling_name: Name of sibling loop directory
@@ -224,6 +247,21 @@ class BaseRAVLLoop:
         Returns:
             Sibling's model or None if not found
         """
+        # Use helper if available (proper path resolution)
+        if self.learning_access_helper:
+            log_execution(f"{self.loop_name}: Reading sibling model: {sibling_name}", status='debug')
+            model = self.learning_access_helper.read_sibling_model(sibling_name)
+            if model is None:
+                log_execution(f"{self.loop_name}: Sibling model not found: {sibling_name}", status='warning')
+            return model
+
+        # Legacy fallback (hardcoded parent.parent navigation)
+        # DEPRECATED: This doesn't respect configurable learning paths
+        log_execution(
+            f"{self.loop_name}: Using legacy sibling path resolution (loop_dir not provided). "
+            "This may fail with configurable learning paths.",
+            status='warning'
+        )
         sibling_model_path = self.model_path.parent.parent / sibling_name / 'learnings' / 'model.yml'
         return load_yaml_file(sibling_model_path)
 
@@ -233,9 +271,27 @@ class BaseRAVLLoop:
 
         Implements "read-anywhere" part of "read-anywhere, write-own" pattern.
 
+        Uses LearningAccessHelper for proper path resolution with configurable learning paths.
+        Falls back to legacy hardcoded navigation if loop_dir not provided.
+
         Returns:
             Parent's model or None if not found
         """
+        # Use helper if available (proper path resolution)
+        if self.learning_access_helper:
+            log_execution(f"{self.loop_name}: Reading parent model", status='debug')
+            model = self.learning_access_helper.read_parent_model()
+            if model is None:
+                log_execution(f"{self.loop_name}: Parent model not found", status='warning')
+            return model
+
+        # Legacy fallback (hardcoded parent.parent.parent navigation)
+        # DEPRECATED: This doesn't respect configurable learning paths
+        log_execution(
+            f"{self.loop_name}: Using legacy parent path resolution (loop_dir not provided). "
+            "This may fail with configurable learning paths.",
+            status='warning'
+        )
         parent_model_path = self.model_path.parent.parent.parent / 'learnings' / 'model.yml'
         return load_yaml_file(parent_model_path)
 
