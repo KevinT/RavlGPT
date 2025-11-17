@@ -30,6 +30,10 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 - **Split learning contexts**: Separated execution learning (solution space: code generation, DSL) from loop learning (problem space: domain patterns)
   - `learnings/execution_learning/` - Infrastructure and code generation learning
   - `learnings/loop_learning/` - Domain knowledge and patterns (the "L" in RAVL)
+- **Hierarchical learning access control**: Top-level parent loops remain isolated while children can share insights with siblings
+  - Top-level parents cannot see each other's learning (organizational boundary enforcement)
+  - Child loops automatically discover and access parent, sibling, and child learning
+  - Proper path resolution with configurable learning directories
 - LLM call logging with JSONL format for debugging and analysis
 - Run insights synthesis in both LEARN and REFLECT phases
 
@@ -49,6 +53,8 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 
 ### Google Workspace Integration
 - **Google Sheets support** with markdown table export (converts spreadsheets to structured markdown)
+- **Excel file support**: Read and process Excel files from Google Drive
+- **Shared Drive access**: Support for enterprise Google Workspace Shared Drives
 - Google Docs/Sheets/Slides unified interface with consistent APIs
 - Proper timestamp handling for Sheets without Drive API dependency
 - Revision tracking fixes for Google Docs
