@@ -233,7 +233,7 @@ class DSLInferenceEngine:
         """
         requirements = {
             'has_api_call': False,
-            'api_type': None,
+            'api_types': [],  # Changed from api_type to api_types (array)
             'has_transformation': False,
             'has_aggregation': False,
         }
@@ -242,12 +242,20 @@ class DSLInferenceEngine:
         if any(word in act_section.lower() for word in ['api', 'fetch', 'query', 'request', 'call']):
             requirements['has_api_call'] = True
 
-            if 'notion' in act_section.lower():
-                requirements['api_type'] = 'notion'
-            elif 'hibob' in act_section.lower():
-                requirements['api_type'] = 'hibob'
-            elif 'google' in act_section.lower():
-                requirements['api_type'] = 'google'
+            # Detect multiple APIs in ACT section
+            act_lower = act_section.lower()
+            api_types = []
+
+            if 'notion' in act_lower:
+                api_types.append('notion')
+            if 'hibob' in act_lower:
+                api_types.append('hibob')
+            if 'google' in act_lower or 'google docs' in act_lower or 'google sheets' in act_lower:
+                api_types.append('google')
+            if 'clickup' in act_lower:
+                api_types.append('clickup')
+
+            requirements['api_types'] = api_types
 
         # Check for transformation
         if any(word in act_section.lower() for word in ['transform', 'convert', 'map', 'extract', 'parse']):

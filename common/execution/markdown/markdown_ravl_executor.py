@@ -598,11 +598,16 @@ class MarkdownRAVLExecutor:
         Detect if this loop is for data ingestion (API data fetching)
 
         Returns True if:
-        - Config has api_endpoint field, OR
-        - Config has context7_docs_path field (Context7 API docs), OR
+        - Config has apis section (multi-API configuration), OR
+        - Config has api_endpoint field (legacy single-API), OR
+        - Config has context7_docs_path field (legacy Context7 docs), AND
         - Has both ACT and VERIFY sections in markdown
         """
-        has_api_config = 'api_endpoint' in self.config or 'context7_docs_path' in self.config
+        has_api_config = (
+            'apis' in self.config or
+            'api_endpoint' in self.config or
+            'context7_docs_path' in self.config
+        )
         has_act_verify = 'act' in self.phases and 'verify' in self.phases
         return has_api_config and has_act_verify
 
@@ -1064,14 +1069,27 @@ class MarkdownRAVLExecutor:
             log_execution("Cached code executed", status='success')
             return action_result
 
-        # Not cached - delegate DSL inference and code generation to CodeGenerator
+        # Not cached - fetch Context7 docs if this is a data ingress loop
+        context7_docs = None
+        if self._is_data_ingress_loop():
+            try:
+                from context7_fetcher import fetch_context7_docs_for_loop
+                context7_docs = fetch_context7_docs_for_loop(self.config, self.learnings_dir)
+                if context7_docs:
+                    log_execution(f"Fetched Context7 docs for {len(context7_docs)} API(s)", status='success')
+            except Exception as e:
+                log_execution(f"Failed to fetch Context7 docs: {e}", status='warning')
+                context7_docs = None
+
+        # Delegate DSL inference and code generation to CodeGenerator
         gen_result = self.code_gen.generate_with_dsl_inference(
             act_spec=act_instructions,
             verify_spec=verify_instructions,
             reflection=reflection,
             load_prompt_fn=self._load_prompt,
             build_context_fn=self._build_context_summary,
-            available_credentials_fn=self._get_available_notion_credentials
+            available_credentials_fn=self._get_available_notion_credentials,
+            context7_docs=context7_docs
         )
 
         action_result = {

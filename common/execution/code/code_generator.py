@@ -111,7 +111,8 @@ class CodeGenerator:
         reflection: Dict[str, Any],
         load_prompt_fn,
         build_context_fn,
-        available_credentials_fn=None
+        available_credentials_fn=None,
+        context7_docs: Optional[Dict[str, str]] = None
     ) -> Dict[str, Any]:
         """
         Generate code using DSL inference guidance
@@ -123,6 +124,7 @@ class CodeGenerator:
             load_prompt_fn: Function to load prompt templates
             build_context_fn: Function to build context summary
             available_credentials_fn: Optional function to get available credentials
+            context7_docs: Optional dict mapping API names to their Context7 documentation
 
         Returns:
             Dictionary with generation result
@@ -141,19 +143,40 @@ class CodeGenerator:
         # Build context summary
         context_summary = build_context_fn(reflection)
 
-        # Load prompt template
-        prompt = load_prompt_fn(
-            'act_phase',
-            act_instructions=act_spec,
-            context_summary=context_summary,
-            verify_instructions=verify_spec
-        )
+        # Check if this is a data ingress loop with Context7 docs
+        is_data_ingress = context7_docs and len(context7_docs) > 0
+
+        if is_data_ingress:
+            # Format Context7 docs for multiple APIs
+            formatted_docs = self._format_context7_docs(context7_docs)
+
+            # Use data ingestion codegen prompt for API integration
+            prompt = load_prompt_fn(
+                'data_ingestion_codegen',
+                context7_docs=formatted_docs,
+                required_fields='(See Act section for requirements)',
+                output_format='(See Verify section for expected format)',
+                failure_context=''  # Can be enhanced with DSL failure history
+            )
+
+            # Add act and verify context
+            prompt += f"\n\n## Loop Specification\n\n### ACT Section\n{act_spec}\n\n### VERIFY Section\n{verify_spec}"
+
+        else:
+            # Use standard act_phase prompt for non-API loops
+            prompt = load_prompt_fn(
+                'act_phase',
+                act_instructions=act_spec,
+                context_summary=context_summary,
+                verify_instructions=verify_spec
+            )
 
         # Add DSL guidance to prompt
         dsl_guidance = dsl['llm_guidance']
 
         # Enhance with schema-adaptive instructions if this is a Notion API loop
-        if 'notion' in str(act_spec).lower():
+        detected_apis = dsl.get('act_requirements', {}).get('api_types', [])
+        if 'notion' in detected_apis or 'notion' in str(act_spec).lower():
             dsl_guidance = enhance_llm_guidance_with_schema_adaptation(dsl_guidance)
 
             # Add available credential names to guidance
@@ -175,6 +198,30 @@ class CodeGenerator:
             'inferred_dsl': dsl,
             'dsl_file': str(dsl_file.name),
         }
+
+    def _format_context7_docs(self, context7_docs: Dict[str, str]) -> str:
+        """
+        Format Context7 documentation for multiple APIs into a single string
+
+        Args:
+            context7_docs: Dict mapping API names to their documentation
+
+        Returns:
+            Formatted documentation string with clear API sections
+        """
+        if not context7_docs:
+            return "(No API documentation available)"
+
+        # Single API case - just return the docs
+        if len(context7_docs) == 1:
+            return list(context7_docs.values())[0]
+
+        # Multiple APIs - format with clear section headers
+        sections = []
+        for api_name, docs in context7_docs.items():
+            sections.append(f"## {api_name.upper()} API Documentation\n\n{docs}")
+
+        return "\n\n" + "\n\n---\n\n".join(sections)
 
     def handle_verification_outcome(
         self,

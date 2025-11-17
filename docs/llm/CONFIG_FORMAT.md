@@ -138,6 +138,69 @@ Runtime options are configured via CLI flags only (not in `ravl.yml`):
 
 **See full list**: `./ravl --help`
 
+## API Integration Configuration
+
+For loops that integrate with external APIs (data ingestion, API automation), configure API endpoints and Context7 documentation paths.
+
+### Single API Integration
+
+```yaml
+# Simple single-API configuration
+apis:
+  notion:
+    context7_path: /websites/developers_notion
+```
+
+### Multiple API Integrations
+
+Loops can integrate with multiple APIs simultaneously:
+
+```yaml
+# Multi-API configuration
+apis:
+  notion:
+    context7_path: /websites/developers_notion
+
+  clickup:
+    context7_path: /websites/developer_clickup
+
+  google_docs:
+    context7_path: /websites/developers_google_com
+```
+
+**How It Works:**
+- Framework fetches API documentation from Context7 for each configured API
+- Context7 docs are cached per-API: `learnings/context7_docs_cache_{api_name}.txt`
+- Cache TTL defaults to 168 hours (1 week)
+- Generated code receives documentation for all configured APIs
+- LLM determines how to integrate with each API based on ACT section requirements
+
+**Context7 Cache Configuration:**
+
+```yaml
+apis:
+  notion:
+    context7_path: /websites/developers_notion
+    context7_cache_ttl_hours: 72  # Override default cache TTL
+```
+
+**Custom API (Not on Context7):**
+
+```yaml
+apis:
+  custom_internal_api:
+    endpoint: https://api.internal.company.com/v1
+    auth_method: Bearer
+    # No context7_path - provide inline documentation via ACT section
+```
+
+**When to Use Multi-API:**
+- Loop needs data from multiple sources (e.g., Notion + ClickUp task data)
+- Loop coordinates between APIs (e.g., sync Google Docs to Notion)
+- Loop cross-references data (e.g., match HiBob employees to ClickUp users)
+
+**Alternative Pattern:** For complex multi-source scenarios, consider using child loops where each child handles one API and the parent coordinates.
+
 ## Configuration Hierarchy
 
 RAVL uses hierarchical configuration with this priority (highest to lowest):

@@ -8,27 +8,37 @@ description: Self-healing data ingestion from Your API
 emoji: ➿
 
 # ==================== API Configuration ====================
+#
+# Multi-API Support: Configure one or more APIs that your loop will integrate with.
+# The framework fetches API documentation from Context7 and passes it to the LLM
+# for intelligent code generation.
 
-# API endpoint URL
-api_endpoint: https://api.example.com/v1
+# ---- Single API Example ----
+# For loops that integrate with a single API:
+apis:
+  notion:
+    context7_path: /websites/developers_notion
+    # Optional: Override default cache TTL (default: 168 hours = 1 week)
+    # context7_cache_ttl_hours: 72
 
-# Authentication method: Bearer, ApiKey, BasicAuth, OAuth2
-api_auth_method: Bearer
+# ---- Multiple APIs Example ----
+# For loops that integrate with multiple APIs (e.g., sync Notion to ClickUp):
+# apis:
+#   notion:
+#     context7_path: /websites/developers_notion
+#   clickup:
+#     context7_path: /websites/developer_clickup
+#   google_docs:
+#     context7_path: /websites/developers_google_com
+#     context7_cache_ttl_hours: 24  # Refresh daily for fast-changing APIs
 
-# Optional: If using ApiKey auth, specify the header name
-# (Default: X-API-Key for ApiKey, Authorization for Bearer)
-api_auth_header: X-API-Key
-
-# ==================== Context7 Configuration ====================
-
-# Path to API documentation on Context7
-# This is used to dynamically understand the API and generate working code
-# Format: /websites/{domain_without_tld}/llms.txt
-# Example for HiBob: /websites/apidocs_hibob_com/llms.txt
-context7_docs_path: /websites/api_example_com/llms.txt
-
-# How long to cache Context7 docs before refreshing (hours)
-context7_cache_ttl_hours: 168
+# ---- Custom API (Not on Context7) ----
+# If your API isn't on Context7, provide endpoint and auth info:
+# apis:
+#   custom_api:
+#     endpoint: https://api.internal.company.com/v1
+#     auth_method: Bearer
+#     # No context7_path - describe API in your ACT section instead
 
 # ==================== Strategy & Retry Configuration ====================
 
