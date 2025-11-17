@@ -561,12 +561,18 @@ class DSLInferenceEngine:
 
         # API guidance
         act_req = dsl['act_requirements']
-        if act_req['api_type']:
-            guidance_lines.append(f"- Use {act_req['api_type'].upper()} API authentication from environment")
+        api_types = act_req.get('api_types', [])
+        if api_types:
+            if len(api_types) == 1:
+                guidance_lines.append(f"- Use {api_types[0].upper()} API authentication from environment")
+            else:
+                api_names = ', '.join([api.upper() for api in api_types])
+                guidance_lines.append(f"- Use appropriate API authentication from environment for: {api_names}")
 
         # Link following guidance (API-aware)
         if act_req.get('needs_link_following'):
-            api_type = (act_req.get('api_type') or '').lower()
+            # Build lowercase string of all API types for checking
+            api_types_str = ' '.join(api_types).lower()
             link_depth = act_req.get('link_following_depth', 'direct')
 
             guidance_lines.append("")
@@ -581,7 +587,7 @@ class DSLInferenceEngine:
                 guidance_lines.append("- Follow links from linked pages (deep traversal)")
                 guidance_lines.append("- Implement cycle detection to prevent infinite loops")
 
-            if 'notion' in api_type:
+            if 'notion' in api_types_str:
                 guidance_lines.append("- OPTIONAL HELPER: from ravl.common.integrations.notion_helpers import NotionLinkExtractor")
                 guidance_lines.append("- Use NotionLinkExtractor.extract_page_mentions(rich_text) to get linked page IDs")
                 guidance_lines.append("- Or implement your own parsing logic for type='mention' with mention.type='page'")
@@ -590,7 +596,7 @@ class DSLInferenceEngine:
                 else:
                     guidance_lines.append("- Recursively fetch and merge content from all linked pages")
                 guidance_lines.append("- Example: For each block, extract rich_text → extract mentions → fetch linked pages → merge content")
-            elif 'google' in api_type:
+            elif 'google' in api_types_str:
                 guidance_lines.append("- Parse document content for links to other Google Docs")
                 guidance_lines.append("- Extract document IDs from URLs")
                 if link_depth == 'direct':
