@@ -53,11 +53,10 @@ class ConfigDisplay:
             venv_path_source: Source of venv path (CLI/Config/Env/Default)
             loop_dir_source: Source of loop directory (CLI/Env/Default)
         """
-        emoji = loop_config.get('emoji', '➿')
         name = loop_config.get('description', loop_dir.name)
 
         log_message(f"\n{'='*80}", status='info', indent=0)
-        log_message(f"{emoji} Configuration Report: {name}", status='info', indent=0)
+        log_message(f"Configuration Report: {name}", status='info', indent=0)
         log_message(f"{'='*80}\n", status='info', indent=0)
 
         # Section 1: Configuration Resolution
@@ -96,32 +95,32 @@ class ConfigDisplay:
         venv_path_source: str
     ):
         """Display configuration resolution section"""
-        log_message("📍 Configuration Resolution", status='info', indent=0)
+        log_message("Configuration Resolution", status='info', indent=0)
         log_message(f"{'─'*80}", status='info', indent=0)
 
         # Loop Directory
         log_message(f"\n  Loop Directory:", status='info', indent=0)
         log_message(f"    Source:  {loop_dir_source}", status='info', indent=0)
         log_message(f"    Path:    {loop_dir}", status='info', indent=0)
-        log_message(f"    Status:  {'✅ Exists' if loop_dir.exists() else '❌ Not found'}", status='info', indent=0)
+        log_message(f"    Status:  {'[exists]' if loop_dir.exists() else '[not found]'}", status='info', indent=0)
 
         # Learning Path
         log_message(f"\n  Learning Path:", status='info', indent=0)
         log_message(f"    Source:  {learning_path_source}", status='info', indent=0)
         log_message(f"    Path:    {learning_path}", status='info', indent=0)
-        log_message(f"    Status:  {'✅ Exists' if learning_path.exists() else '⚠️  Will be created'}", status='info', indent=0)
+        log_message(f"    Status:  {'[exists]' if learning_path.exists() else '[will be created]'}", status='info', indent=0)
 
         # Venv Path
         log_message(f"\n  Virtual Environment:", status='info', indent=0)
         log_message(f"    Source:  {venv_path_source}", status='info', indent=0)
         log_message(f"    Path:    {venv_path}", status='info', indent=0)
-        log_message(f"    Status:  {'✅ Exists' if venv_path.exists() else '⚠️  Will be created'}", status='info', indent=0)
+        log_message(f"    Status:  {'[exists]' if venv_path.exists() else '[will be created]'}", status='info', indent=0)
         log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_loop_configuration(loop_dir: Path, loop_config: Dict[str, Any]):
         """Display loop configuration section"""
-        log_message("🔧 Loop Configuration", status='info', indent=0)
+        log_message("Loop Configuration", status='info', indent=0)
         log_message(f"{'─'*80}", status='info', indent=0)
 
         # Detect loop type
@@ -131,7 +130,6 @@ class ConfigDisplay:
 
         log_message(f"\n  Name:         {loop_config.get('name', loop_dir.name)}", status='info', indent=0)
         log_message(f"  Description:  {loop_config.get('description', 'N/A')}", status='info', indent=0)
-        log_message(f"  Emoji:        {loop_config.get('emoji', '➿')}", status='info', indent=0)
         log_message(f"  Type:         {loop_type}", status='info', indent=0)
 
         if not is_markdown:
@@ -169,18 +167,18 @@ class ConfigDisplay:
     @staticmethod
     def _show_execution_parameters(args: Any):
         """Display execution parameters section"""
-        log_message("⚙️  Execution Parameters", status='info', indent=0)
+        log_message("Execution Parameters", status='info', indent=0)
         log_message(f"{'─'*80}", status='info', indent=0)
         log_message(f"\n  Mode:          {args.mode}", status='info', indent=0)
-        log_message(f"  Deep Learning: {'❌ Disabled (--no-deep-learning)' if args.no_deep_learning else '✅ Enabled'}", status='info', indent=0)
+        log_message(f"  Deep Learning: {'[disabled]' if args.no_deep_learning else '[enabled]'}", status='info', indent=0)
         log_message(f"  Timeout:       {args.timeout} seconds", status='info', indent=0)
-        log_message(f"  Quiet Mode:    {'✅ Enabled' if args.quiet else '❌ Disabled'}", status='info', indent=0)
+        log_message(f"  Quiet Mode:    {'[enabled]' if args.quiet else '[disabled]'}", status='info', indent=0)
         log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_environment_variables():
         """Display RAVL-related environment variables"""
-        log_message("🌍 Environment Variables", status='info', indent=0)
+        log_message("Environment Variables", status='info', indent=0)
         log_message(f"{'─'*80}", status='info', indent=0)
         log_message("", status='info', indent=0)
 
@@ -194,8 +192,8 @@ class ConfigDisplay:
                     display_value = f"{value[:20]}... (truncated)"
                 else:
                     display_value = value
-                log_message(f"  ✅ {var_name}", status='info', indent=0)
-                log_message(f"     {display_value}", status='info', indent=0)
+                log_message(f"  [set] {var_name}", status='info', indent=0)
+                log_message(f"        {display_value}", status='info', indent=0)
 
         if not found_any:
             log_message("  (no RAVL environment variables set)", status='info', indent=0)
@@ -205,7 +203,7 @@ class ConfigDisplay:
     @staticmethod
     def _show_loaded_config_files(project_root: Path, loop_dir: Path):
         """Display which config files were loaded"""
-        log_message("📄 Loaded Configuration Files", status='info', indent=0)
+        log_message("Loaded Configuration Files", status='info', indent=0)
         log_message(f"{'─'*80}", status='info', indent=0)
         log_message("", status='info', indent=0)
 
@@ -223,17 +221,17 @@ class ConfigDisplay:
 
         for config_path, description in config_files:
             if config_path.exists():
-                log_message(f"  ✅ {description}", status='info', indent=0)
-                log_message(f"     {config_path}", status='info', indent=0)
+                log_message(f"  [loaded] {description}", status='info', indent=0)
+                log_message(f"           {config_path}", status='info', indent=0)
             else:
-                log_message(f"  ⚪ {description} (not found)", status='info', indent=0)
+                log_message(f"  [not found] {description}", status='info', indent=0)
 
         log_message("", status='info', indent=0)
 
     @staticmethod
     def _show_dependencies_whitelist(project_root: Path, loop_dir: Path, loop_config: Dict[str, Any]):
         """Display allowed dependencies"""
-        log_message("📦 Dependency Whitelist", status='info', indent=0)
+        log_message("Dependency Whitelist", status='info', indent=0)
         log_message(f"{'─'*80}", status='info', indent=0)
         log_message("", status='info', indent=0)
 
@@ -261,7 +259,7 @@ class ConfigDisplay:
     @staticmethod
     def _show_suggested_command(args: Any, loop_config: Dict[str, Any]):
         """Display suggested run command"""
-        log_message("🚀 Ready to Run", status='info', indent=0)
+        log_message("Ready to Run", status='info', indent=0)
         log_message(f"{'─'*80}", status='info', indent=0)
         log_message("", status='info', indent=0)
 

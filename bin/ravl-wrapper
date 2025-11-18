@@ -48,16 +48,6 @@ case "$COMMAND" in
     shift
     exec "$PYTHON" "$RAVL_BIN/ravl-new-loop" "$@"
     ;;
-  --health|-h)
-    shift
-    echo "⚠️  WARNING: --health is deprecated. Use --execution-health or --loop-health instead." >&2
-    echo "   --execution-health: Analyzes code generation, DSL, dependencies (solution space)" >&2
-    echo "   --loop-health: Analyzes domain learning, patterns, model (problem space)" >&2
-    echo "" >&2
-    echo "Running deprecated health check..." >&2
-    echo "" >&2
-    exec "$PYTHON" "$RAVL_BIN/ravl-health" "$@"
-    ;;
   --execution-health)
     shift
     exec "$PYTHON" "$RAVL_BIN/ravl-execution-health" "$@"
@@ -78,10 +68,10 @@ Commands:
   --list, -l          List all available RAVL loops
   --clean, -c         Clean up RAVL learning files
   --clone             Clone a RAVL loop from templates
-  --new          Create a new RAVL loop from scratch
+  --new               Create a new RAVL loop from scratch
+  --show-config       Display resolved configuration without executing
   --execution-health  Analyze code generation and DSL (solution space)
   --loop-health       Analyze domain learning and patterns (problem space)
-  --health            [DEPRECATED] Use --execution-health or --loop-health
   --help              Show this help message
 
 Running Loops:
@@ -97,6 +87,7 @@ Examples:
   ./ravl --list
   ./ravl --clean
   ./ravl --new my_loop --content "# Reflect\n\n# Act\n\n# Verify\n\n# Learn"
+  ./ravl LOOP_NAME --show-config
   ./ravl --execution-health org_context
   ./ravl --loop-health strategy_coherence
 
