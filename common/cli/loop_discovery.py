@@ -43,7 +43,7 @@ class LoopDiscovery:
         - Absolute path: /absolute/path/to/loop
         - Relative path: ./relative/path/to/loop
         - Project-relative: ravl_loops/parent/ravl_loops/child
-        - Hierarchical path: parent/child or grandparent/parent/child
+        - Hierarchical path: parent.child or grandparent.parent.child
         - Loop name only: my_loop (with collision detection)
 
         Args:
@@ -57,8 +57,8 @@ class LoopDiscovery:
 
         Examples:
             find_loop('my_loop')  # Name only
-            find_loop('context_ingestion/fetch_fe_content')  # Hierarchical
-            find_loop('frontier_engineering/context_ingestion/fetch_fe_content')  # More specific
+            find_loop('context_ingestion.fetch_fe_content')  # Hierarchical
+            find_loop('frontier_engineering.context_ingestion.fetch_fe_content')  # More specific
         """
         # Check if it's a direct path
         path = Path(identifier)
@@ -74,9 +74,9 @@ class LoopDiscovery:
         if project_relative.exists() and self._is_loop_dir(project_relative):
             return project_relative
 
-        # Try hierarchical path matching (e.g., parent/child or grandparent/parent/child)
-        if '/' in identifier:
-            segments = identifier.split('/')
+        # Try hierarchical path matching (e.g., parent.child or grandparent.parent.child)
+        if '.' in identifier:
+            segments = identifier.split('.')
             hierarchical_matches = self._find_loops_by_hierarchical_path(segments)
 
             if len(hierarchical_matches) == 1:

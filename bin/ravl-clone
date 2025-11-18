@@ -16,13 +16,13 @@ Supports nested destination paths with automatic ravl_loops/ separator insertion
 Usage:
     ravl-clone <loop-name> [options]
     ravl-clone <loop-name> <new-name> [options]
-    ravl-clone <loop-name> <parent/child/new-name> [options]
+    ravl-clone <loop-name> <parent.child.new-name> [options]
 
 Arguments:
-    loop-name           Name or path of the loop to clone (e.g., strategic_coherence or strategic_coherence/content_coherence)
+    loop-name           Name or path of the loop to clone (e.g., strategic_coherence or strategic_coherence.content_coherence)
     new-name            New name or nested path for the cloned loop
                         Simple: my_loop
-                        Nested: parent/my_loop or parent/child/my_loop
+                        Nested: parent.my_loop or parent.child.my_loop
                         (Automatically inserts ravl_loops/ separators between hierarchy levels)
 
 Options:
@@ -35,15 +35,15 @@ Examples:
     ravl-clone strategic_coherence my_handbook_monitoring
 
     # Clone to nested location under existing parent
-    ravl-clone strategic_coherence frontier_engineering/my_monitoring
+    ravl-clone strategic_coherence frontier_engineering.my_monitoring
     # Creates: ravl_loops/frontier_engineering/ravl_loops/my_monitoring/
 
     # Clone to deeply nested location
-    ravl-clone content_coherence frontier_engineering/context_management/my_checker
+    ravl-clone content_coherence frontier_engineering.context_management.my_checker
     # Creates: ravl_loops/frontier_engineering/ravl_loops/context_management/ravl_loops/my_checker/
 
     # Clone child from nested template to nested destination
-    ravl-clone strategic_coherence/content_coherence frontier_engineering/strategic_coherence/content_coherence
+    ravl-clone strategic_coherence.content_coherence frontier_engineering.strategic_coherence.content_coherence
     # Creates: ravl_loops/frontier_engineering/ravl_loops/strategic_coherence/ravl_loops/content_coherence/
 
     # Clone to custom directory
@@ -103,12 +103,12 @@ class RAVLCloneCommand(RAVLCLIBase):
             new_name = args.new_name
         else:
             # No custom name - auto-strip example_n_ prefix from source
-            base_source_name = source_name.split('/')[-1]  # Get last segment for nested paths
+            base_source_name = source_name.split('.')[-1]  # Get last segment for nested paths
             stripped_name = self._strip_example_prefix(base_source_name)
             # Reconstruct full path if source was nested
-            if '/' in source_name:
-                parent_parts = source_name.split('/')[:-1]
-                new_name = '/'.join(parent_parts + [stripped_name])
+            if '.' in source_name:
+                parent_parts = source_name.split('.')[:-1]
+                new_name = '.'.join(parent_parts + [stripped_name])
             else:
                 new_name = stripped_name
 
@@ -120,9 +120,9 @@ class RAVLCloneCommand(RAVLCLIBase):
             target_dir = str(self.project_loops_dir)
 
         # Parse destination path for nested loop support
-        if '/' in new_name:
-            # Nested destination: parent/child/my_loop
-            destination_segments = new_name.split('/')
+        if '.' in new_name:
+            # Nested destination: parent.child.my_loop
+            destination_segments = new_name.split('.')
             loop_name = destination_segments[-1]  # Last segment is loop name
             parent_segments = destination_segments[:-1]  # Everything before is parent hierarchy
         else:
@@ -130,9 +130,9 @@ class RAVLCloneCommand(RAVLCLIBase):
             loop_name = new_name
             parent_segments = []
 
-        # Validate source name (can contain / for nested templates)
-        # Split source_name by / and validate each segment
-        source_segments = source_name.split('/')
+        # Validate source name (can contain . for nested templates)
+        # Split source_name by . and validate each segment
+        source_segments = source_name.split('.')
         for segment in source_segments:
             if not self._is_valid_loop_name(segment):
                 self.print_error(f"Invalid source loop name: {source_name}\n"
@@ -195,7 +195,7 @@ class RAVLCloneCommand(RAVLCLIBase):
         print(f"   Source: {source_display}", file=sys.stderr)
         print(f"   Target: {target_display}", file=sys.stderr)
         if parent_segments:
-            print(f"   Nested under: {'/'.join(parent_segments)}", file=sys.stderr)
+            print(f"   Nested under: {'.'.join(parent_segments)}", file=sys.stderr)
         if source_name != loop_name:
             # Check if this was auto-stripping
             source_base = source_name.split('/')[-1]
@@ -232,14 +232,14 @@ class RAVLCloneCommand(RAVLCLIBase):
             print(f"  2. Run it:", file=sys.stderr)
             # Use hierarchical path for nested loops, simple name for flat loops
             run_path = new_name if not parent_segments else new_name
-            print(f"     ./ravl {run_path} --mode fast", file=sys.stderr)
+            print(f"     ./ravl {run_path}", file=sys.stderr)
             if has_nested_loops:
                 print(f"  3. Or run child loops individually:", file=sys.stderr)
                 child_loops = [d.name for d in (target_path / 'ravl_loops').iterdir() if d.is_dir() and (d / 'config' / 'ravl.yml').exists()]
                 for child in child_loops:
                     # Show hierarchical path for nested child loops
-                    child_run_path = f"{new_name}/{child}" if parent_segments else child
-                    print(f"     ./ravl {child_run_path} --mode fast", file=sys.stderr)
+                    child_run_path = f"{new_name}.{child}" if parent_segments else child
+                    print(f"     ravl {child_run_path}", file=sys.stderr)
 
         except Exception as e:
             self.print_error(f"Failed to clone loop: {e}")
@@ -292,11 +292,11 @@ class RAVLCloneCommand(RAVLCLIBase):
         """
         Find all matches for a loop name in all sources
 
-        Supports both simple names (my_loop) and nested paths (parent/child/my_loop)
+        Supports both simple names (my_loop) and nested paths (parent.child.my_loop)
 
         Args:
             loop_name: Name or path of loop to find
-                       Examples: 'strategic_coherence' or 'strategic_coherence/content_coherence'
+                       Examples: 'strategic_coherence' or 'strategic_coherence.content_coherence'
 
         Returns:
             List of paths to matching loops (sorted by source: templates, examples, project)
@@ -309,11 +309,11 @@ class RAVLCloneCommand(RAVLCLIBase):
         ]
 
         # Check if this is a nested source path
-        is_nested_path = '/' in loop_name
+        is_nested_path = '.' in loop_name
 
         if is_nested_path:
             # Parse nested path into segments
-            path_segments = loop_name.split('/')
+            path_segments = loop_name.split('.')
 
             # Search in each source directory for nested path
             for search_dir, source_type in search_dirs:
@@ -479,7 +479,7 @@ class RAVLCloneCommand(RAVLCLIBase):
 
             # Check if parent exists
             if not parent_loop_dir.exists():
-                parent_path_str = '/'.join(parent_segments[:i+1])
+                parent_path_str = '.'.join(parent_segments[:i+1])
                 return (False,
                        f"Parent loop not found: {parent}\n"
                        f"  Expected at: {parent_loop_dir}\n"
