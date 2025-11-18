@@ -247,9 +247,9 @@ class LearningAccessHelper:
             # Example: parent learnings = /data/ravl/parent/learnings
             #          child learnings = /data/ravl/parent/child_name/learnings
 
-            # Remove '/learnings' from parent, add child_name, add '/learnings' back
+            # Remove '/learnings' from parent, add child_learnings separator, add child_name, add '/learnings' back
             parent_base = self.learnings_dir.parent
-            child_learning_path = parent_base / child_name / 'learnings'
+            child_learning_path = parent_base / 'child_learnings' / child_name / 'learnings'
 
         if self.debug:
             logger.debug(f"Child learning path resolved: {child_learning_path}")

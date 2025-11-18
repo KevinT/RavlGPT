@@ -270,8 +270,8 @@ class RAVLRunner:
                                     child_segments.insert(0, current.name)
                                 current = current.parent
 
-                            # Build final path
-                            final_path = parent_learning_path
+                            # Build final path with child_learnings separator
+                            final_path = parent_learning_path / 'child_learnings'
                             for segment in child_segments:
                                 final_path = final_path / segment
                             return (final_path / 'learnings').resolve()
@@ -295,7 +295,14 @@ class RAVLRunner:
                             # Build path structure for this loop
                             child_path = RAVLRunner._detect_child_loop_path(loop_dir)
                             if child_path:
-                                return (project_learning_path / child_path / 'learnings').resolve()
+                                # Add child_learnings separator for child loops
+                                parts = child_path.split('/')
+                                if len(parts) > 1:
+                                    parent_name = parts[0]
+                                    child_segments = '/'.join(parts[1:])
+                                    return (project_learning_path / parent_name / 'child_learnings' / child_segments / 'learnings').resolve()
+                                else:
+                                    return (project_learning_path / child_path / 'learnings').resolve()
                             else:
                                 return (project_learning_path / loop_dir.name / 'learnings').resolve()
                 except Exception:
@@ -310,8 +317,14 @@ class RAVLRunner:
                 # Check if this is a child loop and build appropriate path structure
                 child_path = RAVLRunner._detect_child_loop_path(loop_dir)
                 if child_path:
-                    # Child loop: {base}/{parent}/{child}/learnings
-                    return (base_path / child_path / 'learnings').resolve()
+                    # Add child_learnings separator for child loops
+                    parts = child_path.split('/')
+                    if len(parts) > 1:
+                        parent_name = parts[0]
+                        child_segments = '/'.join(parts[1:])
+                        return (base_path / parent_name / 'child_learnings' / child_segments / 'learnings').resolve()
+                    else:
+                        return (base_path / child_path / 'learnings').resolve()
                 else:
                     # Parent loop: {base}/{loop_name}/learnings
                     return (base_path / loop_dir.name / 'learnings').resolve()
