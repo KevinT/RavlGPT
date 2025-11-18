@@ -98,7 +98,7 @@ def log_domain(message: str, indent: int = 2, status: str = 'info'):
     log_message(message, status=status, indent=indent)
 
 
-def log_message(message: str, status: str = 'info', indent: int = 2, file=None):
+def log_message(message: str, status: str = 'info', indent: int = 2, file=None, show_symbol: bool = True):
     """
     Log a formatted message with consistent styling.
 
@@ -107,6 +107,7 @@ def log_message(message: str, status: str = 'info', indent: int = 2, file=None):
         status: Status type ('info', 'success', 'error', 'working')
         indent: Number of spaces to indent
         file: File to write to (default: sys.stderr)
+        show_symbol: Whether to show the status symbol prefix (default: True)
     """
     if file is None:
         file = sys.stderr
@@ -116,9 +117,12 @@ def log_message(message: str, status: str = 'info', indent: int = 2, file=None):
         print("", file=file, flush=True)
         return
 
-    symbol = STATUS_SYMBOLS.get(status, '[i]')
     indent_str = ' ' * indent
-    print(f"{indent_str}{symbol} {message}", file=file, flush=True)
+    if show_symbol:
+        symbol = STATUS_SYMBOLS.get(status, '[i]')
+        print(f"{indent_str}{symbol} {message}", file=file, flush=True)
+    else:
+        print(f"{indent_str}{message}", file=file, flush=True)
 
 
 def log_verification_error(error_title: str, error_msg: str, max_length: int = 150, file=None):
