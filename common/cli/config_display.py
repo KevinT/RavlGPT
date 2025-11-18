@@ -64,28 +64,25 @@ class ConfigDisplay:
         _log(f"Configuration Report: {name}", indent=0)
         _log(f"{'='*80}\n", indent=0)
 
-        # Section 1: Configuration Resolution
+        # Section 1: Loop Metadata & Execution Parameters
+        ConfigDisplay._show_loop_metadata_and_parameters(loop_dir, loop_config, args)
+
+        # Section 2: Configuration Resolution
         ConfigDisplay._show_configuration_resolution(
             loop_dir, learning_path, venv_path,
             loop_dir_source, learning_path_source, venv_path_source
         )
 
-        # Section 2: Loop Configuration
-        ConfigDisplay._show_loop_configuration(loop_dir, loop_config)
-
-        # Section 3: Execution Parameters
-        ConfigDisplay._show_execution_parameters(args)
-
-        # Section 4: Environment Variables
+        # Section 3: Environment Variables
         ConfigDisplay._show_environment_variables()
 
-        # Section 5: Loaded Config Files
+        # Section 4: Loaded Config Files
         ConfigDisplay._show_loaded_config_files(project_root, loop_dir)
 
-        # Section 6: Dependencies Whitelist
+        # Section 5: Dependencies Whitelist
         ConfigDisplay._show_dependencies_whitelist(project_root, loop_dir, loop_config)
 
-        # Section 7: Suggested Run Command
+        # Section 6: Ready to Run
         ConfigDisplay._show_suggested_command(args, loop_config)
 
         _log(f"\n{'='*80}\n", indent=0)
@@ -123,9 +120,9 @@ class ConfigDisplay:
         _log("", indent=0)
 
     @staticmethod
-    def _show_loop_configuration(loop_dir: Path, loop_config: Dict[str, Any]):
-        """Display loop configuration section"""
-        _log("Loop Configuration", indent=0)
+    def _show_loop_metadata_and_parameters(loop_dir: Path, loop_config: Dict[str, Any], args: Any):
+        """Display loop metadata and execution parameters"""
+        _log("Loop Metadata & Execution Parameters", indent=0)
         _log(f"{'─'*80}", indent=0)
 
         # Detect loop type
@@ -133,51 +130,63 @@ class ConfigDisplay:
         is_python = (loop_dir / 'ravl_loop.py').exists()
         loop_type = 'Markdown' if is_markdown else ('Python' if is_python else 'Unknown')
 
-        _log(f"\n  Name:         {loop_config.get('name', loop_dir.name)}", indent=0)
-        _log(f"  Description:  {loop_config.get('description', 'N/A')}", indent=0)
-        _log(f"  Type:         {loop_type}", indent=0)
+        # Loop Metadata
+        _log(f"\n  Loop Metadata:", indent=0)
+        _log(f"    Name:         {loop_config.get('name', loop_dir.name)}", indent=0)
+        _log(f"    Description:  {loop_config.get('description', 'N/A')}", indent=0)
+        _log(f"    Type:         {loop_type}", indent=0)
 
         if not is_markdown:
-            _log(f"  Class:        {loop_config.get('class_name', 'N/A')}", indent=0)
-            _log(f"  Module:       {loop_config.get('module', 'ravl_loop')}", indent=0)
-
-        _log("", indent=0)
+            _log(f"    Class:        {loop_config.get('class_name', 'N/A')}", indent=0)
+            _log(f"    Module:       {loop_config.get('module', 'ravl_loop')}", indent=0)
 
         # Template variables for markdown loops
         if is_markdown and 'template_variables' in loop_config:
-            ConfigDisplay._show_template_variables(loop_config['template_variables'])
+            _log(f"\n    Template Variables:", indent=0)
+            template_vars = loop_config['template_variables']
+            if not template_vars:
+                _log("      (none)", indent=0)
+            else:
+                for var_name, var_config in template_vars.items():
+                    required = var_config.get('required', False)
+                    default = var_config.get('default', None)
+                    description = var_config.get('description', '')
+                    req_marker = '(required)' if required else '(optional)'
+                    default_str = f", default: {default}" if default else ""
+                    _log(f"      • {var_name} {req_marker}{default_str}", indent=0)
+                    if description:
+                        _log(f"        {description}", indent=0)
 
-    @staticmethod
-    def _show_template_variables(template_vars: Dict[str, Any]):
-        """Display template variables for markdown loops"""
-        _log("  Template Variables:", indent=0)
+        # Execution Parameters (ALL options)
+        _log(f"\n  Execution Parameters:", indent=0)
+        _log(f"    Mode:                {args.mode}", indent=0)
+        _log(f"    Deep Learning:       {'[disabled]' if args.no_deep_learning else '[enabled]'}", indent=0)
+        _log(f"    Timeout:             {args.timeout} seconds", indent=0)
+        _log(f"    Quiet Mode:          {'[enabled]' if args.quiet else '[disabled]'}", indent=0)
 
-        if not template_vars:
-            _log("    (none)", indent=0)
-            return
+        # Show execution details flag
+        show_exec = getattr(args, 'show_execution', False)
+        _log(f"    Show Execution:      {'[enabled]' if show_exec else '[disabled]'}", indent=0)
 
-        for var_name, var_config in template_vars.items():
-            required = var_config.get('required', False)
-            default = var_config.get('default', None)
-            description = var_config.get('description', '')
+        # Path overrides (show if set, otherwise "not set, use --flag")
+        learning_path_val = getattr(args, 'learning_path', None)
+        if learning_path_val:
+            _log(f"    Learning Path:       {learning_path_val}", indent=0)
+        else:
+            _log(f"    Learning Path:       not set, use --learning-path flag", indent=0)
 
-            req_marker = '(required)' if required else '(optional)'
-            default_str = f", default: {default}" if default else ""
+        venv_path_val = getattr(args, 'venv_path', None)
+        if venv_path_val:
+            _log(f"    Venv Path:           {venv_path_val}", indent=0)
+        else:
+            _log(f"    Venv Path:           not set, use --venv-path flag", indent=0)
 
-            _log(f"    • {var_name} {req_marker}{default_str}", indent=0)
-            if description:
-                _log(f"      {description}", indent=0)
-        _log("", indent=0)
+        loop_dir_val = getattr(args, 'loop_dir', None)
+        if loop_dir_val:
+            _log(f"    Loop Directory:      {loop_dir_val}", indent=0)
+        else:
+            _log(f"    Loop Directory:      not set, use --loop-dir flag", indent=0)
 
-    @staticmethod
-    def _show_execution_parameters(args: Any):
-        """Display execution parameters section"""
-        _log("Execution Parameters", indent=0)
-        _log(f"{'─'*80}", indent=0)
-        _log(f"\n  Mode:          {args.mode}", indent=0)
-        _log(f"  Deep Learning: {'[disabled]' if args.no_deep_learning else '[enabled]'}", indent=0)
-        _log(f"  Timeout:       {args.timeout} seconds", indent=0)
-        _log(f"  Quiet Mode:    {'[enabled]' if args.quiet else '[disabled]'}", indent=0)
         _log("", indent=0)
 
     @staticmethod
