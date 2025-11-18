@@ -239,7 +239,9 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
                     self.act_results['documents_skipped'] += 1
                     continue
 
-                print(f"   • Fetching document {doc_idx}/{len(docs_config)}: {url[:60]}...", file=sys.stderr)
+                # Use description or filename for display, fallback to truncated URL
+                doc_name = doc_config.get('description', doc_config.get('filename', url[:60]))
+                print(f"   • Fetching document {doc_idx}/{len(docs_config)}: {doc_name}", file=sys.stderr)
 
                 # Detect URL type and use appropriate exporter
                 if '/presentation/d/' in url:
