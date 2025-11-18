@@ -153,8 +153,19 @@ class LoopDiscovery:
 
         # Load from file if exists
         if config_file.exists():
-            with open(config_file, 'r', encoding='utf-8') as f:
-                config = yaml.safe_load(f) or {}
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    config = yaml.safe_load(f) or {}
+            except yaml.YAMLError as e:
+                error_msg = f"YAML syntax error in loop config: {config_file}\n  Loop: {loop_dir.name}\n"
+                if hasattr(e, 'problem_mark'):
+                    error_msg += f"  Error at line {e.problem_mark.line + 1}, column {e.problem_mark.column + 1}\n"
+                    if hasattr(e, 'problem'):
+                        error_msg += f"  Problem: {e.problem}\n"
+                error_msg += "  Check the file for YAML syntax errors (indentation, colons, etc.)"
+                raise ValueError(error_msg)
+            except Exception as e:
+                raise ValueError(f"Cannot read config file {config_file}: {str(e)}")
         else:
             config = {}
 
@@ -344,21 +355,43 @@ class LoopDiscovery:
             if not config_file.is_absolute():
                 config_file = wrapper_dir / config_file
 
+            # Set up utils path for logging (needed in both success and error paths)
+            _utils_dir = Path(__file__).parent.parent / 'utils'
+            if str(_utils_dir) not in sys.path:
+                sys.path.insert(0, str(_utils_dir))
+
             if not config_file.exists():
-                _utils_dir = Path(__file__).parent.parent / 'utils'
-                if str(_utils_dir) not in sys.path:
-                    sys.path.insert(0, str(_utils_dir))
-                from logging_utils import log_execution
-                log_execution(f"Config file not found: {config_file}", status='error')
-                log_execution(f"Specified in: {wrapper_dir.name}/config/ravl.yml", status='error')
+                from logging_utils import log_message
+                log_message(f"Config file not found: {config_file}", status='error')
+                log_message(f"Specified in: {wrapper_dir.name}/config/ravl.yml", status='error')
                 continue
 
             # Load and merge config file
-            with open(config_file, 'r', encoding='utf-8') as f:
-                external_config = yaml.safe_load(f) or {}
+            try:
+                with open(config_file, 'r', encoding='utf-8') as f:
+                    external_config = yaml.safe_load(f) or {}
+            except yaml.YAMLError as e:
+                from logging_utils import log_message
+                log_message(f"YAML syntax error in config file: {config_file}", status='error')
+                if hasattr(e, 'problem_mark'):
+                    log_message(f"Error at line {e.problem_mark.line + 1}, column {e.problem_mark.column + 1}", status='error', indent=4)
+                    if hasattr(e, 'problem'):
+                        log_message(f"Problem: {e.problem}", status='error', indent=4)
+                log_message(f"Specified in delegation from loop: {wrapper_dir.name}", status='error')
+                log_message(f"Fix: Check YAML syntax in the config file", status='error')
+                raise ValueError(
+                    f"Invalid YAML syntax in config file: {config_file}\n"
+                    f"  Specified in delegation from: {wrapper_dir.name}/config/ravl.yml\n"
+                    f"  Check the file for YAML syntax errors (indentation, colons, etc.)"
+                )
+            except Exception as e:
+                from logging_utils import log_message
+                log_message(f"Failed to read config file: {config_file}", status='error')
+                log_message(f"Error: {str(e)}", status='error', indent=4)
+                raise
 
-                # Deep merge external config into merged
-                for key, value in external_config.items():
+            # Deep merge external config into merged
+            for key, value in external_config.items():
                     if isinstance(value, dict) and isinstance(merged.get(key), dict):
                         # Deep merge for dicts
                         merged[key] = {**merged[key], **value}
@@ -762,8 +795,26 @@ class LoopDiscovery:
                     with open(markdown_config_file, 'r', encoding='utf-8') as f:
                         markdown_config = yaml.safe_load(f) or {}
                         template_vars = markdown_config.get('template_variables', {})
-                except Exception:
-                    pass
+                except yaml.YAMLError as e:
+                    # YAML syntax error in markdown config - log but continue with empty config
+                    _utils_dir = self.ravl_dir / 'common' / 'utils'
+                    if _utils_dir not in sys.path:
+                        sys.path.insert(0, str(_utils_dir))
+                    from logging_utils import log_execution
+                    log_execution(f"YAML syntax error in markdown config: {markdown_config_file}", status='error')
+                    if hasattr(e, 'problem_mark'):
+                        log_execution(f"Error at line {e.problem_mark.line + 1}, column {e.problem_mark.column + 1}", status='error')
+                    template_vars = {}  # Continue with empty config
+                except FileNotFoundError:
+                    template_vars = {}  # Config file doesn't exist, use defaults
+                except Exception as e:
+                    # Other errors - log but continue
+                    _utils_dir = self.ravl_dir / 'common' / 'utils'
+                    if _utils_dir not in sys.path:
+                        sys.path.insert(0, str(_utils_dir))
+                    from logging_utils import log_execution
+                    log_execution(f"Cannot read markdown config {markdown_config_file}: {str(e)}", status='error')
+                    template_vars = {}
 
         if not template_vars:
             return []

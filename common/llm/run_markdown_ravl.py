@@ -297,8 +297,8 @@ class ConfigBasedRAVLRunner:
                 log_message(f"   Understand config and get diagnostic suggestions:", status='info', indent=0)
                 log_message(f"     ravl {loop_name} --show-config # shows settings", status='info', indent=0)
                 log_message(f"     ravl {loop_name} --show-execution # shows execution steps", status='info', indent=0)
-                log_message(f"     ravl --loop-health {loop_name} # loop agentic health", status='info', indent=0)
-                log_message(f"     ravl --execution-health {loop_name} # loop execution health", status='info', indent=0)
+                log_message(f"     ravl --loop-health {loop_name} # inspect loop agentic health", status='info', indent=0)
+                log_message(f"     ravl --execution-health {loop_name} # inspect loop execution health", status='info', indent=0)
                 log_message(f"", status='info', indent=0)
 
             # Success/completion summary
