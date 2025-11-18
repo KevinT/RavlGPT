@@ -19,7 +19,6 @@ Options:
     --project-loops     Show only project loops
     --framework-loops   Show only framework loops
     --templates         Show only available templates
-    --loops-only        (Deprecated: use --project-loops) Show only project loops
 """
 
 import sys
@@ -61,10 +60,6 @@ class RAVLListCommand(RAVLCLIBase):
         only_templates = getattr(args, 'templates', False)
         only_project_loops = getattr(args, 'project_loops', False)
         only_framework_loops = getattr(args, 'framework_loops', False)
-
-        # Handle deprecated --loops-only flag
-        if getattr(args, 'loops_only', False):
-            only_project_loops = True
 
         show_loops = not only_templates
         show_templates = not (only_project_loops or only_framework_loops)
@@ -657,11 +652,6 @@ def main():
         '--templates',
         action='store_true',
         help='Show only available templates'
-    )
-    parser.add_argument(
-        '--loops-only',
-        action='store_true',
-        help='(Deprecated: use --project-loops) Show only project loops'
     )
     parser.add_argument(
         '--loop-dir',

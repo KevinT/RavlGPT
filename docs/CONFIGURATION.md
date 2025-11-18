@@ -361,7 +361,6 @@ For markdown-based loops that need dynamic input:
 ```yaml
 # In config/ravl.yml
 type: markdown
-markdown_file: ravl_loop.md
 
 template_variables:
   data_source:

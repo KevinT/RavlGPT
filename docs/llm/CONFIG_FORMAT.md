@@ -41,7 +41,6 @@ name: tech_news_curator
 description: Curate and score tech news stories
 emoji: 📰
 type: markdown
-markdown_file: ravl_loop.md
 ```
 
 ## Advanced Configuration
@@ -219,7 +218,6 @@ name: api_data_ingestion
 description: Ingest data from external API with self-healing
 emoji: 🔄
 type: markdown
-markdown_file: ravl_loop.md
 
 # Custom paths (can also use RAVL_DEFAULT_LEARNING_DIRECTORY and RAVL_DEFAULT_VENV_DIRECTORY in .env)
 learning_path: /data/ravl_learning/api_ingestion  # CLI: --learning-path, env: RAVL_DEFAULT_LEARNING_DIRECTORY

@@ -2,7 +2,6 @@
 #name: MySimpleLoop # Uses directory name by default
 description: Simple loop - change me in ravl.yml
 type: markdown
-markdown_file: ravl_loop.md
 # emoji: ➿ # Will use this loop emoji by default
 
 ## PARAMETER PASSING

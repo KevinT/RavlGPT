@@ -42,7 +42,6 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 - Separate CLI commands: `ravl-execution-health` and `ravl-loop-health`
 - Enhanced diagnostics with actionable recommendations and pattern tracking
 - Fuzzy matching for loop names with helpful suggestions
-- Deprecated old unified `--health` flag in favor of specialized checks
 
 ### Code Generation & LLM
 - Dynamic token limits externalized to configuration (adjustable per model)

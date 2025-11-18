@@ -102,7 +102,6 @@ project/                              # Your project repository
 │   │   ├── ravl-clean               # Clean loop learnings
 │   │   ├── ravl-execution-health    # Analyze code generation & DSL (solution space)
 │   │   ├── ravl-loop-health         # Analyze domain learning & patterns (problem space)
-│   │   ├── ravl-health              # [DEPRECATED] Use execution/loop-health instead
 │   │   ├── ravl-sync-claude         # Sync commands to Claude Code
 │   │   └── ravl-sync-opencode       # Sync commands to Opencode
 │   ├── common/                      # 🔧 Framework code

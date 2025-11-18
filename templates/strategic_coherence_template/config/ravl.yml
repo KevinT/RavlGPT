@@ -1,7 +1,6 @@
 description: Generic parent loop for content coherence and external alignment monitoring
 emoji: ➿
 type: markdown
-markdown_file: ravl_loop.md
 
 template_variables: {}
 

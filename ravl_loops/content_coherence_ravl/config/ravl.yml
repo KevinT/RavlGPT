@@ -2,7 +2,6 @@ name: content_coherence_ravl
 description: Analyzes internal consistency and coherence within document collections
 emoji: ➿
 type: framework
-markdown_file: ravl_loop.md
 
 # Default configuration structure (users override via delegation)
 # These are documentation - actual values come from delegating loop's config files

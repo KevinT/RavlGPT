@@ -2,7 +2,7 @@
 
 ----- BUSY
 
-strategy_coherence delegated loop
+allow loops to create new loops themselves, by calling "ravl --new ..."
 
 ----- TODO -----
 
@@ -18,10 +18,11 @@ strategy_coherence delegated loop
 
 - synthesize_domain_learnings.md and synthesize_run.md seem very similar but I can see code usages of both. What's correct?
 
-- ask generated code to include print statements for the domain specific actoins it is taking
+- ask generated code to include print statements for the domain specific actions it is taking
 
 # General Features
 ## PIONEER
+
 - See if I can convert python fde source loop into markdown loop
 	provide a loop archetype in md loop config
 	create a loop archetype in .ravl
@@ -30,8 +31,11 @@ strategy_coherence delegated loop
 	- Deleted fde_operating_strategy_google_md is worth relooking at, could an agent write a ravl_loop.md version of the python implementation version that got the same results (was called fde_operating_strategy_google_py at time of deletion)?
 
 ## SETTLE
-- Improve detection for custom code generation
-	- print(f"  [•] Custom code required - complex operations in loop spec", file=sys.stderr)
+
+- Known unkowns listing
+	- During learn stage write known_unknowns.json to loop and execution learning
+	- If there are answers in those files, use them in reflect stage (could be added by human or another loop)
+	- Allow for perspective-based answers - human thinks answer is X, self_healing_loop thinks Y
 
 - Context gathering capability
 	- automatically send an email to someone to get more context and add it to the reply

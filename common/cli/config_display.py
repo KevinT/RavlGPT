@@ -102,21 +102,21 @@ class ConfigDisplay:
 
         # Loop Directory
         _log(f"\n  Loop Directory:", indent=0)
-        _log(f"    Source:  {loop_dir_source}", indent=0)
-        _log(f"    Path:    {loop_dir}", indent=0)
-        _log(f"    Status:  {'[exists]' if loop_dir.exists() else '[not found]'}", indent=0)
+        _log(f"    Source:              {loop_dir_source}", indent=0)
+        _log(f"    Path:                {loop_dir}", indent=0)
+        _log(f"    Status:              {'[exists]' if loop_dir.exists() else '[not found]'}", indent=0)
 
         # Learning Path
         _log(f"\n  Learning Path:", indent=0)
-        _log(f"    Source:  {learning_path_source}", indent=0)
-        _log(f"    Path:    {learning_path}", indent=0)
-        _log(f"    Status:  {'[exists]' if learning_path.exists() else '[will be created]'}", indent=0)
+        _log(f"    Source:              {learning_path_source}", indent=0)
+        _log(f"    Path:                {learning_path}", indent=0)
+        _log(f"    Status:              {'[exists]' if learning_path.exists() else '[will be created]'}", indent=0)
 
         # Venv Path
         _log(f"\n  Virtual Environment:", indent=0)
-        _log(f"    Source:  {venv_path_source}", indent=0)
-        _log(f"    Path:    {venv_path}", indent=0)
-        _log(f"    Status:  {'[exists]' if venv_path.exists() else '[will be created]'}", indent=0)
+        _log(f"    Source:              {venv_path_source}", indent=0)
+        _log(f"    Path:                {venv_path}", indent=0)
+        _log(f"    Status:              {'[exists]' if venv_path.exists() else '[will be created]'}", indent=0)
         _log("", indent=0)
 
     @staticmethod
@@ -132,13 +132,13 @@ class ConfigDisplay:
 
         # Loop Metadata
         _log(f"\n  Loop Metadata:", indent=0)
-        _log(f"    Name:         {loop_config.get('name', loop_dir.name)}", indent=0)
-        _log(f"    Description:  {loop_config.get('description', 'N/A')}", indent=0)
-        _log(f"    Type:         {loop_type}", indent=0)
+        _log(f"    Name:                {loop_config.get('name', loop_dir.name)}", indent=0)
+        _log(f"    Description:         {loop_config.get('description', 'not set in ravl.yml')}", indent=0)
+        _log(f"    Type:                {loop_type}", indent=0)
 
         if not is_markdown:
-            _log(f"    Class:        {loop_config.get('class_name', 'N/A')}", indent=0)
-            _log(f"    Module:       {loop_config.get('module', 'ravl_loop')}", indent=0)
+            _log(f"    Class:           {loop_config.get('class_name', 'not set')}", indent=0)
+            _log(f"    Module:          {loop_config.get('module', 'ravl_loop')}", indent=0)
 
         # Template variables for markdown loops
         if is_markdown and 'template_variables' in loop_config:
@@ -160,32 +160,33 @@ class ConfigDisplay:
         # Execution Parameters (ALL options)
         _log(f"\n  Execution Parameters:", indent=0)
         _log(f"    Mode:                {args.mode}", indent=0)
-        _log(f"    Deep Learning:       {'[disabled]' if args.no_deep_learning else '[enabled]'}", indent=0)
         _log(f"    Timeout:             {args.timeout} seconds", indent=0)
-        _log(f"    Quiet Mode:          {'[enabled]' if args.quiet else '[disabled]'}", indent=0)
+        _log(f"    Deep Learning:       {'[disabled]' if args.no_deep_learning else '[enabled], use --no-deep-learning to skip VERIFY and LEARN steps'}", indent=0)
+        _log(f"    Quiet Mode:          {'[enabled]' if args.quiet else '[disabled], use --quiet to suppress framework messages'}", indent=0)
 
         # Show execution details flag
         show_exec = getattr(args, 'show_execution', False)
-        _log(f"    Show Execution:      {'[enabled]' if show_exec else '[disabled]'}", indent=0)
+        _log(f"    Show Execution:      {'[enabled]' if show_exec else '[disabled], use --show-execution to show execution steps'}", indent=0)
 
         # Path overrides (show if set, otherwise "not set, use --flag")
+        loop_dir_val = getattr(args, 'loop_dir', None)
+        if loop_dir_val:
+            _log(f"    Loop Directory:      {loop_dir_val}", indent=0)
+        else:
+            _log(f"    Loop Directory:      will use resolved value, use --loop-dir flag to override", indent=0)
+
         learning_path_val = getattr(args, 'learning_path', None)
         if learning_path_val:
             _log(f"    Learning Path:       {learning_path_val}", indent=0)
         else:
-            _log(f"    Learning Path:       not set, use --learning-path flag", indent=0)
+            _log(f"    Learning Path:       will use resolved value, use --learning-path flag to override", indent=0)
 
         venv_path_val = getattr(args, 'venv_path', None)
         if venv_path_val:
             _log(f"    Venv Path:           {venv_path_val}", indent=0)
         else:
-            _log(f"    Venv Path:           not set, use --venv-path flag", indent=0)
+            _log(f"    Venv Path:           will use resolved value, use --venv-path flag to override", indent=0)
 
-        loop_dir_val = getattr(args, 'loop_dir', None)
-        if loop_dir_val:
-            _log(f"    Loop Directory:      {loop_dir_val}", indent=0)
-        else:
-            _log(f"    Loop Directory:      not set, use --loop-dir flag", indent=0)
 
         _log("", indent=0)
 

@@ -20,7 +20,7 @@ This command will:
 
 RAVL markdown loops require an LLM API key. Choose your preferred provider:
 
-### Option 1: Anthropic Claude (Recommended)
+### Option 1: Anthropic Claude
 
 ```bash
 # Get your key from: https://console.anthropic.com/

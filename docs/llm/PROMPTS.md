@@ -117,7 +117,6 @@ For health check and failure analysis:
 
 **Execution Health Check**: `.ravl/ravl_loops/health_checks/execution_health_check/config/` (code generation, DSL)
 **Loop Health Check**: `.ravl/ravl_loops/health_checks/loop_health_check/config/` (domain learning, patterns)
-**Legacy**: `.ravl/ravl_loops/health_checks/health_check_ravl/config/prompt_diagnostic_v2.md` (deprecated)
 
 ```markdown
 # Diagnostic Analysis
