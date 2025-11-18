@@ -174,6 +174,29 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
         print("\n🔍 REFLECT: Planning document fetching", file=sys.stderr)
 
         docs_config = self.config.get('google_documents', [])
+
+        # Validate config is not None (can happen if config_files failed to load)
+        if docs_config is None:
+            error_msg = (
+                "Configuration error: 'google_documents' is None.\n"
+                "This usually means:\n"
+                "  1. External config_files failed to load (check file paths)\n"
+                "  2. The config is missing the 'google_documents' key\n"
+                "  3. Config overrides were not properly merged\n"
+                "\n"
+                "To fix:\n"
+                "  - Check that config_files paths exist (if specified in delegate_to.config_files)\n"
+                "  - Or define google_documents directly in config_overrides\n"
+                "  - Or remove config_files references if not needed"
+            )
+            raise ValueError(error_msg)
+
+        # Validate config is a list
+        if not isinstance(docs_config, list):
+            raise ValueError(
+                f"Configuration error: 'google_documents' must be a list, got {type(docs_config).__name__}"
+            )
+
         model_docs = self.model.get('documents', [])
 
         print(f"   • Documents configured: {len(docs_config)}", file=sys.stderr)
