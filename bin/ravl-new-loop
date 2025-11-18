@@ -179,8 +179,6 @@ class RAVLNewLoopCommand(RAVLCLIBase):
             config['emoji'] = '➿'
         if 'description' not in config:
             config['description'] = f"RAVL loop: {loop_name}"
-        if config['type'] == 'markdown' and 'markdown_file' not in config:
-            config['markdown_file'] = 'ravl_loop.md'
 
         self.print_info(f"Creating new RAVL loop: {loop_name}")
         target_display = target_path.relative_to(self.project_root) if target_path.is_relative_to(self.project_root) else target_path
