@@ -600,21 +600,31 @@ class MarkdownRAVLExecutor:
         available = [name for name in candidates if os.environ.get(name)]
         return available or candidates  # Return what's available, or suggest all options
 
-    def _is_data_ingress_loop(self) -> bool:
+    def _is_data_ingress_loop(self, skip_phase_check: bool = False) -> bool:
         """
         Detect if this loop is for data ingestion (API data fetching)
+
+        Args:
+            skip_phase_check: If True, only check config (used when we know phases are valid,
+                            e.g., when using cached code). Avoids expensive phase parsing.
 
         Returns True if:
         - Config has apis section (multi-API configuration), OR
         - Config has api_endpoint field (legacy single-API), OR
         - Config has context7_docs_path field (legacy Context7 docs), AND
-        - Has both ACT and VERIFY sections in markdown
+        - Has both ACT and VERIFY sections in markdown (unless skip_phase_check=True)
         """
         has_api_config = (
             'apis' in self.config or
             'api_endpoint' in self.config or
             'context7_docs_path' in self.config
         )
+
+        if skip_phase_check:
+            # When using cached code, we know phases were valid when code was generated
+            # Just check config to avoid triggering enhancement LLM call
+            return has_api_config
+
         has_act_verify = 'act' in self.phases and 'verify' in self.phases
         return has_api_config and has_act_verify
 
@@ -963,6 +973,41 @@ class MarkdownRAVLExecutor:
         # Store reflection for LEARN phase synthesis
         self._last_reflection = reflection
 
+        # Check cache FIRST, before any phase access (which triggers enhancement LLM call)
+        # We check cache before even determining if this is a code generation loop,
+        # because if there's cached code, we don't need to access phases at all
+        skip_cache = reflection.get('skip_cache', False)
+
+        if not skip_cache:
+            cache_result = self._check_code_cache()
+            if cache_result:
+                # Cache hit - return immediately without accessing phases
+                cached_code, cached_dsl = cache_result
+                log_execution("Using cached verified code - executing...")
+
+                timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
+                action_result = {
+                    'timestamp': reflection['timestamp'],
+                    'context_vars': self.context_vars,
+                    'output': cached_code,
+                    'code_executed': False,
+                    'execution_result': None,
+                    'using_cached_code': True,
+                    'cached_dsl': cached_dsl,
+                }
+
+                # Execute the cached code
+                action_result = self._execute_generated_code(cached_code, action_result)
+
+                # Save human-readable companion files for cached code
+                if action_result.get('output'):
+                    self._save_generated_code_artifacts(action_result['output'], timestamp)
+
+                log_execution("Cached code executed", status='success')
+                return action_result
+
+        # Cache miss or cache skipped - proceed with phase parsing
+        # (This triggers enhancement LLM call via lazy-loaded @property phases)
         act_instructions = self.phases.get('act', '')
         if not act_instructions:
             raise ValueError("Markdown must define an 'Act' section")
@@ -1041,42 +1086,15 @@ class MarkdownRAVLExecutor:
         """
         ACT phase with DSL inference for code generation loops
 
-        Delegates core logic to CodeGenerator while handling caching,
-        code execution, and result persistence locally.
+        Delegates core logic to CodeGenerator while handling code generation,
+        execution, and result persistence.
+
+        Note: Cache checking is now done in act() before calling this method,
+        so this method only runs when cache misses or is skipped.
         """
         timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
 
-        # Check if caching should be skipped (from REFLECT phase)
-        skip_cache = reflection.get('skip_cache', False)
-        skip_reason = reflection.get('skip_cache_reason', '')
-
-        # Check for cached verified code (unless skipping)
-        cache_result = None if skip_cache else self._check_code_cache()
-        if cache_result:
-            cached_code, cached_dsl = cache_result
-            log_execution("Using cached verified code - executing...")
-            action_result = {
-                'timestamp': reflection['timestamp'],
-                'context_vars': self.context_vars,
-                'output': cached_code,
-                'code_executed': False,
-                'execution_result': None,
-                'using_cached_code': True,
-                'cached_dsl': cached_dsl,
-            }
-
-            # Execute the cached code
-            if self._should_attempt_code_generation():
-                action_result = self._execute_generated_code(cached_code, action_result)
-
-            # Save human-readable companion files for cached code
-            if action_result.get('output'):
-                self._save_generated_code_artifacts(action_result['output'], timestamp)
-
-            log_execution("Cached code executed", status='success')
-            return action_result
-
-        # Not cached - fetch Context7 docs if this is a data ingress loop
+        # Fetch Context7 docs if this is a data ingress loop
         context7_docs = None
         if self._is_data_ingress_loop():
             try:
@@ -1146,7 +1164,9 @@ class MarkdownRAVLExecutor:
         """
         try:
             # Choose appropriate executor based on loop type
-            if self._is_data_ingress_loop():
+            # If using cached code, skip phase check to avoid enhancement LLM call
+            using_cache = act_result.get('using_cached_code', False)
+            if self._is_data_ingress_loop(skip_phase_check=using_cache):
                 # Data ingestion loops need JSON output
                 global DataIngressExecutor
                 if DataIngressExecutor is None:
