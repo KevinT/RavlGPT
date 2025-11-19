@@ -35,6 +35,32 @@ class LoopDiscovery:
         self.framework_loops_dir = project_root / '.ravl' / 'ravl_loops'
         self.examples_dir = project_root / '.ravl' / 'examples'
 
+    def _build_namespace_from_path(self, loop_path: Path) -> str:
+        """
+        Build dot-separated namespace from loop path.
+
+        Converts hierarchical loop paths to namespaces for easy copy-paste.
+        Example: ravl_loops/parent/ravl_loops/child -> parent.child
+
+        Args:
+            loop_path: Path to loop directory
+
+        Returns:
+            Dot-separated namespace string
+        """
+        # Get path relative to project root
+        try:
+            rel_path = loop_path.relative_to(self.project_root)
+        except ValueError:
+            # If not relative to project root, use as-is
+            rel_path = loop_path
+
+        # Filter out 'ravl_loops' structural directories and build namespace
+        parts = [p for p in rel_path.parts if p != 'ravl_loops']
+
+        # Return dot-separated namespace
+        return '.'.join(parts)
+
     def find_loop(self, identifier: str) -> Path:
         """
         Find loop directory by name, hierarchical path, or full path
@@ -83,12 +109,18 @@ class LoopDiscovery:
                 return hierarchical_matches[0]
             elif len(hierarchical_matches) > 1:
                 # Ambiguous hierarchical path
-                matches_str = "\n".join([f"  {i+1}. {match}" for i, match in enumerate(hierarchical_matches)])
+                matches_str = "\n".join([
+                    f"  {i+1}. {self._build_namespace_from_path(match)}"
+                    for i, match in enumerate(hierarchical_matches)
+                ])
+                examples = "\n".join([
+                    f"  ./ravl {self._build_namespace_from_path(match)}"
+                    for match in hierarchical_matches
+                ])
                 raise ValueError(
                     f"Ambiguous loop path: '{identifier}'\n\n"
                     f"Multiple loops match this hierarchical path:\n{matches_str}\n\n"
-                    f"Use a more specific path to disambiguate:\n"
-                    f"  ./ravl {hierarchical_matches[0]}\n"
+                    f"Use a more specific namespace to disambiguate:\n{examples}\n"
                 )
             # If no hierarchical matches, fall through to name-based search
 
@@ -112,13 +144,18 @@ class LoopDiscovery:
 
         if len(matches) > 1:
             # COLLISION DETECTED - show all matches with helpful error
-            matches_str = "\n".join([f"  {i+1}. {match}" for i, match in enumerate(matches)])
+            matches_str = "\n".join([
+                f"  {i+1}. {self._build_namespace_from_path(match)}"
+                for i, match in enumerate(matches)
+            ])
+            examples = "\n".join([
+                f"  ./ravl {self._build_namespace_from_path(match)}"
+                for match in matches
+            ])
             raise ValueError(
                 f"Ambiguous loop name: '{identifier}'\n\n"
                 f"Multiple loops found with this name:\n{matches_str}\n\n"
-                f"Please use the full path to specify which one:\n"
-                f"  ./ravl {matches[0]}\n"
-                f"  ./ravl {matches[1]}\n"
+                f"Please use the namespace to specify which one:\n{examples}\n"
             )
 
         # Build list of searched locations
@@ -320,15 +357,20 @@ class LoopDiscovery:
 
         # Multiple matches - ambiguous
         matches_str = "\n".join([
-            f"  {i+1}. {scope}: {path}"
+            f"  {i+1}. {scope}: {self._build_namespace_from_path(path)}"
             for i, (scope, path) in enumerate(candidates)
+        ])
+        examples = "\n".join([
+            f"  {self._build_namespace_from_path(path)}"
+            for scope, path in candidates
         ])
         raise ValueError(
             f"Ambiguous loop name: '{loop_name}'\n\n"
             f"Multiple loops found:\n{matches_str}\n\n"
-            f"Fix: Use full path to disambiguate:\n"
+            f"Fix: Use namespace to disambiguate:\n"
             f"  delegate_to:\n"
-            f"    loop: {candidates[0][1].relative_to(self.project_root)}"
+            f"    loop: {self._build_namespace_from_path(candidates[0][1])}\n\n"
+            f"Or use one of these:\n{examples}"
         )
 
     def _merge_configs(self, base_config: Dict[str, Any], delegation: Dict[str, Any], wrapper_dir: Path) -> Dict[str, Any]:
