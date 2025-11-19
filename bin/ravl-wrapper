@@ -81,9 +81,22 @@ Running Loops:
   If multiple loops share the same name, you MUST use the full path.
   Use './ravl --list' to see all loops and detect name collisions.
 
+Loop Options:
+  --mode {fast|full}               Analysis mode (default: full)
+  --force-code-regeneration        Force fresh code generation, bypassing cache
+  --no-deep-learning               Skip verify and learn phases
+  --show-config                    Display resolved configuration
+  --show-execution                 Show code generation details
+  --quiet                          Suppress status messages
+  --timeout SECONDS                Execution timeout
+  --learning-path PATH             Override learning directory
+  --venv-path PATH                 Override venv location
+  --loop-dir PATH                  Override loop directory
+
 Examples:
   ./ravl external_drift --mode fast
   ./ravl frontier_delivery.my_loop --mode full
+  ./ravl my_loop --force-code-regeneration
   ./ravl --list
   ./ravl --clean
   ./ravl --new my_loop --content "# Reflect\n\n# Act\n\n# Verify\n\n# Learn"

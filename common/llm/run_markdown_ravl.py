@@ -206,12 +206,16 @@ class ConfigBasedRAVLRunner:
             for var_name, var_value in context_vars.items():
                 markdown_text = markdown_text.replace(f"{{{var_name}}}", var_value)
 
+            # Extract force_code_regeneration flag from args
+            force_code_regeneration = getattr(args, 'force_code_regeneration', False)
+
             # Initialize executor
             executor = MarkdownRAVLExecutor(
                 markdown_text=markdown_text,
                 loop_dir=self.loop_dir,
                 learnings_dir=learnings_dir,
-                context_vars=context_vars
+                context_vars=context_vars,
+                force_code_regeneration=force_code_regeneration
             )
 
             # ===== Step 1: REFLECT =====

@@ -573,6 +573,8 @@ class RAVLRunner:
         parser.add_argument('--show-execution', action='store_true',
                            help='Show execution learning details (code generation, DSL, caching). '
                                 'Default: only show domain learning progress.')
+        parser.add_argument('--force-code-regeneration', action='store_true',
+                           help='Force fresh code generation, bypassing cache for this run')
         return parser
 
     @staticmethod

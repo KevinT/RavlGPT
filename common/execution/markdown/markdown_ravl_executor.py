@@ -363,7 +363,8 @@ class MarkdownRAVLExecutor:
         loop_dir: Path,
         learnings_dir: Path,
         context_vars: Optional[Dict[str, str]] = None,
-        llm_provider: Optional[LLMProvider] = None
+        llm_provider: Optional[LLMProvider] = None,
+        force_code_regeneration: bool = False
     ):
         """
         Initialize executor
@@ -374,11 +375,13 @@ class MarkdownRAVLExecutor:
             learnings_dir: Path to this loop's learnings directory
             context_vars: Context variables (e.g., {"current role": "CTO"})
             llm_provider: LLM provider to use (defaults to Anthropic)
+            force_code_regeneration: Force fresh code generation, bypassing cache for this run
         """
         self.markdown_text = markdown_text
         self.loop_dir = loop_dir
         self.learnings_dir = learnings_dir
         self.context_vars = context_vars or {}
+        self.force_code_regeneration = force_code_regeneration
         self.used_interpretation = False  # Track if LLM interpretation was used
 
         # Find project root for venv/dependency resolution
@@ -532,7 +535,11 @@ class MarkdownRAVLExecutor:
         Returns:
             Tuple of (skip_cache: bool, reason: str)
         """
-        # Check 1: Config flag (explicit control)
+        # Check 1: Force regeneration flag (CLI override)
+        if self.force_code_regeneration:
+            return (True, "Force regeneration flag enabled (--force-code-regeneration)")
+
+        # Check 2: Config flag (explicit control)
         code_gen_config = self.config.get('code_generation', {})
         cache_enabled = code_gen_config.get('cache_code', True)
 
@@ -540,7 +547,7 @@ class MarkdownRAVLExecutor:
             reason = code_gen_config.get('cache_reason', 'Config disables code caching')
             return (True, reason)
 
-        # Check 2: LEARN's regeneration recommendation
+        # Check 3: LEARN's regeneration recommendation
         execution_learning_dir = self.learnings_dir / 'execution_learning'
         recommendation_file = execution_learning_dir / 'current_state' / 'regeneration_recommendation.json'
 
@@ -555,7 +562,7 @@ class MarkdownRAVLExecutor:
             except (IOError, json.JSONDecodeError):
                 pass
 
-        # Check 3: Domain verification pattern (fallback - same as cache_manager logic)
+        # Check 4: Domain verification pattern (fallback - same as cache_manager logic)
         loop_learning_dir = self.learnings_dir / 'loop_learning'
         if loop_learning_dir.exists():
             recent_attempts_dir = loop_learning_dir / 'recent_attempts'
