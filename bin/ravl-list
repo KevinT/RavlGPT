@@ -62,6 +62,9 @@ class RAVLListCommand(RAVLCLIBase):
         only_framework_loops = getattr(args, 'framework_loops', False)
         only_namespaces = getattr(args, 'namespaces_only', False)
 
+        # Capture filter text early (used for all output formats)
+        filter_text = getattr(args, 'namespace_filter', None)
+
         show_loops = not only_templates
         show_templates = not (only_project_loops or only_framework_loops)
 
@@ -106,6 +109,12 @@ class RAVLListCommand(RAVLCLIBase):
         if show_templates:
             templates = self._discover_templates()
 
+        # Apply filter to all lists if provided (works for all output formats)
+        if filter_text:
+            project_loops = self._filter_loops_by_text(project_loops, filter_text)
+            framework_loops = self._filter_loops_by_text(framework_loops, filter_text)
+            templates = self._filter_loops_by_text(templates, filter_text)
+
         # Check if we have anything to show
         if not project_loops and not framework_loops and not templates:
             self.print_warning("No RAVL loops or templates found")
@@ -113,7 +122,6 @@ class RAVLListCommand(RAVLCLIBase):
 
         # Handle namespaces-only output (takes precedence over other formats)
         if only_namespaces:
-            filter_text = getattr(args, 'namespace_filter', None)
             self._print_namespaces_only(
                 project_loops, framework_loops, templates,
                 as_json=args.json,
@@ -454,6 +462,30 @@ class RAVLListCommand(RAVLCLIBase):
 
         # Return dot-separated namespace
         return '.'.join(parts)
+
+    def _filter_loops_by_text(self, loops: List[Dict[str, Any]], filter_text: str) -> List[Dict[str, Any]]:
+        """
+        Filter loops by partial text matching in namespace.
+
+        Args:
+            loops: List of loop info dicts
+            filter_text: Text to search for (case-insensitive)
+
+        Returns:
+            Filtered list of loops
+        """
+        if not filter_text:
+            return loops
+
+        filter_lower = filter_text.lower()
+        filtered = []
+
+        for loop_info in loops:
+            namespace = self._build_loop_namespace(loop_info['path'])
+            if filter_lower in namespace.lower():
+                filtered.append(loop_info)
+
+        return filtered
 
     def _print_namespaces_only(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]], as_json: bool = False, filter_text: Optional[str] = None):
         """
