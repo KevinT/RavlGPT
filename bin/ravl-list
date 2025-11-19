@@ -60,6 +60,7 @@ class RAVLListCommand(RAVLCLIBase):
         only_templates = getattr(args, 'templates', False)
         only_project_loops = getattr(args, 'project_loops', False)
         only_framework_loops = getattr(args, 'framework_loops', False)
+        only_namespaces = getattr(args, 'namespaces_only', False)
 
         show_loops = not only_templates
         show_templates = not (only_project_loops or only_framework_loops)
@@ -109,6 +110,11 @@ class RAVLListCommand(RAVLCLIBase):
         if not project_loops and not framework_loops and not templates:
             self.print_warning("No RAVL loops or templates found")
             sys.exit(1)
+
+        # Handle namespaces-only output (takes precedence over other formats)
+        if only_namespaces:
+            self._print_namespaces_only(project_loops, framework_loops, templates, as_json=args.json)
+            return
 
         # Output format
         if args.json:
@@ -418,6 +424,75 @@ class RAVLListCommand(RAVLCLIBase):
         if framework_loops or templates:
             self._print_framework_resources(framework_loops, templates)
 
+    def _build_loop_namespace(self, loop_path: Path) -> str:
+        """
+        Build dot-separated namespace from loop path.
+
+        Converts hierarchical loop paths to namespaces for easy copy-paste.
+        Example: ravl_loops/parent/ravl_loops/child -> parent.child
+
+        Args:
+            loop_path: Path to loop directory
+
+        Returns:
+            Dot-separated namespace string
+        """
+        # Get path relative to project root
+        try:
+            rel_path = loop_path.relative_to(self.project_root)
+        except ValueError:
+            # If not relative to project root, try framework root
+            rel_path = loop_path.relative_to(self.project_root / '.ravl')
+
+        # Filter out 'ravl_loops' structural directories and build namespace
+        parts = [p for p in rel_path.parts if p != 'ravl_loops']
+
+        # Return dot-separated namespace
+        return '.'.join(parts)
+
+    def _print_namespaces_only(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]], as_json: bool = False):
+        """
+        Print only loop namespaces in simple list format.
+
+        Output is one namespace per line for easy copy-paste.
+
+        Args:
+            project_loops: List of project loop info dicts
+            framework_loops: List of framework loop info dicts
+            templates: List of template info dicts
+            as_json: If True, output as JSON array instead of line-by-line
+        """
+        namespaces = []
+
+        # Collect all namespaces
+        for loop_info in project_loops:
+            namespace = self._build_loop_namespace(loop_info['path'])
+            namespaces.append(namespace)
+
+        for loop_info in framework_loops:
+            namespace = self._build_loop_namespace(loop_info['path'])
+            namespaces.append(namespace)
+
+        for template_info in templates:
+            namespace = self._build_loop_namespace(template_info['path'])
+            namespaces.append(namespace)
+
+        # Sort alphabetically for easier browsing
+        namespaces.sort()
+
+        # Output
+        if as_json:
+            output = {
+                'project_loops': [self._build_loop_namespace(l['path']) for l in project_loops],
+                'framework_loops': [self._build_loop_namespace(l['path']) for l in framework_loops],
+                'templates': [self._build_loop_namespace(t['path']) for t in templates]
+            }
+            print(json.dumps(output, indent=2))
+        else:
+            # Simple line-by-line output
+            for namespace in namespaces:
+                print(namespace)
+
     def _print_flat_with_templates(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
         """Print loops and templates in flat view"""
         # Check for and display collision warnings first
@@ -437,27 +512,31 @@ class RAVLListCommand(RAVLCLIBase):
         # Add project loops
         for loop_info in project_loops:
             loop_name = loop_info['config']['name']
+            namespace = self._build_loop_namespace(loop_info['path'])
             output['project_loops'].append({
                 'name': loop_name,
+                'namespace': namespace,
                 'description': loop_info['config'].get('description', ''),
                 'emoji': loop_info['config'].get('emoji', '➰'),
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"./ravl {loop_name}"
+                'run_command': f"./ravl {namespace}"
             })
 
         # Add framework loops
         for loop_info in framework_loops:
             loop_name = loop_info['config']['name']
+            namespace = self._build_loop_namespace(loop_info['path'])
             output['framework_loops'].append({
                 'name': loop_name,
+                'namespace': namespace,
                 'description': loop_info['config'].get('description', ''),
                 'emoji': loop_info['config'].get('emoji', '➰'),
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"./ravl {loop_name}"
+                'run_command': f"./ravl {namespace}"
             })
 
         # Add templates
@@ -652,6 +731,11 @@ def main():
         '--templates',
         action='store_true',
         help='Show only available templates'
+    )
+    parser.add_argument(
+        '--namespaces-only',
+        action='store_true',
+        help='Show only loop namespaces (dot-separated paths) for easy copy-paste'
     )
     parser.add_argument(
         '--loop-dir',
