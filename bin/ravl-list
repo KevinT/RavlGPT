@@ -374,54 +374,8 @@ class RAVLListCommand(RAVLCLIBase):
             is_child_last = (idx == len(children) - 1)
             self._print_loop_tree_child(child, child_prefix, is_child_last)
 
-    def _print_collision_warnings(self, all_loops: List[Dict[str, Any]]):
-        """
-        Detect and print warnings about loops with duplicate names
-
-        Args:
-            all_loops: List of all loop dictionaries
-        """
-        # Group loops by name
-        name_groups = {}
-        for loop in all_loops:
-            name = loop['path'].name
-            if name not in name_groups:
-                name_groups[name] = []
-            name_groups[name].append(loop)
-
-        # Find collisions (names with multiple loops)
-        collisions = {name: loops for name, loops in name_groups.items() if len(loops) > 1}
-
-        if not collisions:
-            return
-
-        # Print warning header
-        self.print_warning("⚠️  NAME COLLISIONS DETECTED")
-        print(file=sys.stderr)
-        print("The following loop names are ambiguous (multiple loops share the same name):", file=sys.stderr)
-        print("You must use full paths to run these loops.\n", file=sys.stderr)
-
-        # Print each collision group
-        for name, loops in sorted(collisions.items()):
-            print(f"Loop name: '{name}' ({len(loops)} instances)", file=sys.stderr)
-            for loop in loops:
-                rel_path = loop['path'].relative_to(self.project_root)
-                print(f"  → {rel_path}", file=sys.stderr)
-            print(file=sys.stderr)
-
-        print("To run a colliding loop, use its full path:", file=sys.stderr)
-        first_collision = list(collisions.values())[0]
-        if first_collision:
-            rel_path = first_collision[0]['path'].relative_to(self.project_root)
-            print(f"  ./ravl {rel_path}", file=sys.stderr)
-        print(file=sys.stderr)
-        print(f"{'='*80}\n", file=sys.stderr)
-
     def _print_tree_with_templates(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
         """Print loops and templates in tree view"""
-        # Check for and display collision warnings first
-        self._print_collision_warnings(project_loops + framework_loops)
-
         # Print project loops only
         if project_loops:
             self.print_header("[Project Loops]", "")
@@ -467,25 +421,41 @@ class RAVLListCommand(RAVLCLIBase):
         """
         Filter loops by partial text matching in namespace.
 
+        When filtering for tree view, also includes parent loops so the hierarchy can be built.
+
         Args:
             loops: List of loop info dicts
             filter_text: Text to search for (case-insensitive)
 
         Returns:
-            Filtered list of loops
+            Filtered list of loops (including necessary parents for tree structure)
         """
         if not filter_text:
             return loops
 
         filter_lower = filter_text.lower()
-        filtered = []
 
+        # Create lookup by path
+        loops_by_path = {loop['path']: loop for loop in loops}
+
+        # Find directly matching loops
+        matching_loops = set()
         for loop_info in loops:
             namespace = self._build_loop_namespace(loop_info['path'])
             if filter_lower in namespace.lower():
-                filtered.append(loop_info)
+                matching_loops.add(loop_info['path'])
 
-        return filtered
+        # Include all parent loops for tree structure
+        loops_to_include = set(matching_loops)
+        for loop_path in matching_loops:
+            # Walk up parent chain (only for loops that have parents, not templates)
+            current = loops_by_path.get(loop_path)
+            while current and current.get('parent'):
+                loops_to_include.add(current['parent'])
+                current = loops_by_path.get(current['parent'])
+
+        # Return loops in original order
+        return [loop for loop in loops if loop['path'] in loops_to_include]
 
     def _print_namespaces_only(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]], as_json: bool = False, filter_text: Optional[str] = None):
         """
@@ -559,8 +529,6 @@ class RAVLListCommand(RAVLCLIBase):
 
     def _print_flat_with_templates(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
         """Print loops and templates in flat view"""
-        # Check for and display collision warnings first
-        self._print_collision_warnings(project_loops + framework_loops)
         self._print_flat(project_loops, framework_loops)
         if templates:
             self._print_templates(templates)
