@@ -35,16 +35,16 @@ Examples:
     ravl-clone strategic_coherence my_handbook_monitoring
 
     # Clone to nested location under existing parent
-    ravl-clone strategic_coherence frontier_engineering.my_monitoring
-    # Creates: ravl_loops/frontier_engineering/ravl_loops/my_monitoring/
+    ravl-clone strategic_coherence frontier_delivery.my_monitoring
+    # Creates: ravl_loops/frontier_delivery/ravl_loops/my_monitoring/
 
     # Clone to deeply nested location
-    ravl-clone content_coherence frontier_engineering.context_management.my_checker
-    # Creates: ravl_loops/frontier_engineering/ravl_loops/context_management/ravl_loops/my_checker/
+    ravl-clone content_coherence frontier_delivery.context_management.my_checker
+    # Creates: ravl_loops/frontier_delivery/ravl_loops/context_management/ravl_loops/my_checker/
 
     # Clone child from nested template to nested destination
-    ravl-clone strategic_coherence.content_coherence frontier_engineering.strategic_coherence.content_coherence
-    # Creates: ravl_loops/frontier_engineering/ravl_loops/strategic_coherence/ravl_loops/content_coherence/
+    ravl-clone strategic_coherence.content_coherence frontier_delivery.strategic_coherence.content_coherence
+    # Creates: ravl_loops/frontier_delivery/ravl_loops/strategic_coherence/ravl_loops/content_coherence/
 
     # Clone to custom directory
     ravl-clone data_ingress my_api --target ./custom_dir/
@@ -445,9 +445,9 @@ class RAVLCloneCommand(RAVLCLIBase):
 
         Example:
             base_path = /project/ravl_loops/
-            parent_segments = ['frontier_engineering', 'context_management']
+            parent_segments = ['frontier_delivery', 'context_management']
             loop_name = 'my_loop'
-            Returns: /project/ravl_loops/frontier_engineering/ravl_loops/context_management/ravl_loops/my_loop/
+            Returns: /project/ravl_loops/frontier_delivery/ravl_loops/context_management/ravl_loops/my_loop/
         """
         current_path = base_path
 

@@ -58,7 +58,7 @@ class LoopDiscovery:
         Examples:
             find_loop('my_loop')  # Name only
             find_loop('context_ingestion.fetch_fe_content')  # Hierarchical
-            find_loop('frontier_engineering.context_ingestion.fetch_fe_content')  # More specific
+            find_loop('frontier_delivery.context_ingestion.fetch_fe_content')  # More specific
         """
         # Check if it's a direct path
         path = Path(identifier)
@@ -528,7 +528,7 @@ class LoopDiscovery:
             True if all segments appear in order in the loop path
 
         Example:
-            loop_path: /project/ravl_loops/frontier_engineering/ravl_loops/context_ingestion/fetch_fe_content/
+            loop_path: /project/ravl_loops/frontier_delivery/ravl_loops/context_ingestion/fetch_fe_content/
             segments: ['context_ingestion', 'fetch_fe_content']
             Returns: True (both segments appear in order)
         """

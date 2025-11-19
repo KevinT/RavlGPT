@@ -129,7 +129,7 @@ loop_learning/
 1. **Top-level parents CANNOT see each other's learning**
    - Enforces organizational separation
    - Each top-level parent is isolated
-   - Example: `clickup_intelligence/` cannot read `frontier_engineering/` learning
+   - Example: `clickup_intelligence/` cannot read `frontier_delivery/` learning
 
 2. **Child loops CAN see:**
    - Their own learning (read/write)
@@ -153,7 +153,7 @@ ravl_loops/
 │       │   └── learnings/
 │       └── team_workload/         # Child of A (sibling of task_velocity)
 │           └── learnings/
-├── frontier_engineering/          # Top-level parent B (ISOLATED from A)
+├── frontier_delivery/          # Top-level parent B (ISOLATED from A)
 │   ├── learnings/
 │   └── ravl_loops/
 │       └── context_management/    # Child of B
@@ -167,11 +167,11 @@ ravl_loops/
 | `clickup_intelligence` | Own, children (`task_velocity`, `team_workload`) |
 | `task_velocity` | Own, parent (`clickup_intelligence`), sibling (`team_workload`) |
 | `team_workload` | Own, parent (`clickup_intelligence`), sibling (`task_velocity`) |
-| `frontier_engineering` | Own, children (`context_management`) |
-| `context_management` | Own, parent (`frontier_engineering`) |
+| `frontier_delivery` | Own, children (`context_management`) |
+| `context_management` | Own, parent (`frontier_delivery`) |
 
 **Isolation Enforcement**:
-- `clickup_intelligence` CANNOT read `frontier_engineering` learning
+- `clickup_intelligence` CANNOT read `frontier_delivery` learning
 - `task_velocity` CANNOT read `context_management` learning (different top-level parent)
 
 ---

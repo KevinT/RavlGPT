@@ -259,7 +259,7 @@ class RAVLRunner:
                                 parent_learning_path = (parent_dir / parent_learning_path).resolve()
 
                             # Build child path: collect all intermediate loop names between parent and child
-                            # Example: parent=frontier_engineering, child=context_ingestion
+                            # Example: parent=frontier_delivery, child=context_ingestion
                             # Intermediate: context_management
                             # Result: parent_path/context_management/context_ingestion/learnings
                             child_segments = []

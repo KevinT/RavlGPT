@@ -76,14 +76,14 @@ Commands:
 
 Running Loops:
   By name:     ./ravl strategic_context_sourcing --mode fast
-  By path:     ./ravl frontier_engineering.strategic_context_sourcing
+  By path:     ./ravl frontier_delivery.strategic_context_sourcing
 
   If multiple loops share the same name, you MUST use the full path.
   Use './ravl --list' to see all loops and detect name collisions.
 
 Examples:
   ./ravl external_drift --mode fast
-  ./ravl frontier_engineering.my_loop --mode full
+  ./ravl frontier_delivery.my_loop --mode full
   ./ravl --list
   ./ravl --clean
   ./ravl --new my_loop --content "# Reflect\n\n# Act\n\n# Verify\n\n# Learn"

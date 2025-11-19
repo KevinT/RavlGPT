@@ -57,9 +57,9 @@ Examples:
         --config '{"description": "Custom description", "emoji": "🎯"}'
 
     # Create deeply nested loop
-    ravl --new frontier_engineering.context_management.strategy_alignment \\
+    ravl --new frontier_delivery.context_management.strategy_alignment \\
         --content 'Align strategy with context'
-    # Creates: ravl_loops/frontier_engineering/ravl_loops/context_management/ravl_loops/strategy_alignment/
+    # Creates: ravl_loops/frontier_delivery/ravl_loops/context_management/ravl_loops/strategy_alignment/
 
     # AVOID: Backticks in double quotes (shell executes them as commands!)
     ravl --new my_loop --content "Write `Hello RAVL!` here"  # ❌ Shell runs `Hello RAVL!`
@@ -297,9 +297,9 @@ class RAVLNewLoopCommand(RAVLCLIBase):
 
         Example:
             base_path = /project/ravl_loops/
-            parent_segments = ['frontier_engineering', 'context_management']
+            parent_segments = ['frontier_delivery', 'context_management']
             loop_name = 'my_loop'
-            Returns: /project/ravl_loops/frontier_engineering/ravl_loops/context_management/ravl_loops/my_loop/
+            Returns: /project/ravl_loops/frontier_delivery/ravl_loops/context_management/ravl_loops/my_loop/
         """
         current_path = base_path
 
