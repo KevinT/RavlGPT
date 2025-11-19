@@ -87,6 +87,7 @@ sys.path.insert(0, str(_current / 'common'))
 sys.path.insert(0, str(_current / 'common' / 'cli'))
 
 from ravl_cli_base import RAVLCLIBase
+from loop_discovery import LoopDiscovery
 
 
 class RAVLNewLoopCommand(RAVLCLIBase):
@@ -101,6 +102,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
         self.project_root = self.find_project_root()
         self.ravl_dir = self.project_root / '.ravl'
         self.project_loops_dir = project_loops_dir if project_loops_dir else (self.project_root / 'ravl_loops')
+        self.discovery = LoopDiscovery(self.project_root, loops_dir=project_loops_dir)
 
     def run(self, args: argparse.Namespace):
         """
@@ -285,7 +287,11 @@ class RAVLNewLoopCommand(RAVLCLIBase):
 
     def _build_nested_path(self, base_path: Path, parent_segments: list[str], loop_name: str) -> Path:
         """
-        Build physical path with ravl_loops/ separators for nested hierarchy
+        Build physical path for new loop using actual parent location from LoopDiscovery
+
+        Uses LoopDiscovery to find the actual parent location, then creates child under it.
+        This ensures children are created in the correct location even when parents
+        are nested deep in the hierarchy.
 
         Args:
             base_path: Base directory (e.g., project_root/ravl_loops/)
@@ -297,20 +303,35 @@ class RAVLNewLoopCommand(RAVLCLIBase):
 
         Example:
             base_path = /project/ravl_loops/
-            parent_segments = ['frontier_delivery', 'context_management']
+            parent_segments = ['delivery_enablement_system']
             loop_name = 'my_loop'
-            Returns: /project/ravl_loops/frontier_delivery/ravl_loops/context_management/ravl_loops/my_loop/
+            If delivery_enablement_system lives at: experimental/delivery_enablement_system/
+            Returns: /project/ravl_loops/experimental/ravl_loops/delivery_enablement_system/ravl_loops/my_loop/
         """
-        current_path = base_path
+        if not parent_segments:
+            # No parent - create directly under base_path
+            return base_path / loop_name
 
-        for parent in parent_segments:
-            current_path = current_path / parent / 'ravl_loops'
-
-        return current_path / loop_name
+        # Use LoopDiscovery to find the actual parent location
+        parent_path_str = '.'.join(parent_segments)
+        try:
+            parent_loop_dir = self.discovery.find_loop(parent_path_str)
+            # Create child under parent's ravl_loops/ subdirectory
+            return parent_loop_dir / 'ravl_loops' / loop_name
+        except ValueError:
+            # Parent not found - validation should have caught this, but fall back to naive path
+            # This shouldn't happen if _validate_parent_chain was called first
+            current_path = base_path
+            for parent in parent_segments:
+                current_path = current_path / parent / 'ravl_loops'
+            return current_path / loop_name
 
     def _validate_parent_chain(self, parent_segments: list[str], base_path: Path) -> Tuple[bool, Optional[str]]:
         """
         Validate that all parents in the chain are valid RAVL loops
+
+        Uses LoopDiscovery to find parent loops, allowing them to exist anywhere in the hierarchy.
+        This is consistent with how execution commands find loops.
 
         Args:
             parent_segments: List of parent loop names in hierarchy
@@ -320,36 +341,36 @@ class RAVLNewLoopCommand(RAVLCLIBase):
             Tuple of (success, error_message)
 
         Validation:
-            - Each parent must exist
+            - Each parent must exist and be findable by LoopDiscovery
             - Each parent must be a valid RAVL loop (has config/ravl.yml)
         """
-        current_path = base_path
-
         for i, parent in enumerate(parent_segments):
-            parent_loop_dir = current_path / parent
+            # Build parent path up to this point (dot notation)
+            parent_path_str = '.'.join(parent_segments[:i+1])
 
-            # Check if parent exists
-            if not parent_loop_dir.exists():
-                parent_path_str = '.'.join(parent_segments[:i+1])
+            try:
+                # Use LoopDiscovery to find the parent loop (can find it anywhere)
+                parent_loop_dir = self.discovery.find_loop(parent_path_str)
+
+                # Validate it's a proper RAVL loop
+                if not self._is_valid_ravl_loop(parent_loop_dir):
+                    return (False,
+                           f"Parent directory exists but is not a valid RAVL loop: {parent}\n"
+                           f"  Path: {parent_loop_dir}\n"
+                           f"  Expected: {parent_loop_dir}/config/ravl.yml\n"
+                           f"  \n"
+                           f"  Fix: Ensure {parent} is a complete RAVL loop with config")
+
+            except ValueError as e:
+                # LoopDiscovery couldn't find the parent
                 return (False,
                        f"Parent loop not found: {parent}\n"
-                       f"  Expected at: {parent_loop_dir}\n"
                        f"  Full parent path: {parent_path_str}\n"
+                       f"  \n"
+                       f"  {str(e)}\n"
                        f"  \n"
                        f"  Create the parent loop first:\n"
                        f"    ./ravl --new {parent_path_str} --content \"...\"")
-
-            # Check if parent is a valid RAVL loop
-            if not self._is_valid_ravl_loop(parent_loop_dir):
-                return (False,
-                       f"Parent directory exists but is not a valid RAVL loop: {parent}\n"
-                       f"  Path: {parent_loop_dir}\n"
-                       f"  Expected: {parent_loop_dir}/config/ravl.yml\n"
-                       f"  \n"
-                       f"  Fix: Ensure {parent} is a complete RAVL loop with config")
-
-            # Move to next level (ravl_loops/ subdirectory)
-            current_path = parent_loop_dir / 'ravl_loops'
 
         return (True, None)
 
