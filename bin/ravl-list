@@ -113,7 +113,12 @@ class RAVLListCommand(RAVLCLIBase):
 
         # Handle namespaces-only output (takes precedence over other formats)
         if only_namespaces:
-            self._print_namespaces_only(project_loops, framework_loops, templates, as_json=args.json)
+            filter_text = getattr(args, 'namespace_filter', None)
+            self._print_namespaces_only(
+                project_loops, framework_loops, templates,
+                as_json=args.json,
+                filter_text=filter_text
+            )
             return
 
         # Output format
@@ -450,7 +455,7 @@ class RAVLListCommand(RAVLCLIBase):
         # Return dot-separated namespace
         return '.'.join(parts)
 
-    def _print_namespaces_only(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]], as_json: bool = False):
+    def _print_namespaces_only(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]], as_json: bool = False, filter_text: Optional[str] = None):
         """
         Print only loop namespaces in simple list format.
 
@@ -461,6 +466,7 @@ class RAVLListCommand(RAVLCLIBase):
             framework_loops: List of framework loop info dicts
             templates: List of template info dicts
             as_json: If True, output as JSON array instead of line-by-line
+            filter_text: Optional filter string for partial matching (case-insensitive)
         """
         namespaces = []
 
@@ -480,13 +486,39 @@ class RAVLListCommand(RAVLCLIBase):
         # Sort alphabetically for easier browsing
         namespaces.sort()
 
+        # Apply filter if provided
+        if filter_text:
+            filter_lower = filter_text.lower()
+            namespaces = [ns for ns in namespaces if filter_lower in ns.lower()]
+
         # Output
         if as_json:
-            output = {
-                'project_loops': [self._build_loop_namespace(l['path']) for l in project_loops],
-                'framework_loops': [self._build_loop_namespace(l['path']) for l in framework_loops],
-                'templates': [self._build_loop_namespace(t['path']) for t in templates]
-            }
+            # Build filtered output for JSON
+            if filter_text:
+                filter_lower = filter_text.lower()
+                output = {
+                    'project_loops': [
+                        self._build_loop_namespace(l['path'])
+                        for l in project_loops
+                        if filter_lower in self._build_loop_namespace(l['path']).lower()
+                    ],
+                    'framework_loops': [
+                        self._build_loop_namespace(l['path'])
+                        for l in framework_loops
+                        if filter_lower in self._build_loop_namespace(l['path']).lower()
+                    ],
+                    'templates': [
+                        self._build_loop_namespace(t['path'])
+                        for t in templates
+                        if filter_lower in self._build_loop_namespace(t['path']).lower()
+                    ]
+                }
+            else:
+                output = {
+                    'project_loops': [self._build_loop_namespace(l['path']) for l in project_loops],
+                    'framework_loops': [self._build_loop_namespace(l['path']) for l in framework_loops],
+                    'templates': [self._build_loop_namespace(t['path']) for t in templates]
+                }
             print(json.dumps(output, indent=2))
         else:
             # Simple line-by-line output
@@ -742,6 +774,12 @@ def main():
         type=str,
         default=None,
         help='Override loop directory path (highest priority: CLI > .env > default)'
+    )
+    parser.add_argument(
+        'namespace_filter',
+        nargs='?',
+        default=None,
+        help='Optional filter: show only namespaces containing this text (case-insensitive)'
     )
 
     args = parser.parse_args()
