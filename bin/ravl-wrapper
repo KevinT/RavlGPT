@@ -71,7 +71,9 @@ Commands:
   --new               Create a new RAVL loop from scratch
   --show-config       Display resolved configuration without executing
   --execution-health  Analyze code generation and DSL (solution space)
+                      Use --focus "text" to bias analysis toward specific concerns
   --loop-health       Analyze domain learning and patterns (problem space)
+                      Use --focus "text" to bias analysis toward specific concerns
   --help              Show this help message
 
 Running Loops:
@@ -102,7 +104,9 @@ Examples:
   ./ravl --new my_loop --content "# Reflect\n\n# Act\n\n# Verify\n\n# Learn"
   ./ravl LOOP_NAME --show-config
   ./ravl --execution-health org_context
+  ./ravl --execution-health my_loop --focus "Look for dependency conflicts"
   ./ravl --loop-health strategy_coherence
+  ./ravl --loop-health my_loop --focus "have a look why there's no data"
 
 For more information, see the README.md file.
 EOF

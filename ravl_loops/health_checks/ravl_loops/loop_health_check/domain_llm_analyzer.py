@@ -58,7 +58,8 @@ class DomainLLMAnalyzer:
     def analyze_domain_health(
         self,
         domain_context: Dict[str, Any],
-        learned_patterns: Optional[List[Dict[str, Any]]] = None
+        learned_patterns: Optional[List[Dict[str, Any]]] = None,
+        focus_area: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Analyze domain learning health using LLM - ALWAYS calls LLM with full context.
@@ -69,6 +70,7 @@ class DomainLLMAnalyzer:
         Args:
             domain_context: Full domain context (models, verification, attempts, patterns, metrics)
             learned_patterns: Previous successful diagnostics (few-shot learning)
+            focus_area: Optional custom focus area to bias analysis (e.g., "Check for API rate limiting")
 
         Returns:
             Diagnostic results with assessment, root cause, steps, and confidence
@@ -80,7 +82,8 @@ class DomainLLMAnalyzer:
         # Build prompt with FULL context (not just failures!)
         prompt = self._build_diagnostic_prompt(
             domain_info=domain_info,
-            learned_patterns_examples=examples
+            learned_patterns_examples=examples,
+            focus_area=focus_area
         )
 
         # Call LLM for comprehensive domain health analysis
@@ -176,10 +179,26 @@ class DomainLLMAnalyzer:
             return f.read()
 
     def _build_diagnostic_prompt(
-        self, domain_info: str, learned_patterns_examples: str
+        self, domain_info: str, learned_patterns_examples: str, focus_area: Optional[str] = None
     ) -> str:
-        """Build comprehensive domain health diagnostic prompt"""
+        """Build comprehensive domain health diagnostic prompt with optional focus"""
+        # Build focus instruction if user provided focus area
+        if focus_area:
+            focus_instruction = f"""
+**USER'S SPECIFIC DIAGNOSTIC CONCERN:**
+
+The user has requested focused analysis on: "{focus_area}"
+
+Interpret this as a diagnostic concern about the loop being analyzed. Bias your health
+check to specifically investigate this area. If you find issues related to this concern,
+ensure they are prominently addressed in your ROOT_CAUSE and STEPS sections.
+
+"""
+        else:
+            focus_instruction = ""
+
         return self.prompt_domain_diagnostic.format(
+            focus_instruction=focus_instruction,
             domain_info=domain_info,
             learned_patterns_examples=learned_patterns_examples
         )

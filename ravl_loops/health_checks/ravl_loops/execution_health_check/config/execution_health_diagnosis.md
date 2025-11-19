@@ -28,7 +28,7 @@ Items specific to the problem space the ravl is working in that are not related 
 
 {learned_patterns_examples}
 
-## Your Analysis Task
+{focus_instruction}## Your Analysis Task
 
 You have been given the RAW execution learning files from the loop's `execution_learning/` directory.
 

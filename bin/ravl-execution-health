@@ -5,11 +5,12 @@ RAVL Execution Health Check - Analyze code generation, DSL stability, and depend
 Focuses on SOLUTION SPACE: How to make the infrastructure work.
 
 Usage:
-    ravl-execution-health <loop-name>
+    ravl-execution-health <loop-name> [--focus TEXT]
 
 Examples:
     ravl-execution-health org_context
-    ravl-execution-health strategy_coherence
+    ravl-execution-health strategy_coherence --focus "Look for dependency conflicts"
+    ravl-execution-health my_loop --focus "something's wrong with code generation"
 
 Analyzes:
 - DSL iteration stability (converging vs unstable)
@@ -17,24 +18,40 @@ Analyzes:
 - Code cache effectiveness
 - Recent execution success rates
 
-Runs: ./.ravl/bin/ravl health_checks/execution_health_check --loop <loop-name>
+The --focus parameter biases the analysis toward specific concerns (formal or casual phrasing).
+
+Runs: ./.ravl/bin/ravl health_checks.execution_health_check --loop <loop-name>
 """
 
 import sys
 import subprocess
 from pathlib import Path
 import difflib
+import argparse
 
-if len(sys.argv) < 2:
-    print(__doc__)
-    sys.exit(1)
+# Parse arguments
+parser = argparse.ArgumentParser(
+    description='RAVL Execution Health Check - Analyze code generation and DSL stability',
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    epilog="""
+Examples:
+  ravl-execution-health org_context
+  ravl-execution-health my_loop --focus "Look for dependency conflicts"
+  ravl-execution-health my_loop --focus "something's wrong with code generation"
+"""
+)
+parser.add_argument('loop_name', help='Target loop to analyze')
+parser.add_argument('--focus', type=str, default=None,
+                    help='Custom focus area for health analysis (e.g., "Look for dependency conflicts")')
+
+args = parser.parse_args()
 
 # Find framework directory
 _current = Path(__file__).resolve().parent.parent
 _framework_dir = _current  # .ravl directory
 project_root = _framework_dir.parent
 
-loop_name = sys.argv[1]
+loop_name = args.loop_name
 
 # Validate that the loop exists before running health check
 sys.path.insert(0, str(_framework_dir / "common"))
@@ -81,18 +98,18 @@ except Exception as e:
 # Build ravl command
 ravl_cmd = [
     str(_framework_dir / "bin" / "ravl"),
-    "health_checks/execution_health_check",
+    "health_checks.execution_health_check",
     "--quiet"  # Suppress framework banners, show only health diagnostics
 ]
 
-# Pass through remaining arguments
-for arg in sys.argv[2:]:
-    ravl_cmd.append(arg)
-
-# Run the health check through RAVL runner with target loop in environment
+# Run the health check through RAVL runner with target loop and focus in environment
 import os
 env = os.environ.copy()
 env["HEALTH_CHECK_TARGET_LOOP"] = loop_name
+
+# Pass focus parameter via environment variable if provided
+if args.focus:
+    env["HEALTH_CHECK_FOCUS"] = args.focus
 
 try:
     result = subprocess.run(ravl_cmd, cwd=str(project_root), env=env)

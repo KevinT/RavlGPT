@@ -62,6 +62,9 @@ class ExecutionHealthCheckLoop(BaseRAVLLoop):
         if not self.target_loop_name:
             raise ValueError("No target loop specified. Use: ./ravl --execution-health <loop_name>")
 
+        # Optional focus area for biasing analysis
+        self.focus_area = os.environ.get('HEALTH_CHECK_FOCUS', None)
+
         # Find target loop
         self.target_loop_dir = self._find_target_loop()
 
@@ -223,7 +226,8 @@ class ExecutionHealthCheckLoop(BaseRAVLLoop):
         # ALWAYS call LLM analyzer with FULL context
         diagnosis = self.llm_analyzer.analyze_execution_health(
             execution_context=execution_context,
-            learned_patterns=patterns[:5]
+            learned_patterns=patterns[:5],
+            focus_area=self.focus_area
         )
 
         # Save diagnostic turn for thread continuity

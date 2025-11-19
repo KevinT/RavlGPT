@@ -28,7 +28,7 @@ You are a diagnostic expert analyzing RAVL loop DOMAIN LEARNING health (not exec
 
 {learned_patterns_examples}
 
-## Your Analysis Task
+{focus_instruction}## Your Analysis Task
 
 You have been given the RAW loop learning files from the loop's `loop_learning/` directory.
 
