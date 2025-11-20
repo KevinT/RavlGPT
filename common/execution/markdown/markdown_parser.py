@@ -86,9 +86,17 @@ class MarkdownParser:
         # Well-defined loops will have minimal changes; incomplete loops will be enhanced
         if markdown_text.strip():
             if self.llm:
-                interpreted = self._interpret_free_form_markdown(markdown_text, phases)
-                # Re-parse the interpreted markdown which should now have explicit phases
-                return self._parse_markdown_internal(interpreted)
+                try:
+                    interpreted = self._interpret_free_form_markdown(markdown_text, phases)
+                    # Re-parse the interpreted markdown which should now have explicit phases
+                    return self._parse_markdown_internal(interpreted)
+                except Exception as e:
+                    log_execution(
+                        f"⚠️  LLM enhancement failed: {e}. Using original markdown.",
+                        status='warning'
+                    )
+                    # Fallback to original phases if enhancement fails
+                    return phases
 
         return phases
 
@@ -144,13 +152,21 @@ class MarkdownParser:
 
         # Enhance with reflection context (includes fresh domain_guidance)
         if markdown_text.strip() and self.llm:
-            interpreted = self._interpret_free_form_markdown(
-                markdown_text,
-                phases,
-                reflection=reflection  # Pass reflection context
-            )
-            # Re-parse the interpreted markdown
-            return self._parse_markdown_internal(interpreted)
+            try:
+                interpreted = self._interpret_free_form_markdown(
+                    markdown_text,
+                    phases,
+                    reflection=reflection  # Pass reflection context
+                )
+                # Re-parse the interpreted markdown
+                return self._parse_markdown_internal(interpreted)
+            except Exception as e:
+                log_execution(
+                    f"⚠️  LLM enhancement failed: {e}. Using original markdown.",
+                    status='warning'
+                )
+                # Fallback to original phases if enhancement fails
+                return phases
 
         return phases
 

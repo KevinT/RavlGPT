@@ -375,11 +375,30 @@ class ConfigBasedRAVLRunner:
                     # Continue to LEARN phase to record the failure
 
                 RAVLRunner.print_banner("Step 4 of 4: [L]EARN", "")
-                executor.learn(verification, action_result)
+                try:
+                    executor.learn(verification, action_result)
 
-                # Calculate duration
-                duration = time.time() - start_time
-                log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
+                    # Calculate duration
+                    duration = time.time() - start_time
+                    log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
+                except Exception as learn_error:
+                    duration = time.time() - start_time
+                    log_message(f"Error during LEARN phase: {learn_error}", status='error', indent=3)
+                    log_message(f"Completed at {duration:.1f}s (with LEARN error)", status='warning', indent=3)
+
+                    # Save error artifacts for debugging
+                    error_file = learnings_dir / 'current_state' / 'learn_phase_error.json'
+                    error_file.parent.mkdir(parents=True, exist_ok=True)
+                    with open(error_file, 'w', encoding='utf-8') as f:
+                        json.dump({
+                            'error': str(learn_error),
+                            'error_type': type(learn_error).__name__,
+                            'timestamp': datetime.now().isoformat(),
+                            'phase': 'learn',
+                            'verification': verification,
+                            'action_result': action_result
+                        }, f, indent=2)
+                    log_message(f"Error details saved to: {error_file.relative_to(Path.cwd())}", status='info', indent=3)
 
             # Show interpretation summary if LLM interpreted the loop
             if executor.used_interpretation:

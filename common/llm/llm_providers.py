@@ -130,15 +130,29 @@ class OpenAIProvider(LLMProvider):
         self.top_p = top_p
         self.client = openai.OpenAI(api_key=self.api_key)
 
+    def _is_reasoning_model(self) -> bool:
+        """
+        Check if model is a reasoning model (GPT-5, o1, o3 series).
+        These models use max_completion_tokens instead of max_tokens.
+        """
+        model_lower = self.model.lower()
+        reasoning_prefixes = ['gpt-5', 'o1-', 'o3-']
+        return any(model_lower.startswith(prefix) for prefix in reasoning_prefixes)
+
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
         # Use method param, then instance default, then framework default
         if max_tokens is None:
             max_tokens = self.default_max_tokens or get_max_tokens('default')
 
+        # Reasoning models (GPT-5, o1, o3) require max_completion_tokens
+        # Regular models (GPT-4, GPT-3.5) use max_tokens
+        is_reasoning = self._is_reasoning_model()
+        token_param = 'max_completion_tokens' if is_reasoning else 'max_tokens'
+
         # Build API params
         api_params = {
             'model': self.model,
-            'max_tokens': max_tokens,
+            token_param: max_tokens,
             'messages': [{"role": "user", "content": prompt}]
         }
 

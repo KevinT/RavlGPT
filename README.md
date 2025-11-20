@@ -22,9 +22,10 @@ This automatically:
 - Checks prerequisites
 - Verifies your environment
 
-**Set up your API key:**
+**Set up your API keys (at least one is required):**
 ```bash
 export ANTHROPIC_API_KEY="sk-ant-..."  # Get key from console.anthropic.com
+export OPENAI_API_KEY="sk-svc-..."  # Get key from platform.openai.com
 ```
 
 **Run your first loop:**
