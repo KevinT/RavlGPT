@@ -83,13 +83,37 @@ Your goal is to produce a complete, well-structured RAVL loop with all required 
 
 **Output Requirements:**
 
-Output ONLY the structured markdown with these sections (use exact headings):
+Output ONLY the structured markdown with these sections.
 
-### # Act
+**CRITICAL: Heading Format**
+
+YOU MUST use H1 headings (single #) for RAVL phases. The parser ONLY recognizes this format:
+
+✅ CORRECT:
+```
+# Act
+
+[instructions here]
+
+# Verify
+
+[criteria here]
+```
+
+❌ WRONG - These will NOT be parsed:
+```
+## Act          (H2 - too many #)
+### # Act       (H3 with extra #)
+### Act         (H3 - too many #)
+```
+
+**Use these exact headings:**
+
+# Act
 
 [Specific actionable steps - preserve existing if good, otherwise enhance/create]
 
-### # Verify
+# Verify
 
 [Clear, testable acceptance criteria - preserve existing if good, otherwise enhance/create]
 
@@ -98,3 +122,4 @@ Output ONLY the structured markdown with these sections (use exact headings):
 - Output only the structured markdown
 - Preserve user's well-written content verbatim
 - Always include both Act and Verify sections at minimum
+- ALWAYS use H1 headings (single #) - no exceptions

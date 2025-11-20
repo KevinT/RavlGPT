@@ -294,23 +294,29 @@ class MyRAVLLoop:
 
 ### For LLM-Interpreted Markdown Implementations
 
-Define loops as markdown documents with clear phase instructions:
+Define loops as markdown documents with clear phase instructions.
+
+**CRITICAL: Phase headings MUST use H1 format (single #):**
 
 ```markdown
-# MyLoop RAVL Specification
+# Reflect
 
-## Reflect Phase
 <Instructions for LLM to gather observations>
 
-## Act Phase
+# Act
+
 <Instructions for LLM to take actions>
 
-## Verify Phase
+# Verify
+
 <Instructions for LLM to verify outcomes>
 
-## Learn Phase
+# Learn
+
 <Instructions for LLM to update model>
 ```
+
+**Note:** The markdown parser requires H1 headings (`# Act`) for phase names. Using H2 (`## Act`) or other formats will cause parsing to fail.
 
 An executor interprets these and maintains state between phases.
 

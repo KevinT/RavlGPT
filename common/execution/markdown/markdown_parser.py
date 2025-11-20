@@ -46,23 +46,33 @@ class MarkdownParser:
 
         Note: This method is kept for backwards compatibility but won't have access
         to fresh domain_guidance. Use parse_with_context() instead.
+
+        Now accepts H1, H2, and H3 headings but warns on non-H1.
         """
         phases = {}
         current_phase = None
         current_content = []
-        has_explicit_phases = False
 
         for line in markdown_text.split('\n'):
-            # Check if line is a phase heading (# Act, # Verify, etc.)
-            if line.strip().startswith('# '):
-                has_explicit_phases = True
+            # Check if line is a heading
+            heading_info = self._extract_heading(line)
+            if heading_info:
+                level, heading_text = heading_info
+
                 # Save previous phase
                 if current_phase:
                     phases[current_phase] = '\n'.join(current_content).strip()
 
+                # Warn if not H1
+                if level != 1:
+                    log_execution(
+                        f"⚠️  Found H{level} heading '{heading_text}' (expected H1). "
+                        f"Use '# {heading_text}' instead of '{'#' * level} {heading_text}'",
+                        status='warning'
+                    )
+
                 # Start new phase - normalize the name
-                heading = line.strip('# ').strip()
-                current_phase = self._normalize_phase_name(heading)
+                current_phase = self._normalize_phase_name(heading_text)
                 current_content = []
             else:
                 current_content.append(line)
@@ -93,6 +103,8 @@ class MarkdownParser:
         If reflection provided, uses fresh domain_guidance to inform enhancement.
         Otherwise falls back to disk-based run_insights.
 
+        Now accepts H1, H2, and H3 headings but warns on non-H1.
+
         Args:
             markdown_text: Raw markdown content
             reflection: Optional reflection dict with domain_guidance
@@ -106,11 +118,23 @@ class MarkdownParser:
         current_content = []
 
         for line in markdown_text.split('\n'):
-            if line.strip().startswith('# '):
+            # Check if line is a heading
+            heading_info = self._extract_heading(line)
+            if heading_info:
+                level, heading_text = heading_info
+
                 if current_phase:
                     phases[current_phase] = '\n'.join(current_content).strip()
-                heading = line.strip('# ').strip()
-                current_phase = self._normalize_phase_name(heading)
+
+                # Warn if not H1
+                if level != 1:
+                    log_execution(
+                        f"⚠️  Found H{level} heading '{heading_text}' (expected H1). "
+                        f"Use '# {heading_text}' instead of '{'#' * level} {heading_text}'",
+                        status='warning'
+                    )
+
+                current_phase = self._normalize_phase_name(heading_text)
                 current_content = []
             else:
                 current_content.append(line)
@@ -129,6 +153,42 @@ class MarkdownParser:
             return self._parse_markdown_internal(interpreted)
 
         return phases
+
+    def _extract_heading(self, line: str) -> Optional[tuple[int, str]]:
+        """
+        Extract heading level and text from a markdown line.
+
+        Handles common heading variations:
+        - # Act (H1) → (1, "Act")
+        - ## Act (H2) → (2, "Act")
+        - ### # Act (malformed H3+H1) → (3, "Act")
+        - ### Act (H3) → (3, "Act")
+
+        Returns:
+            Tuple of (level, heading_text) or None if not a heading
+        """
+        stripped = line.strip()
+        if not stripped.startswith('#'):
+            return None
+
+        # Count leading # characters
+        level = 0
+        for char in stripped:
+            if char == '#':
+                level += 1
+            elif char == ' ':
+                break
+            else:
+                # Not a valid heading
+                return None
+
+        if level == 0:
+            return None
+
+        # Extract heading text (strip all # and spaces)
+        text = stripped.lstrip('#').strip()
+
+        return (level, text)
 
     def _normalize_phase_name(self, heading: str) -> str:
         """
@@ -149,21 +209,35 @@ class MarkdownParser:
         return phase_mappings.get(normalized, normalized)
 
     def _parse_markdown_internal(self, markdown_text: str) -> Dict[str, str]:
-        """Internal parse that doesn't trigger interpretation (to avoid recursion)"""
+        """
+        Internal parse that doesn't trigger interpretation (to avoid recursion)
+
+        Now accepts H1, H2, and H3 headings but warns on non-H1.
+        """
         phases = {}
         current_phase = None
         current_content = []
 
         for line in markdown_text.split('\n'):
-            # Check if line is a phase heading (# Act, # Verify, etc.)
-            if line.strip().startswith('# '):
+            # Check if line is a heading
+            heading_info = self._extract_heading(line)
+            if heading_info:
+                level, heading_text = heading_info
+
                 # Save previous phase
                 if current_phase:
                     phases[current_phase] = '\n'.join(current_content).strip()
 
+                # Warn if not H1
+                if level != 1:
+                    log_execution(
+                        f"⚠️  Found H{level} heading '{heading_text}' (expected H1). "
+                        f"Use '# {heading_text}' instead of '{'#' * level} {heading_text}'",
+                        status='warning'
+                    )
+
                 # Start new phase - normalize the name
-                heading = line.strip('# ').strip()
-                current_phase = self._normalize_phase_name(heading)
+                current_phase = self._normalize_phase_name(heading_text)
                 current_content = []
             else:
                 current_content.append(line)
@@ -172,7 +246,70 @@ class MarkdownParser:
         if current_phase:
             phases[current_phase] = '\n'.join(current_content).strip()
 
+        # Validate required phases
+        self._validate_phases(phases, markdown_text)
+
         return phases
+
+    def _validate_phases(self, phases: Dict[str, str], markdown_text: str) -> None:
+        """
+        Validate that required phases are present and provide helpful errors.
+
+        Args:
+            phases: Parsed phases dict
+            markdown_text: Original markdown text for debugging
+        """
+        required_phases = {'act', 'verify'}
+        found_phases = set(phases.keys())
+        missing_phases = required_phases - found_phases
+
+        if missing_phases:
+            log_execution(
+                f"⚠️  Missing required phases: {', '.join(missing_phases)}",
+                status='warning'
+            )
+
+            # Check if there are headings in the markdown that weren't parsed
+            has_headings = any(line.strip().startswith('#') for line in markdown_text.split('\n'))
+
+            if has_headings and not found_phases:
+                log_execution(
+                    "Headings found but no phases parsed. Common issues:",
+                    status='warning'
+                )
+                log_execution(
+                    "  1. Headings must use H1 format: '# Act' not '## Act'",
+                    status='warning'
+                )
+                log_execution(
+                    "  2. Must have space after #: '# Act' not '#Act'",
+                    status='warning'
+                )
+                log_execution(
+                    "  3. Phase names must match: 'Act', 'Verify', 'Reflect', 'Learn'",
+                    status='warning'
+                )
+            elif not has_headings:
+                log_execution(
+                    "No headings found in markdown. Required format:",
+                    status='warning'
+                )
+                log_execution(
+                    "  # Act",
+                    status='warning'
+                )
+                log_execution(
+                    "  [instructions]",
+                    status='warning'
+                )
+                log_execution(
+                    "  # Verify",
+                    status='warning'
+                )
+                log_execution(
+                    "  [criteria]",
+                    status='warning'
+                )
 
     def _interpret_free_form_markdown(
         self,
