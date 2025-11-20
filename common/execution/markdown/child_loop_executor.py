@@ -78,7 +78,7 @@ class ChildLoopExecutor:
             log_message(f"\n  ▶️  Running child loop: {child_name}", status='info', indent=0)
 
             # Find child loop directory
-            child_dir = self.loop_dir / 'ravl_loops' / child_name
+            child_dir = self.loop_dir / 'child_loops' / child_name
 
             if not child_dir.exists():
                 error_msg = f"Child loop not found: {child_name} at {child_dir}"

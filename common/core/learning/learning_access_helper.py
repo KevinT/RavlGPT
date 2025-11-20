@@ -56,7 +56,7 @@ class LearningAccessHelper:
         """
         # Top-level parents are directly under ravl_loops/
         # Structure: ravl_loops/{top_level_parent}/...
-        # NOT: ravl_loops/{parent}/ravl_loops/{child}/...
+        # NOT: ravl_loops/{parent}/child_loops/{child}/...
 
         parent_dir = self.loop_dir.parent
         if parent_dir.name == 'ravl_loops':
@@ -76,13 +76,13 @@ class LearningAccessHelper:
         if self.debug:
             logger.debug(f"Resolving parent learning path for loop: {self.loop_dir}")
 
-        # Check if this is a child loop (parent.name == 'ravl_loops')
-        if self.loop_dir.parent.name != 'ravl_loops':
+        # Check if this is a child loop (parent.name == 'ravl_loops' or 'child_loops')
+        if self.loop_dir.parent.name not in ('ravl_loops', 'child_loops'):
             if self.debug:
-                logger.debug("Not a child loop (parent is not 'ravl_loops')")
+                logger.debug("Not a child loop (parent is not 'ravl_loops' or 'child_loops')")
             return None
 
-        # Parent is the directory above ravl_loops/
+        # Parent is the directory above ravl_loops/child_loops/
         parent_dir = self.loop_dir.parent.parent
 
         # Verify parent has ravl.yml
@@ -96,10 +96,10 @@ class LearningAccessHelper:
         # from the relationship between child's loop_dir and learnings_dir
 
         # Example structures:
-        # DEFAULT: child loop_dir = .../parent/ravl_loops/child
-        #          child learnings = .../parent/ravl_loops/child/learnings
+        # DEFAULT: child loop_dir = .../parent/child_loops/child
+        #          child learnings = .../parent/child_loops/child/learnings
         #          parent learnings = .../parent/learnings
-        # CUSTOM:  child loop_dir = .../parent/ravl_loops/child
+        # CUSTOM:  child loop_dir = .../parent/child_loops/child
         #          child learnings = /data/ravl/parent/child/learnings
         #          parent learnings = /data/ravl/parent/learnings
 
@@ -109,7 +109,7 @@ class LearningAccessHelper:
 
         # Find common path structure by counting how many levels down child is from parent
         # Parent loop_dir: .../parent
-        # Child loop_dir: .../parent/ravl_loops/child (2 levels down)
+        # Child loop_dir: .../parent/child_loops/child (2 levels down)
 
         # Calculate parent learnings by applying same transformation
         try:
@@ -129,7 +129,7 @@ class LearningAccessHelper:
 
             # Remove child segment from learnings path and add to parent base
             # Convert loop_dir path to learnings_dir path pattern
-            # Example: /ravl_loops/parent/ravl_loops/child -> /data/ravl/parent/child
+            # Example: /ravl_loops/parent/child_loops/child -> /data/ravl/parent/child
             #          so /data/ravl/parent/child/learnings -> /data/ravl/parent/learnings
 
             # Find where child_name appears in learnings_dir and remove it
@@ -162,11 +162,11 @@ class LearningAccessHelper:
             logger.debug(f"Resolving sibling learning path for: {sibling_name}")
 
         # Siblings exist at the same level in the hierarchy
-        # Structure: ravl_loops/{parent}/ravl_loops/{sibling_1}/...
+        # Structure: ravl_loops/{parent}/child_loops/{sibling_1}/...
         #                                            /{sibling_2}/...
 
         # Check if this is a child loop
-        if self.loop_dir.parent.name != 'ravl_loops':
+        if self.loop_dir.parent.name not in ('ravl_loops', 'child_loops'):
             if self.debug:
                 logger.debug("Not a child loop, cannot have siblings")
             return None
@@ -221,10 +221,10 @@ class LearningAccessHelper:
         if self.debug:
             logger.debug(f"Resolving child learning path for: {child_name}")
 
-        # Children exist under ravl_loops/ subdirectory
-        # Structure: {loop_dir}/ravl_loops/{child_name}/...
+        # Children exist under child_loops/ subdirectory
+        # Structure: {loop_dir}/child_loops/{child_name}/...
 
-        child_dir = self.loop_dir / 'ravl_loops' / child_name
+        child_dir = self.loop_dir / 'child_loops' / child_name
 
         # Verify child exists and has ravl.yml
         if not (child_dir / 'config' / 'ravl.yml').exists():
@@ -270,7 +270,7 @@ class LearningAccessHelper:
         siblings = []
 
         # Check if this is a child loop
-        if self.loop_dir.parent.name != 'ravl_loops':
+        if self.loop_dir.parent.name not in ('ravl_loops', 'child_loops'):
             return siblings
 
         # Check if we should exclude top-level parents
@@ -309,7 +309,7 @@ class LearningAccessHelper:
         """
         children = []
 
-        children_dir = self.loop_dir / 'ravl_loops'
+        children_dir = self.loop_dir / 'child_loops'
         if not children_dir.exists():
             return children
 

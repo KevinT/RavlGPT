@@ -34,7 +34,7 @@ class TestLearningAccessHelper:
         #   ├── top_level_a/
         #   │   ├── config/ravl.yml
         #   │   ├── learnings/
-        #   │   └── ravl_loops/
+        #   │   └── child_loops/
         #   │       ├── child_a1/
         #   │       │   ├── config/ravl.yml
         #   │       │   └── learnings/
@@ -55,12 +55,12 @@ class TestLearningAccessHelper:
         (top_a / 'learnings').mkdir()
         (top_a / 'ravl_loops').mkdir()
 
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
         (child_a1 / 'config').mkdir(parents=True)
         (child_a1 / 'config' / 'ravl.yml').write_text('name: child_a1\n')
         (child_a1 / 'learnings').mkdir()
 
-        child_a2 = top_a / 'ravl_loops' / 'child_a2'
+        child_a2 = top_a / 'child_loops' / 'child_a2'
         (child_a2 / 'config').mkdir(parents=True)
         (child_a2 / 'config' / 'ravl.yml').write_text('name: child_a2\n')
         (child_a2 / 'learnings').mkdir()
@@ -86,7 +86,7 @@ class TestLearningAccessHelper:
         assert helper_a.is_top_level_parent() is True, "top_level_a should be detected as top-level parent"
 
         # Child loop (not top-level)
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
         helper_child = LearningAccessHelper(child_a1, child_a1 / 'learnings')
         assert helper_child.is_top_level_parent() is False, "child_a1 should NOT be top-level parent"
 
@@ -94,7 +94,7 @@ class TestLearningAccessHelper:
         """Test parent learning path resolution"""
         base = temp_loop_structure
         top_a = base / 'top_level_a'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
 
         # Child can find parent
         helper = LearningAccessHelper(child_a1, child_a1 / 'learnings')
@@ -113,8 +113,8 @@ class TestLearningAccessHelper:
         """Test sibling learning path resolution"""
         base = temp_loop_structure
         top_a = base / 'top_level_a'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
-        child_a2 = top_a / 'ravl_loops' / 'child_a2'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
+        child_a2 = top_a / 'child_loops' / 'child_a2'
 
         # child_a1 can find sibling child_a2
         helper = LearningAccessHelper(child_a1, child_a1 / 'learnings')
@@ -132,7 +132,7 @@ class TestLearningAccessHelper:
         """Test child learning path resolution"""
         base = temp_loop_structure
         top_a = base / 'top_level_a'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
 
         # Parent can find child
         helper = LearningAccessHelper(top_a, top_a / 'learnings')
@@ -152,7 +152,7 @@ class TestLearningAccessHelper:
         base = temp_loop_structure
         top_a = base / 'top_level_a'
         top_b = base / 'top_level_b'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
 
         # Top-level A should NOT see top-level B as sibling (isolation)
         helper_a = LearningAccessHelper(top_a, top_a / 'learnings')
@@ -178,7 +178,7 @@ class TestLearningAccessHelper:
         """Test child loop discovery"""
         base = temp_loop_structure
         top_a = base / 'top_level_a'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
 
         # Parent discovers all children
         helper = LearningAccessHelper(top_a, top_a / 'learnings')
@@ -196,8 +196,8 @@ class TestLearningAccessHelper:
         """Test reading sibling model"""
         base = temp_loop_structure
         top_a = base / 'top_level_a'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
-        child_a2 = top_a / 'ravl_loops' / 'child_a2'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
+        child_a2 = top_a / 'child_loops' / 'child_a2'
 
         # Create model.yml in child_a2
         model_data = {'version': 1, 'patterns': ['test']}
@@ -215,7 +215,7 @@ class TestLearningAccessHelper:
         """Test reading parent model"""
         base = temp_loop_structure
         top_a = base / 'top_level_a'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
 
         # Create model.yml in parent
         model_data = {'version': 2, 'parent_data': True}
@@ -233,7 +233,7 @@ class TestLearningAccessHelper:
         """Test reading child model"""
         base = temp_loop_structure
         top_a = base / 'top_level_a'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
 
         # Create model.yml in child
         model_data = {'version': 3, 'child_data': True}
@@ -266,12 +266,12 @@ class TestLoopContextBuilder:
         (top_a / 'learnings').mkdir()
         (top_a / 'ravl_loops').mkdir()
 
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
         (child_a1 / 'config').mkdir(parents=True)
         (child_a1 / 'config' / 'ravl.yml').write_text('name: child_a1\n')
         (child_a1 / 'learnings').mkdir()
 
-        child_a2 = top_a / 'ravl_loops' / 'child_a2'
+        child_a2 = top_a / 'child_loops' / 'child_a2'
         (child_a2 / 'config').mkdir(parents=True)
         (child_a2 / 'config' / 'ravl.yml').write_text('name: child_a2\n')
         (child_a2 / 'learnings').mkdir()
@@ -304,7 +304,7 @@ class TestLoopContextBuilder:
         """Test that children can see their siblings"""
         base = temp_loop_structure
         top_a = base / 'top_level_a'
-        child_a1 = top_a / 'ravl_loops' / 'child_a1'
+        child_a1 = top_a / 'child_loops' / 'child_a1'
 
         # child_a1 should discover child_a2 as sibling
         builder = LoopContextBuilder(child_a1, child_a1 / 'learnings')
@@ -345,7 +345,7 @@ class TestBackwardCompatibility:
         (parent / 'learnings').mkdir()
         (parent / 'ravl_loops').mkdir()
 
-        child = parent / 'ravl_loops' / 'child_loop'
+        child = parent / 'child_loops' / 'child_loop'
         (child / 'config').mkdir(parents=True)
         (child / 'config' / 'ravl.yml').write_text('name: child_loop\n')
         (child / 'learnings').mkdir()
@@ -369,7 +369,7 @@ class TestBackwardCompatibility:
         from ravl_base import BaseRAVLLoop
 
         base = temp_loop_structure
-        child = base / 'parent_loop' / 'ravl_loops' / 'child_loop'
+        child = base / 'parent_loop' / 'child_loops' / 'child_loop'
 
         # Initialize with loop_dir (enables proper cross-loop access)
         loop = BaseRAVLLoop(
@@ -391,7 +391,7 @@ class TestBackwardCompatibility:
         from ravl_base import BaseRAVLLoop
 
         base = temp_loop_structure
-        child = base / 'parent_loop' / 'ravl_loops' / 'child_loop'
+        child = base / 'parent_loop' / 'child_loops' / 'child_loop'
 
         # Initialize without loop_dir (legacy mode)
         loop = BaseRAVLLoop(

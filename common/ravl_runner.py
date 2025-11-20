@@ -126,10 +126,10 @@ class RAVLRunner:
             return None
 
         # Capture everything after the first "ravl_loops" as the hierarchy
-        # Filter out intermediate "ravl_loops" directories (they separate parent/child boundaries)
+        # Filter out "ravl_loops" and "child_loops" directories (they separate parent/child boundaries)
         hierarchy = []
         for part in parts[first_ravl_loops_idx + 1:]:
-            if part != 'ravl_loops':
+            if part not in ('ravl_loops', 'child_loops'):
                 hierarchy.append(part)
 
         if hierarchy:

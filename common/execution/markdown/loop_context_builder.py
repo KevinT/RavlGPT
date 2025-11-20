@@ -55,7 +55,7 @@ class LoopContextBuilder:
         is_top_level_parent = helper.is_top_level_parent()
 
         # Determine loop type based on directory structure
-        is_child_loop = self.loop_dir.parent.name == 'ravl_loops'
+        is_child_loop = self.loop_dir.parent.name in ('ravl_loops', 'child_loops')
 
         # Find parent
         if is_child_loop:
@@ -64,7 +64,7 @@ class LoopContextBuilder:
                 result['parent'] = parent_dir
 
         # Find children
-        children_dir = self.loop_dir / 'ravl_loops'
+        children_dir = self.loop_dir / 'child_loops'
         if children_dir.exists():
             for child in children_dir.iterdir():
                 if child.is_dir() and (child / 'config' / 'ravl.yml').exists():

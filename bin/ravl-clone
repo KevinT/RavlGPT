@@ -11,7 +11,7 @@ RAVL-CLONE - Clone a RAVL loop from templates, examples, or existing loops
 Clone RAVL loops from available sources: templates, examples, or existing loops in your project.
 If multiple matches exist, you'll be prompted to select which one to clone.
 
-Supports nested destination paths with automatic ravl_loops/ separator insertion.
+Supports nested destination paths with automatic child_loops/ separator insertion.
 
 Usage:
     ravl-clone <loop-name> [options]
@@ -23,7 +23,7 @@ Arguments:
     new-name            New name or nested path for the cloned loop
                         Simple: my_loop
                         Nested: parent.my_loop or parent.child.my_loop
-                        (Automatically inserts ravl_loops/ separators between hierarchy levels)
+                        (Automatically inserts child_loops/ separators between hierarchy levels)
 
 Options:
     --target PATH       Target directory (default: project_root/ravl_loops/)
@@ -36,15 +36,15 @@ Examples:
 
     # Clone to nested location under existing parent
     ravl-clone strategic_coherence frontier_delivery.my_monitoring
-    # Creates: ravl_loops/frontier_delivery/ravl_loops/my_monitoring/
+    # Creates: ravl_loops/frontier_delivery/child_loops/my_monitoring/
 
     # Clone to deeply nested location
     ravl-clone content_coherence frontier_delivery.context_management.my_checker
-    # Creates: ravl_loops/frontier_delivery/ravl_loops/context_management/ravl_loops/my_checker/
+    # Creates: ravl_loops/frontier_delivery/child_loops/context_management/child_loops/my_checker/
 
     # Clone child from nested template to nested destination
     ravl-clone strategic_coherence.content_coherence frontier_delivery.strategic_coherence.content_coherence
-    # Creates: ravl_loops/frontier_delivery/ravl_loops/strategic_coherence/ravl_loops/content_coherence/
+    # Creates: ravl_loops/frontier_delivery/child_loops/strategic_coherence/child_loops/content_coherence/
 
     # Clone to custom directory
     ravl-clone data_ingress my_api --target ./custom_dir/
@@ -178,7 +178,7 @@ class RAVLCloneCommand(RAVLCLIBase):
                 self.print_error(error_msg)
                 sys.exit(1)
 
-        # Build full nested path with ravl_loops/ separators
+        # Build full nested path with child_loops/ separators
         target_path = self._build_nested_path(target_base, parent_segments, loop_name)
 
         # Check if already exists
@@ -186,7 +186,7 @@ class RAVLCloneCommand(RAVLCLIBase):
             self.print_error(f"Already exists: {target_path}")
             sys.exit(1)
 
-        # Create target parent and intermediate ravl_loops/ directories
+        # Create target parent and intermediate child_loops/ directories
         target_path.parent.mkdir(parents=True, exist_ok=True)
 
         self.print_info(f"Cloning RAVL loop: {source_name}")
@@ -206,7 +206,7 @@ class RAVLCloneCommand(RAVLCLIBase):
 
         try:
             # Check if source has nested loops (is a parent loop)
-            has_nested_loops = (source_path / 'ravl_loops').exists()
+            has_nested_loops = (source_path / 'child_loops').exists()
             if has_nested_loops:
                 print(f"   ℹ️  Parent loop detected - will include nested child loops", file=sys.stderr)
 
@@ -235,7 +235,7 @@ class RAVLCloneCommand(RAVLCLIBase):
             print(f"     ./ravl {run_path}", file=sys.stderr)
             if has_nested_loops:
                 print(f"  3. Or run child loops individually:", file=sys.stderr)
-                child_loops = [d.name for d in (target_path / 'ravl_loops').iterdir() if d.is_dir() and (d / 'config' / 'ravl.yml').exists()]
+                child_loops = [d.name for d in (target_path / 'child_loops').iterdir() if d.is_dir() and (d / 'config' / 'ravl.yml').exists()]
                 for child in child_loops:
                     # Show hierarchical path for nested child loops
                     child_run_path = f"{new_name}.{child}" if parent_segments else child
@@ -262,14 +262,14 @@ class RAVLCloneCommand(RAVLCLIBase):
         Example:
             base_dir = .ravl/templates/
             path_segments = ['strategic_coherence', 'content_coherence']
-            Returns: .ravl/templates/strategic_coherence/ravl_loops/content_coherence/
+            Returns: .ravl/templates/strategic_coherence/child_loops/content_coherence/
         """
         if not base_dir.exists():
             return None
 
         current_path = base_dir
 
-        # Traverse hierarchy with ravl_loops/ separators
+        # Traverse hierarchy with child_loops/ separators
         for i, segment in enumerate(path_segments):
             # Last segment is the target loop
             if i == len(path_segments) - 1:
@@ -281,8 +281,8 @@ class RAVLCloneCommand(RAVLCLIBase):
                 parent_path = current_path / segment
                 if not parent_path.is_dir():
                     return None
-                # Move to ravl_loops/ subdirectory of parent
-                current_path = parent_path / 'ravl_loops'
+                # Move to child_loops/ subdirectory of parent
+                current_path = parent_path / 'child_loops'
                 if not current_path.is_dir():
                     return None
 
@@ -433,7 +433,7 @@ class RAVLCloneCommand(RAVLCLIBase):
 
     def _build_nested_path(self, base_path: Path, parent_segments: list[str], loop_name: str) -> Path:
         """
-        Build physical path with ravl_loops/ separators for nested hierarchy
+        Build physical path with child_loops/ separators for nested hierarchy
 
         Args:
             base_path: Base directory (e.g., project_root/ravl_loops/)
@@ -441,18 +441,18 @@ class RAVLCloneCommand(RAVLCLIBase):
             loop_name: Final loop name
 
         Returns:
-            Full path with ravl_loops/ separators inserted
+            Full path with child_loops/ separators inserted
 
         Example:
             base_path = /project/ravl_loops/
             parent_segments = ['frontier_delivery', 'context_management']
             loop_name = 'my_loop'
-            Returns: /project/ravl_loops/frontier_delivery/ravl_loops/context_management/ravl_loops/my_loop/
+            Returns: /project/ravl_loops/frontier_delivery/child_loops/context_management/child_loops/my_loop/
         """
         current_path = base_path
 
         for parent in parent_segments:
-            current_path = current_path / parent / 'ravl_loops'
+            current_path = current_path / parent / 'child_loops'
 
         return current_path / loop_name
 
@@ -470,7 +470,7 @@ class RAVLCloneCommand(RAVLCLIBase):
         Validation:
             - Each parent must exist
             - Each parent must be a valid RAVL loop (has config/ravl.yml and implementation)
-            - Intermediate ravl_loops/ directories are checked/created
+            - Intermediate child_loops/ directories are checked/created
         """
         current_path = base_path
 
@@ -498,8 +498,8 @@ class RAVLCloneCommand(RAVLCLIBase):
                        f"  \n"
                        f"  Fix: Ensure {parent} is a complete RAVL loop with config and implementation")
 
-            # Move to next level (ravl_loops/ subdirectory)
-            current_path = parent_loop_dir / 'ravl_loops'
+            # Move to next level (child_loops/ subdirectory)
+            current_path = parent_loop_dir / 'child_loops'
 
         return (True, None)
 

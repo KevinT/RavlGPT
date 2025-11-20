@@ -55,8 +55,8 @@ class LoopDiscovery:
             # If not relative to project root, use as-is
             rel_path = loop_path
 
-        # Filter out 'ravl_loops' structural directories and build namespace
-        parts = [p for p in rel_path.parts if p != 'ravl_loops']
+        # Filter out 'ravl_loops' and 'child_loops' structural directories and build namespace
+        parts = [p for p in rel_path.parts if p not in ('ravl_loops', 'child_loops')]
 
         # Return dot-separated namespace
         return '.'.join(parts)
@@ -330,8 +330,13 @@ class LoopDiscovery:
         if project_path.exists() and self._is_loop_dir(project_path):
             candidates.append(('project', project_path))
 
-        # 3. Sibling to parent (parent_dir/ravl_loops/loop_name)
-        sibling_path = parent_dir / 'ravl_loops' / loop_name
+        # 3. Sibling to parent (parent_dir/child_loops/loop_name or parent_dir/loop_name if at top)
+        if parent_dir.name in ('ravl_loops', 'child_loops'):
+            # Parent is at top level or is a child_loops dir, so siblings are direct children
+            sibling_path = parent_dir / loop_name
+        else:
+            # Parent is a loop, so siblings are in child_loops
+            sibling_path = parent_dir.parent / 'child_loops' / loop_name
         if sibling_path.exists() and self._is_loop_dir(sibling_path):
             candidates.append(('sibling', sibling_path))
 
@@ -570,7 +575,7 @@ class LoopDiscovery:
             True if all segments appear in order in the loop path
 
         Example:
-            loop_path: /project/ravl_loops/frontier_delivery/ravl_loops/context_ingestion/fetch_fe_content/
+            loop_path: /project/ravl_loops/frontier_delivery/child_loops/context_ingestion/fetch_fe_content/
             segments: ['context_ingestion', 'fetch_fe_content']
             Returns: True (both segments appear in order)
         """
@@ -578,8 +583,8 @@ class LoopDiscovery:
         if loop_path.name != segments[-1]:
             return False
 
-        # Get path components, excluding structural 'ravl_loops' directories
-        path_parts = [p for p in loop_path.parts if p != 'ravl_loops']
+        # Get path components, excluding structural 'ravl_loops' and 'child_loops' directories
+        path_parts = [p for p in loop_path.parts if p not in ('ravl_loops', 'child_loops')]
 
         # Check if all segments appear in order in the path
         segment_idx = 0

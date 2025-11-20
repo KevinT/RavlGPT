@@ -51,19 +51,10 @@ allow loops to create new loops themselves, by calling "ravl --new ..."
 - ravl framework version numbers in the loop learning outputs so that health checkers have the context of when the fx changed
 	- consider using the SHA hash of the HEAD of the ravl git repo as the version, so we don't need to manually increment anything?
 
-- "Fetching document" could give document name instead of URL, would be more helpful
-
 ## SCALE
-- Make ravl framework portable between LLMs - currently only built using anthropic, but tried to keep coupling + direct dependency low
-	- support opencode
-	- support codex
-	- support google gemini
-	- Add per-ravl model selection support to markdown ravls
 
 
 # Sand Specific
-
-
 
 - SIESe RAVLs
 	SOURCE
