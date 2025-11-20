@@ -3,15 +3,52 @@
 Python Version Validator
 
 Finds and validates Python installations for RAVL venv creation.
-Ensures compatible Python versions are used (avoiding Python 3.14+ which has
-dependency compatibility issues with Anthropic/Pydantic).
+Ensures compatible Python versions are used based on framework configuration.
 """
 
 import shutil
 import subprocess
 import sys
+import yaml
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any
+
+
+def _load_framework_config() -> Dict[str, Any]:
+    """
+    Load framework configuration from .ravl/config/ravl.yml
+
+    Returns:
+        Dict with framework configuration, including min/max Python versions
+    """
+    # Find .ravl directory (should be parent of this file's grandparent)
+    script_dir = Path(__file__).parent  # .ravl/common/utils
+    ravl_dir = script_dir.parent.parent  # .ravl
+    config_file = ravl_dir / 'config' / 'ravl.yml'
+
+    if not config_file.exists():
+        # Fallback to hardcoded defaults if config not found
+        return {
+            'framework': {
+                'min_python_version': '3.9',
+                'max_python_version': '3.14',
+                'required_python_version': '3.12'
+            }
+        }
+
+    try:
+        with open(config_file, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f) or {}
+            return config
+    except Exception:
+        # Fallback to defaults on error
+        return {
+            'framework': {
+                'min_python_version': '3.9',
+                'max_python_version': '3.14',
+                'required_python_version': '3.12'
+            }
+        }
 
 
 def find_required_python(required_version: str = "3.12") -> Tuple[Optional[str], Optional[str]]:
@@ -95,7 +132,8 @@ def check_python_compatibility(python_path: str) -> Tuple[bool, str]:
     """
     Check if a Python version is compatible with RAVL's dependencies.
 
-    Currently: Python 3.9-3.13 are compatible, 3.14+ have issues with Anthropic library.
+    Reads min/max Python versions from framework config (.ravl/config/ravl.yml).
+    This ensures configuration is the single source of truth for version requirements.
 
     Args:
         python_path: Path to Python executable
@@ -103,6 +141,23 @@ def check_python_compatibility(python_path: str) -> Tuple[bool, str]:
     Returns:
         Tuple of (is_compatible, version_or_warning)
     """
+    # Load config to get version constraints
+    config = _load_framework_config()
+    framework_config = config.get('framework', {})
+
+    # Parse version constraints from config
+    min_version_str = framework_config.get('min_python_version', '3.9')
+    max_version_str = framework_config.get('max_python_version', '3.14')
+
+    # Extract major.minor from version strings
+    min_parts = min_version_str.split('.')
+    min_major = int(min_parts[0])
+    min_minor = int(min_parts[1])
+
+    max_parts = max_version_str.split('.')
+    max_major = int(max_parts[0])
+    max_minor = int(max_parts[1])
+
     try:
         result = subprocess.run(
             [python_path, "--version"],
@@ -119,13 +174,19 @@ def check_python_compatibility(python_path: str) -> Tuple[bool, str]:
             major = int(parts[0])
             minor = int(parts[1])
 
-            # Check compatibility
-            if major == 3 and 9 <= minor <= 13:
-                return (True, full_version)
-            elif major == 3 and minor >= 14:
-                return (False, f"Python {full_version} has compatibility issues (use 3.9-3.13)")
+            # Check compatibility against config values
+            if major == min_major == max_major:
+                # Same major version - check minor range
+                if min_minor <= minor <= max_minor:
+                    return (True, full_version)
+                elif minor < min_minor:
+                    return (False, f"Python {full_version} is too old (minimum {min_version_str})")
+                else:
+                    return (False, f"Python {full_version} exceeds maximum supported version (use {min_version_str}-{max_version_str})")
+            elif major < min_major:
+                return (False, f"Python {full_version} is too old (minimum {min_version_str})")
             else:
-                return (False, f"Python {full_version} is too old (minimum 3.9)")
+                return (False, f"Python {full_version} exceeds maximum supported version (use {min_version_str}-{max_version_str})")
 
         return (False, "unknown version")
 
