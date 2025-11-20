@@ -421,8 +421,8 @@ class RAVLListCommand(RAVLCLIBase):
             # If not relative to project root, try framework root
             rel_path = loop_path.relative_to(self.project_root / '.ravl')
 
-        # Filter out 'ravl_loops' structural directories and build namespace
-        parts = [p for p in rel_path.parts if p != 'ravl_loops']
+        # Filter out 'ravl_loops' and 'child_loops' structural directories and build namespace
+        parts = [p for p in rel_path.parts if p not in ('ravl_loops', 'child_loops')]
 
         # Return dot-separated namespace
         return '.'.join(parts)
