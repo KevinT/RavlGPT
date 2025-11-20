@@ -15,6 +15,10 @@ from typing import Dict, Optional, Any
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'utils'))
 from logging_utils import log_execution
 
+# Add cli to path for project root discovery
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'cli'))
+from ravl_cli_base import RAVLCLIBase
+
 
 class MarkdownParser:
     """
@@ -357,7 +361,8 @@ class MarkdownParser:
         import os
 
         # Load RAVL protocol
-        protocol_file = self.loop_dir.parent.parent.parent / '.ravl' / 'docs' / 'RAVL_PROTOCOL.md'
+        project_root = RAVLCLIBase.find_project_root(self.loop_dir)
+        protocol_file = project_root / '.ravl' / 'docs' / 'RAVL_PROTOCOL.md'
         protocol_text = ""
         if protocol_file.exists():
             with open(protocol_file, 'r', encoding='utf-8') as f:

@@ -27,6 +27,7 @@ from typing import Dict, Any, Optional, TextIO, Callable, List
 
 from utils.constants import DEFAULT_EXECUTION_TIMEOUT, MODEL_PATTERN
 from utils.logging_utils import log_message
+from cli.ravl_cli_base import RAVLCLIBase
 
 
 class TeeLogger:
@@ -439,7 +440,9 @@ class RAVLRunner:
         if project_root:
             return (project_root / '.ravl' / 'venv').resolve()
         else:
-            return (loop_dir.parent.parent / '.ravl' / 'venv').resolve()
+            # Find project root from loop_dir when project_root not provided
+            project_root = RAVLCLIBase.find_project_root(loop_dir)
+            return (project_root / '.ravl' / 'venv').resolve()
 
     @staticmethod
     def resolve_llm_config(

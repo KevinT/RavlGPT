@@ -35,6 +35,7 @@ sys.path.insert(0, str(_common_dir / 'core' / 'verification'))
 sys.path.insert(0, str(_common_dir / 'core' / 'error_handling'))
 sys.path.insert(0, str(_common_dir / 'execution' / 'code'))
 sys.path.insert(0, str(_common_dir / 'integrations'))
+sys.path.insert(0, str(_common_dir / 'cli'))
 
 from common.config.config_loader import get_max_tokens
 from llm_providers import LLMProviderFactory, LLMProvider
@@ -51,6 +52,7 @@ from verification_manager import VerificationManager
 from learning_coordinator import LearningCoordinator
 from reflection_orchestrator import ReflectionOrchestrator
 from act_orchestrator import ActOrchestrator
+from ravl_cli_base import RAVLCLIBase
 
 # Import utilities
 from file_utils import load_json_file, save_json_file, append_to_jsonl, load_yaml_file
@@ -492,7 +494,8 @@ class MarkdownRAVLExecutor:
         """
         # Compute relative path, handling case where learnings_dir is outside loop hierarchy
         try:
-            relative_dir = str(learnings_dir.relative_to(self.loop_dir.parent.parent.parent))
+            project_root = RAVLCLIBase.find_project_root(self.loop_dir)
+            relative_dir = str(learnings_dir.relative_to(project_root))
         except ValueError:
             # Learning path is outside the loop directory hierarchy (custom learning path)
             # Use just the loop name instead
