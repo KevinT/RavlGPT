@@ -25,7 +25,6 @@ allow loops to create new loops themselves, by calling "ravl --new ..."
 - Get learning notes from Notion into my personal context?
 
 ## SETTLE
-- ravl --list xyz should do --namespaces-only by default
 - these are effectively doing the same thing on different files, they could be turned into a library loop and parameterise
 	frontier_delivery.context_inference.infer_employee_efforts
 	sand_organisation.context_inference.infer_employee_efforts
