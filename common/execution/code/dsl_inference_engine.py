@@ -558,6 +558,12 @@ class DSLInferenceEngine:
             if persistence['change_detection']:
                 guidance_lines.append("- Implement change detection (hash-based comparison)")
                 guidance_lines.append("- Only save if data has changed from previous run")
+                guidance_lines.append("")
+                guidance_lines.append("**IMPORTANT - State File Placement:**")
+                guidance_lines.append("- Deliverable output files: Write to specified path (e.g., output/, data/)")
+                guidance_lines.append("- State/tracking files (status.json, hashes, etc.): Write to learning directory")
+                guidance_lines.append("- Use: Path(os.environ['RAVL_LEARNINGS_DIR']) / 'state' / 'status.json'")
+                guidance_lines.append("- Keep deliverables and state files separate")
 
         # API guidance
         act_req = dsl['act_requirements']

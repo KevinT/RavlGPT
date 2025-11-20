@@ -141,6 +141,46 @@ except ImportError:
 
 **IMPORTANT**: Only install packages that are on the approved whitelist in `config/ravl.yml` (allowed_dependencies section). If a package is not approved, the framework will reject the code. The loop owner can approve packages by editing the `allowed_dependencies` section in their `config/ravl.yml`.
 
+## File Output Guidelines
+
+When your code needs to write files, distinguish between deliverables and state tracking:
+
+**Deliverable Output Files** (write to specified path):
+- Final data products for external consumption
+- Results meant to be used by other systems/humans
+- Write to the path specified in requirements (e.g., `output/`, `data/`)
+
+**State/Tracking Files** (write to learning directory):
+- Status tracking (status.json, hashes, change detection)
+- Internal state between runs
+- Intermediate processing results
+- Write to: `Path(os.environ['RAVL_LEARNINGS_DIR']) / 'state' / 'filename'`
+
+**Example:**
+```python
+import os
+import json
+from pathlib import Path
+
+# Deliverable output (as specified in requirements)
+output_path = Path("output") / "result.md"
+output_path.parent.mkdir(parents=True, exist_ok=True)
+output_path.write_text(result_content)
+
+# State tracking (change detection, status)
+state_dir = Path(os.environ['RAVL_LEARNINGS_DIR']) / 'state'
+state_dir.mkdir(parents=True, exist_ok=True)
+status_path = state_dir / 'status.json'
+status_path.write_text(json.dumps({
+    'timestamp': datetime.now().isoformat(),
+    'record_count': len(results),
+    'data_changed': True,
+    'hash': content_hash
+}))
+```
+
+**Rule of thumb:** If it's for change detection or tracking state between runs, use the learning directory. If it's a final deliverable, use the specified output path.
+
 {failure_context}
 
 ## OUTPUT FORMAT
