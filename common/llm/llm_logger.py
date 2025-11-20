@@ -10,15 +10,51 @@ from pathlib import Path
 from typing import Optional, Dict
 
 
+def _extract_provider_type(provider_name: str) -> str:
+    """
+    Extract provider type from full name
+
+    Examples:
+        "Anthropic (claude-sonnet-4-5-20250929)" -> "anthropic"
+        "OpenAI (gpt-4o)" -> "openai"
+        "Google (gemini-pro)" -> "google"
+        "Ollama (llama2)" -> "ollama"
+
+    Args:
+        provider_name: Full provider name string
+
+    Returns:
+        Normalized provider type (lowercase)
+    """
+    provider_lower = provider_name.lower()
+    if "anthropic" in provider_lower:
+        return "anthropic"
+    elif "openai" in provider_lower:
+        return "openai"
+    elif "google" in provider_lower:
+        return "google"
+    elif "ollama" in provider_lower:
+        return "ollama"
+    else:
+        return "unknown"
+
+
 class LLMLogger:
     """Logs LLM calls and responses to markdown files"""
 
-    def __init__(self, log_dir: str = None):
+    def __init__(self, log_dir: str = None, provider: Optional[str] = None):
         if log_dir is None:
             # Default to centralized LLM logs directory (.ravl/logs/llm/)
-            self.log_dir = Path(__file__).parent.parent.parent / 'logs' / 'llm'
+            base_log_dir = Path(__file__).parent.parent.parent / 'logs' / 'llm'
         else:
-            self.log_dir = Path(log_dir)
+            base_log_dir = Path(log_dir)
+
+        # If provider specified, create subdirectory for that provider
+        if provider:
+            provider_type = _extract_provider_type(provider)
+            self.log_dir = base_log_dir / provider_type
+        else:
+            self.log_dir = base_log_dir
 
         # Create logs directory if it doesn't exist
         self.log_dir.mkdir(parents=True, exist_ok=True)
@@ -77,25 +113,33 @@ class LLMLogger:
 _logger_instances: Dict[str, LLMLogger] = {}
 
 
-def get_logger(log_dir: str = None) -> LLMLogger:
+def get_logger(log_dir: str = None, provider: Optional[str] = None) -> LLMLogger:
     """
-    Get or create a logger instance for the specified log directory
+    Get or create a logger instance for the specified log directory and provider
 
     Args:
         log_dir: Optional directory path for log files. If None, uses default .ravl/logs/llm/
+        provider: Optional provider name to create provider-specific subdirectory
 
     Returns:
-        LLMLogger instance for the specified directory
+        LLMLogger instance for the specified directory and provider
     """
-    # Normalize log_dir to use as dict key
+    # Normalize log_dir to use as dict key, including provider for separate instances
     if log_dir is None:
-        key = "__default__"
+        base_key = "__default__"
     else:
-        key = str(Path(log_dir).resolve())
+        base_key = str(Path(log_dir).resolve())
 
-    # Create logger if it doesn't exist for this directory
+    # Include provider in key to create separate logger instances per provider
+    if provider:
+        provider_type = _extract_provider_type(provider)
+        key = f"{base_key}::{provider_type}"
+    else:
+        key = base_key
+
+    # Create logger if it doesn't exist for this directory + provider combination
     if key not in _logger_instances:
-        _logger_instances[key] = LLMLogger(log_dir=log_dir)
+        _logger_instances[key] = LLMLogger(log_dir=log_dir, provider=provider)
 
     return _logger_instances[key]
 
@@ -114,5 +158,5 @@ def log_llm_call(provider: str, prompt: str, response: str,
         error: Optional error message if call failed
         log_dir: Optional directory path for log files. If None, uses default .ravl/logs/llm/
     """
-    logger = get_logger(log_dir=log_dir)
+    logger = get_logger(log_dir=log_dir, provider=provider)
     logger.log_call(provider, prompt, response, max_tokens, error)
