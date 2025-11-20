@@ -354,7 +354,7 @@ Both health checks provide four report types, but analyze completely different m
 🔍 Root Cause: Generated code imports google-auth-oauthlib but package not in requirements
 
 💡 Recommended Steps:
-   1. Check generated_requirements.txt for missing packages
+   1. Check learnings/execution_learning/generated_requirements.txt for missing packages
    2. Add google-auth-oauthlib to allowed_dependencies in config/ravl.yml
    3. Re-run loop to install approved dependency
    4. Verify execution succeeds

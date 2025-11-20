@@ -29,7 +29,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."  # Get key from console.anthropic.com
 
 **Run your first loop:**
 ```bash
-./ravl example_1_rugby_tips
+./ravl example_2_intelligence_loop
 ```
 
 📖 **[Full Installation Guide](INSTALL.md)** - Detailed instructions, troubleshooting, and manual installation.
@@ -107,8 +107,8 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 ## Quick Start
 
 **New to RAVL?** Start with the examples:
-- [Rugby Tips](examples/example_1_rugby_tips/) - Simple Markdown RAVL loop
-- [Simple Learning Loop](examples/example_2_simple_learning_loop/) - Demonstrates basic learning patterns
+- [Rugby Tips](examples/example_2_intelligence_loop/) - Simple Markdown RAVL loop
+- [Simple Learning Loop](examples/example_3_recursive_learning_loop/) - Demonstrates basic learning patterns
 - [Examples Overview](examples/README.md) - Detailed guide to all examples
 
 **Using RAVL CLI:**
@@ -117,7 +117,7 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 ./ravl --list
 
 # Run a loop
-./ravl example_1_rugby_tips --mode fast
+./ravl example_2_intelligence_loop --mode fast
 
 # Clone a new loop from template
 ./ravl --clone empty_loop_template ravl_loops/my_analytics

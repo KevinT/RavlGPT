@@ -15,7 +15,7 @@ description: Framework-level RAVL configuration
 # compatibility with dependencies (e.g., Anthropic library requires Python 3.9-3.13)
 
 framework:
-  required_python_version: "3.12"  # Specific Python version to use for all venvs
+  required_python_version: "3.14"  # Specific Python version to use for all venvs
   min_python_version: "3.9"         # Minimum supported Python version
   max_python_version: "3.14"        # Maximum supported Python version
 

@@ -8,11 +8,10 @@ allow loops to create new loops themselves, by calling "ravl --new ..."
 
 # Tidy First
 
+--new is not working since the switch from / to . namespaces
+
 - Additional learning clean up 
 	- the /logs folder could go under /history and be called /terminal-log or something like that
-
-- "Fetching document 5/6: https://docs.google.com/spreadsheets/d"
-	- Should rather use the document name, if it has it.
 
 - move common/mixins/LLMMixin to common/llm/. and remove the mixins folder
 
@@ -23,15 +22,16 @@ allow loops to create new loops themselves, by calling "ravl --new ..."
 # General Features
 ## PIONEER
 
-- See if I can convert python fde source loop into markdown loop
-	provide a loop archetype in md loop config
-	create a loop archetype in .ravl
-		list of code files to keep in context when generating executable code for md ravls
-	when md loop runs with an archetype it adds those source code files to the context as available functionality to use (needs to fit in context window)
-	- Deleted fde_operating_strategy_google_md is worth relooking at, could an agent write a ravl_loop.md version of the python implementation version that got the same results (was called fde_operating_strategy_google_py at time of deletion)?
+- Get learning notes from Notion into my personal context?
 
 ## SETTLE
-
+- ravl --list xyz should do --namespaces-only by default
+- these are effectively doing the same thing on different files, they could be turned into a library loop and parameterise
+	frontier_delivery.context_inference.infer_employee_efforts
+	sand_organisation.context_inference.infer_employee_efforts
+- If REFLECT detects there has been multiple recent failures and no success, switch --show-execution on to help the user find the issue (they might not know about the flag)
+- enable the ability to switch off learning from siblings, children and parents independently in ravl.yml
+- Add funtionality to have #> ignored by ravl fx so people can add comments to ravl_loop.md that aren't used by fx
 - Known unkowns listing
 	- During learn stage write known_unknowns.json to loop and execution learning
 	- If there are answers in those files, use them in reflect stage (could be added by human or another loop)
@@ -44,9 +44,6 @@ allow loops to create new loops themselves, by calling "ravl --new ..."
 		- /I command
 		 	- "/I would like to know XYZ"
 		 	- "/I would like to add context BLAH"
-
-- Allow some prompt text to be include in a health check
-	- "why is blah not blah?"
 
 - Add https://langfuse.com/self-hosting to have observability + optimisation of LLM calls, which is a key feature of the ravl approach, so better visibility and optimisation there would be helpful. There is a free self hosted MIT open source option. It does add architectural complexity though - do this when ready to step away from current code + text simplicity/iteration speed/context containing
 

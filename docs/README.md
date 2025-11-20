@@ -11,8 +11,8 @@ This directory contains the **RAVL framework** - reusable infrastructure for bui
 1. **[RAVL Vision](RAVL_VISION.md)** - Why RAVL exists: Design principles, philosophy, end-state goals
 2. **[RAVL Protocol](RAVL_PROTOCOL.md)** - How RAVL works: The four phases (Reflect → Act → Verify → Learn)
 3. **[Examples](../examples/)** - See working implementations:
-   - [Rugby Tips](../examples/example_1_rugby_tips/) - Simple Markdown RAVL loop
-   - [Simple Learning Loop](../examples/example_2_simple_learning_loop/) - Demonstrates basic learning patterns
+   - [Rugby Tips](../examples/example_2_intelligence_loop/) - Simple Markdown RAVL loop
+   - [Simple Learning Loop](../examples/example_3_recursive_learning_loop/) - Demonstrates basic learning patterns
    - [Tech News Curator](../examples/tech_news_curator/) - Multi-source aggregation with nested loops
 4. **[Templates](../templates/)** - Ready-to-use blueprints:
    - [Data Ingestion](../templates/data_ingress_template/) - Auto-generate API integration code
@@ -88,8 +88,8 @@ project/                              # Your project repository
 │   │       └── README.md            # LLM-based loops guide
 │   ├── examples/                    # 🎯 Ready-to-run example loops
 │   │   ├── README.md                # Examples overview
-│   │   ├── example_1_rugby_tips/    # Simple Markdown RAVL
-│   │   ├── example_2_simple_learning_loop/ # Learning patterns demo
+│   │   ├── example_2_intelligence_loop/    # Simple Markdown RAVL
+│   │   ├── example_3_recursive_learning_loop/ # Learning patterns demo
 │   │   └── tech_news_curator/       # Multi-loop orchestration
 │   ├── templates/                   # 📝 Starter blueprints (ready to clone and customize)
 │   │   ├── data_ingress_template/   # Self-healing API data ingestion

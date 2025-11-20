@@ -26,6 +26,7 @@ import argparse
 import os
 from pathlib import Path
 from typing import Dict, Any, Optional
+from datetime import datetime, timezone
 
 # Add common directory and .ravl root to path
 _script_dir = Path(__file__).parent
@@ -209,30 +210,145 @@ class ConfigBasedRAVLRunner:
             # Extract force_code_regeneration flag from args
             force_code_regeneration = getattr(args, 'force_code_regeneration', False)
 
-            # Initialize executor
-            executor = MarkdownRAVLExecutor(
-                markdown_text=markdown_text,
-                loop_dir=self.loop_dir,
-                learnings_dir=learnings_dir,
-                context_vars=context_vars,
-                force_code_regeneration=force_code_regeneration
-            )
+            # Initialize executor (with initialization failure handling)
+            executor = None
+            initialization_error = None
+            try:
+                executor = MarkdownRAVLExecutor(
+                    markdown_text=markdown_text,
+                    loop_dir=self.loop_dir,
+                    learnings_dir=learnings_dir,
+                    context_vars=context_vars,
+                    force_code_regeneration=force_code_regeneration
+                )
+            except Exception as init_error:
+                # Executor initialization failed (e.g., missing API key, invalid config)
+                # We still want to run LEARN phase to record this failure in the model
+                initialization_error = init_error
+                log_message(f"Executor initialization failed: {init_error}", status='error', indent=3)
+                log_message(f"Will attempt to record failure in LEARN phase", status='info', indent=3)
+
+                # Create minimal executor stub that can at least run learn()
+                class MinimalExecutor:
+                    def __init__(self, learnings_dir, loop_dir, context_vars):
+                        self.learnings_dir = learnings_dir
+                        self.loop_dir = loop_dir
+                        self.context_vars = context_vars
+                        self.used_interpretation = False
+
+                    def learn(self, verification, action_result):
+                        """Write minimal learning artifact for initialization failure"""
+                        from pathlib import Path
+                        import json
+                        from datetime import datetime, timezone
+
+                        # Write to execution_learning (same structure as normal learning)
+                        execution_learning_dir = self.learnings_dir / 'execution_learning'
+                        execution_learning_dir.mkdir(parents=True, exist_ok=True)
+
+                        # Current state
+                        failure_state = {
+                            'timestamp': datetime.now(timezone.utc).isoformat(),
+                            'phase': 'initialization',
+                            'success': False,
+                            'error': str(initialization_error),
+                            'error_type': type(initialization_error).__name__,
+                            'verification': verification,
+                            'action_result': action_result
+                        }
+
+                        current_state_file = execution_learning_dir / 'current_state' / 'initialization_failure.json'
+                        current_state_file.parent.mkdir(parents=True, exist_ok=True)
+                        with open(current_state_file, 'w', encoding='utf-8') as f:
+                            json.dump(failure_state, f, indent=2)
+
+                        # Append to history
+                        history_file = execution_learning_dir / 'history' / 'initialization_failures.jsonl'
+                        history_file.parent.mkdir(parents=True, exist_ok=True)
+                        with open(history_file, 'a', encoding='utf-8') as f:
+                            f.write(json.dumps(failure_state) + '\n')
+
+                executor = MinimalExecutor(learnings_dir, self.loop_dir, context_vars)
+
+            # If initialization failed, create stub responses and jump to LEARN
+            if initialization_error:
+                # Create stub responses that indicate initialization failure
+                reflection = {
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'error': f"Executor initialization failed: {initialization_error}",
+                    'error_type': type(initialization_error).__name__,
+                    'phase': 'initialization',
+                    'success': False
+                }
+                action_result = {
+                    'timestamp': reflection['timestamp'],
+                    'context_vars': context_vars,
+                    'error': str(initialization_error),
+                    'error_type': type(initialization_error).__name__,
+                    'phase': 'initialization',
+                    'success': False,
+                    'output_file': None
+                }
+                verification = {
+                    'timestamp': reflection['timestamp'],
+                    'error': str(initialization_error),
+                    'error_type': type(initialization_error).__name__,
+                    'phase': 'initialization',
+                    'success': False,
+                    'verification_passed': False,
+                    'overall_passed': False
+                }
+
+                # Skip to LEARN phase
+                RAVLRunner.print_banner("Step 4 of 4: [L]EARN", "")
+                executor.learn(verification, action_result)
+
+                # Show error and exit
+                RAVLRunner.print_banner(f"{loop_name} failed during initialization", "❌")
+                log_message(f"   Error: {initialization_error}", status='error', indent=0)
+                log_message(f"   Learning artifacts written to: {learnings_dir}/execution_learning/", status='info', indent=0)
+                tee_logger.close()
+                sys.exit(1)
 
             # ===== Step 1: REFLECT =====
             RAVLRunner.print_banner("Step 1 of 4: [R]EFLECT", "")
-            reflection = executor.reflect()
-
-            # Calculate duration
-            duration = time.time() - start_time
-            log_message(f"\n   ✓ Completed at {duration:.1f}s", status='success', indent=0)
+            try:
+                reflection = executor.reflect()
+                # Calculate duration
+                duration = time.time() - start_time
+                log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
+            except Exception as reflect_error:
+                # REFLECT failed, but record the failure so loop can learn from it
+                log_message(f"REFLECT phase failed: {reflect_error}", status='error', indent=3)
+                reflection = {
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'error': str(reflect_error),
+                    'error_type': type(reflect_error).__name__,
+                    'phase': 'reflect',
+                    'success': False
+                }
+                # Continue to ACT phase with error information
 
             # ===== Step 2: ACT =====
             RAVLRunner.print_banner("Step 2 of 4: [A]CT", "")
-            action_result = executor.act(reflection)
-
-            # Calculate duration
-            duration = time.time() - start_time
-            log_message(f"\n   ✓ Completed at {duration:.1f}s", status='success', indent=0)
+            try:
+                action_result = executor.act(reflection)
+                # Calculate duration
+                duration = time.time() - start_time
+                log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
+            except Exception as act_error:
+                # ACT failed, but record the failure so loop can learn from it
+                log_message(f"ACT phase failed: {act_error}", status='error', indent=3)
+                action_result = {
+                    'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
+                    'context_vars': context_vars,
+                    'error': str(act_error),
+                    'error_type': type(act_error).__name__,
+                    'phase': 'act',
+                    'code_executed': False,
+                    'success': False
+                }
+                # Continue to VERIFY and LEARN phases to record the failure
 
             # ===== Step 3: VERIFY =====
             if not args.no_deep_learning:
@@ -240,18 +356,30 @@ class ConfigBasedRAVLRunner:
                 RAVLRunner.print_banner("Phase 3 of 4: [V]ERIFY", "")
 
                 # Verify the current action result against verification criteria
-                verification = executor.verify(action_result, reflection)
-
-                # Calculate duration
-                duration = time.time() - start_time
-                log_message(f"\n   ✓ Completed at {duration:.1f}s", status='success', indent=0)
+                try:
+                    verification = executor.verify(action_result, reflection)
+                    # Calculate duration
+                    duration = time.time() - start_time
+                    log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
+                except Exception as verify_error:
+                    # VERIFY failed, but record the failure so loop can learn from it
+                    log_message(f"VERIFY phase failed: {verify_error}", status='error', indent=3)
+                    verification = {
+                        'timestamp': action_result.get('timestamp', datetime.now(timezone.utc).isoformat()),
+                        'error': str(verify_error),
+                        'error_type': type(verify_error).__name__,
+                        'phase': 'verify',
+                        'success': False,
+                        'verification_passed': False
+                    }
+                    # Continue to LEARN phase to record the failure
 
                 RAVLRunner.print_banner("Step 4 of 4: [L]EARN", "")
                 executor.learn(verification, action_result)
 
                 # Calculate duration
                 duration = time.time() - start_time
-                log_message(f"\n   ✓ Completed at {duration:.1f}s", status='success', indent=0)
+                log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
 
             # Show interpretation summary if LLM interpreted the loop
             if executor.used_interpretation:

@@ -65,6 +65,16 @@ class RAVLListCommand(RAVLCLIBase):
         # Capture filter text early (used for all output formats)
         filter_text = getattr(args, 'namespace_filter', None)
 
+        # Auto-enable namespaces-only mode when search criteria provided
+        # (provides better UX for search: simple list instead of tree)
+        if filter_text and not only_namespaces:
+            # Check if user explicitly requested a different output format
+            user_requested_format = args.json or args.flat
+
+            if not user_requested_format:
+                # Auto-enable namespaces-only for cleaner search results
+                only_namespaces = True
+
         show_loops = not only_templates
         show_templates = not (only_project_loops or only_framework_loops)
 

@@ -118,11 +118,17 @@ def log_message(message: str, status: str = 'info', indent: int = 2, file=None, 
         return
 
     indent_str = ' ' * indent
+
+    # Handle multi-line messages: apply prefix to each line
+    lines = message.split('\n')
+
     if show_symbol:
         symbol = STATUS_SYMBOLS.get(status, '[i]')
-        print(f"{indent_str}{symbol} {message}", file=file, flush=True)
+        for line in lines:
+            print(f"{indent_str}{symbol} {line}", file=file, flush=True)
     else:
-        print(f"{indent_str}{message}", file=file, flush=True)
+        for line in lines:
+            print(f"{indent_str}{line}", file=file, flush=True)
 
 
 def log_verification_error(error_title: str, error_msg: str, max_length: int = 150, file=None):

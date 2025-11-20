@@ -1,15 +1,17 @@
-{none of these steps are explicitly required, but it's a useful structure. remove the helper text in curly braces before running the loop}
+{Describe what you would like the loop to achieve here}
 
-# PURPOSE
-{optional section, more for your benefit, but helps to include it. You can add an explicit #Reflect and #Learn section if you like, but the RAVL framework will do those steps for you anyway}
+Tips (remove this text before running your loop)
 
-# ACT
-{the thing you want your loop to do. Recommendations:
-- state what not how, and see if the fx can figure it out
-- if it's complex and involves multiple steps you might need to create a code based ravl instead}
-
-# VERIFY
-{optional verification steps that, if true, would mean that the loop has acted correctly}
-
-# LEARN
-{optional, add what/how you would like the loop to learn}
+- Focus on outcomes over steps if you want high learning potential
+- Focus on steps over outcomes if you want more control over execution
+- You don't have to include specific RAVL sections - in fact RavlGPT often works better by inferring them
+- These terminal commands will help you start and understand your loop:
+```
+ravl YOUR_LOOP_NAME							# Trigger a run of your loop
+ravl YOUR_LOOP_NAME	--show-config			# Show what config settings the loop will use
+ravl YOUR_LOOP_NAME	--show-execution		# Show the execution steps as it runs
+ravl --loop-health YOUR_LOOP_NAME 			# Diagnose the health of your loop
+ravl --execution-health YOUR_LOOP_NAME 		# Diagnose any issues the framework is having executing the loop
+ravl --list									# Show all available loops
+ravl --help									# Usage, Commands and Loop options help
+```

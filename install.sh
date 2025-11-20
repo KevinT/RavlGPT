@@ -140,17 +140,17 @@ echo ""
 echo -e "${BLUE}Next steps:${NC}"
 
 if [ "$HAS_KEY" = true ]; then
-    echo "  ./ravl example_1_rugby_tips    # Run rugby tips example"
+    echo "  ./ravl example_2_intelligence_loop    # Run rugby tips example"
 else
     echo "  ${YELLOW}# First, set your API key:${NC}"
     echo "  export ANTHROPIC_API_KEY=\"sk-ant-...\""
     echo ""
     echo "  ${BLUE}# Then run an example:${NC}"
-    echo "  ./ravl example_1_rugby_tips"
+    echo "  ./ravl example_2_intelligence_loop"
 fi
 
 echo "  ./ravl --list                   # List all available loops"
-echo "  ./ravl-clone example_1_rugby_tips my_tips  # Clone and customize"
+echo "  ./ravl-clone example_2_intelligence_loop my_tips  # Clone and customize"
 echo ""
 echo -e "${BLUE}Documentation:${NC}"
 echo "  cat .ravl/INSTALL.md            # Installation guide"

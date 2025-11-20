@@ -414,14 +414,14 @@ class RAVLCloneCommand(RAVLCLIBase):
         Strip example_n_ prefix from loop name if present
 
         Args:
-            name: Original loop name (e.g., 'example_1_rugby_tips')
+            name: Original loop name (e.g., 'example_2_intelligence_loop')
 
         Returns:
             Name with prefix removed (e.g., 'rugby_tips')
 
         Examples:
-            'example_1_rugby_tips' -> 'rugby_tips'
-            'example_2_simple_learning_loop' -> 'simple_learning_loop'
+            'example_2_intelligence_loop' -> 'rugby_tips'
+            'example_3_recursive_learning_loop' -> 'simple_learning_loop'
             'tech_news_curator' -> 'tech_news_curator' (unchanged)
         """
         import re

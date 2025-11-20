@@ -94,6 +94,13 @@ class SimpleCodeExecutor:
         self.loop_dir = loop_dir
         self.project_root = project_root or self._find_project_root()
 
+        # Resolve learnings directory for generated_requirements.txt
+        from ravl_runner import RAVLRunner
+        self.learnings_dir = RAVLRunner.resolve_learning_path(
+            loop_dir=loop_dir,
+            project_root=self.project_root
+        )
+
     def _find_project_root(self) -> Path:
         """Find project root by looking for .git directory"""
         current = self.loop_dir.resolve()
@@ -156,7 +163,9 @@ class SimpleCodeExecutor:
                 }
 
             # Generate requirements.txt from code imports
-            requirements_path = self.loop_dir / 'generated_requirements.txt'
+            execution_learning_dir = self.learnings_dir / 'execution_learning'
+            execution_learning_dir.mkdir(parents=True, exist_ok=True)
+            requirements_path = execution_learning_dir / 'generated_requirements.txt'
             RequirementsGenerator.save_requirements(code_clean, requirements_path)
 
             # Install requirements into venv

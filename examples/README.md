@@ -6,8 +6,8 @@ Progressive examples demonstrating the RAVL framework from simple to advanced.
 
 These examples are designed to be studied in order, building from basic concepts to advanced patterns:
 
-1. **example_1_rugby_tips** - Simplest markdown loop (5 min)
-2. **example_2_simple_learning_loop** - Understanding learning (15 min)
+1. **example_2_intelligence_loop** - Simplest markdown loop (5 min)
+2. **example_3_recursive_learning_loop** - Understanding learning (15 min)
 3. **tech_news_curator** - Data ingestion patterns (15 min)
 4. **github_trending_tracker** - API integration in Python (20 min)
 5. **communication_learner** - Multi-dimensional optimization (25 min)
@@ -17,7 +17,7 @@ These examples are designed to be studied in order, building from basic concepts
 
 ## 1. Rugby Tips - Your First Loop
 
-**Path**: `example_1_rugby_tips/`
+**Path**: `example_2_intelligence_loop/`
 **Type**: Markdown
 **Level**: Beginner
 **Time**: 5 minutes
@@ -35,7 +35,7 @@ Tracks Springbok rugby game results, analyzes player performance, and generates 
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl example_1_rugby_tips
+./ravl example_2_intelligence_loop
 ```
 
 ### Key Concepts
@@ -48,7 +48,7 @@ export ANTHROPIC_API_KEY="your-key"
 
 ## 2. Simple Learning Loop - Environment Explorer
 
-**Path**: `example_2_simple_learning_loop/`
+**Path**: `example_3_recursive_learning_loop/`
 **Type**: Markdown
 **Level**: Beginner
 **Time**: 15 minutes
@@ -66,9 +66,9 @@ Starts with zero knowledge and explores its environment. Each run decides what t
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl example_2_simple_learning_loop
-./ravl example_2_simple_learning_loop  # Run multiple times to see learning!
-./ravl example_2_simple_learning_loop
+./ravl example_3_recursive_learning_loop
+./ravl example_3_recursive_learning_loop  # Run multiple times to see learning!
+./ravl example_3_recursive_learning_loop
 ```
 
 ### Key Concepts
@@ -329,10 +329,10 @@ else:
 
 ```bash
 # Simple markdown starter (requires ANTHROPIC_API_KEY)
-./ravl example_1_rugby_tips
+./ravl example_2_intelligence_loop
 
 # Learning evolution demo (requires ANTHROPIC_API_KEY, run multiple times!)
-./ravl example_2_simple_learning_loop
+./ravl example_3_recursive_learning_loop
 
 # Markdown loop with RSS (requires ANTHROPIC_API_KEY)
 ./ravl tech_news_curator
@@ -400,10 +400,10 @@ parent_loop/
 
 ```bash
 # Option 1: Clone an example (simplest)
-./ravl --clone example_1_rugby_tips ravl_loops/my_markdown_loop
+./ravl --clone example_2_intelligence_loop ravl_loops/my_markdown_loop
 
 # Option 2: Clone learning example
-./ravl --clone example_2_simple_learning_loop ravl_loops/my_learner
+./ravl --clone example_3_recursive_learning_loop ravl_loops/my_learner
 
 # Option 3: Use framework templates
 ./ravl --clone empty_loop_template ravl_loops/my_loop
@@ -419,7 +419,7 @@ vim ravl_loops/my_loop/ravl_loop.md  # or .py
 
 - **Visual Learner?** Watch the real-time output as loops execute
 - **Code Learner?** Read `github_trending_tracker/ravl_loop.py` - Python implementation
-- **Markdown Learner?** Read `example_1_rugby_tips/ravl_loop.md` - plain language specs
+- **Markdown Learner?** Read `example_2_intelligence_loop/ravl_loop.md` - plain language specs
 - **Concept Learner?** Read example READMEs for detailed explanations
 - **Hands-On Learner?** Modify examples and see what breaks
 

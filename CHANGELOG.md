@@ -8,6 +8,28 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 
 ## November 2025
 
+### LLM Provider Configuration System
+- **Problem**: Teams needed flexibility to choose different LLM providers (Anthropic, OpenAI, Google, Ollama) for different loops based on cost, performance, or availability requirements
+- **Solution**: Hierarchical LLM provider configuration system with 5-level precedence (loop config → parent config → project config → .env → auto-detect)
+- **Value**:
+  - Loops can specify which LLM provider they need (with hard failure if API key missing)
+  - Child loops automatically inherit parent's LLM configuration
+  - Support for advanced parameters (model, temperature, max_tokens, top_p)
+  - Simple format (`provider: anthropic`) or advanced format (full JSON with parameters)
+  - Configuration failures logged to execution_learning for debugging
+- **Implementation**: `resolve_llm_config()` in RAVLRunner, API key validation in MarkdownRAVLExecutor, parameter support in all LLM providers
+
+### Enhanced Python Version Support
+- **Problem**: Framework was limited to Python 3.9-3.13, but newer Python versions offer performance improvements
+- **Solution**: Extended framework compatibility to Python 3.14
+- **Value**: Users can leverage latest Python features and performance optimizations
+- All framework dependencies tested and confirmed compatible with Python 3.14
+
+### Multi-API Configuration Format
+- **Problem**: Loops integrating with multiple APIs had verbose configuration syntax
+- **Solution**: Simplified configuration using `apis:` section in ravl.yml
+- **Value**: Cleaner, more maintainable loop configurations with standardized API declaration format
+
 ### Installation & Setup
 - One-command installation via curl (no manual setup required)
 - Comprehensive installation guide with prerequisites and troubleshooting
