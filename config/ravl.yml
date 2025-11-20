@@ -17,7 +17,7 @@ description: Framework-level RAVL configuration
 framework:
   required_python_version: "3.12"  # Specific Python version to use for all venvs
   min_python_version: "3.9"         # Minimum supported Python version
-  max_python_version: "3.13"        # Maximum supported Python version (3.14+ has compatibility issues)
+  max_python_version: "3.14"        # Maximum supported Python version
 
 # ==================== Google Workspace Integration Configuration ====================
 #
