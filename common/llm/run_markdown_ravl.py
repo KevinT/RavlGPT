@@ -281,7 +281,7 @@ class ConfigBasedRAVLRunner:
                     'success': False
                 }
                 action_result = {
-                    'timestamp': reflection['timestamp'],
+                    'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
                     'context_vars': context_vars,
                     'error': str(initialization_error),
                     'error_type': type(initialization_error).__name__,
@@ -290,7 +290,7 @@ class ConfigBasedRAVLRunner:
                     'output_file': None
                 }
                 verification = {
-                    'timestamp': reflection['timestamp'],
+                    'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
                     'error': str(initialization_error),
                     'error_type': type(initialization_error).__name__,
                     'phase': 'initialization',

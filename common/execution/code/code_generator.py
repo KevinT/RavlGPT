@@ -193,7 +193,7 @@ class CodeGenerator:
         generated_code = self.llm.complete(prompt, max_tokens=get_max_tokens('code_generation', 16384))
 
         return {
-            'timestamp': reflection['timestamp'],
+            'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
             'generated_code': generated_code,
             'inferred_dsl': dsl,
             'dsl_file': str(dsl_file.name),

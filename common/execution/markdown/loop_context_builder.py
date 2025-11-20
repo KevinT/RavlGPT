@@ -170,7 +170,7 @@ class LoopContextBuilder:
 
         # Add reflection timestamp
         if reflection.get('timestamp'):
-            context_parts.append(f"Execution Timestamp: {reflection['timestamp']}")
+            context_parts.append(f"Execution Timestamp: {reflection.get('timestamp')}")
 
         # Add loop metadata
         context_parts.append(f"\nLoop: {self.loop_dir.name}")

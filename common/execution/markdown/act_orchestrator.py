@@ -14,7 +14,7 @@ Handles ACT phase of RAVL cycle - code generation and execution.
 import json
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, Callable
 
 # Add utils to path
@@ -135,7 +135,7 @@ class ActOrchestrator:
 
                 timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
                 action_result = {
-                    'timestamp': reflection['timestamp'],
+                    'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
                     'context_vars': self.context_vars,
                     'output': cached_code,
                     'code_executed': False,
@@ -197,7 +197,7 @@ class ActOrchestrator:
         timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
 
         action_result = {
-            'timestamp': reflection['timestamp'],
+            'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
             'context_vars': self.context_vars,
             'output': llm_response,
             'code_executed': False,
@@ -274,7 +274,7 @@ class ActOrchestrator:
         )
 
         action_result = {
-            'timestamp': reflection['timestamp'],
+            'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
             'context_vars': self.context_vars,
             'output': gen_result['generated_code'],
             'code_executed': False,
