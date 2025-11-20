@@ -8,7 +8,7 @@ allow loops to create new loops themselves, by calling "ravl --new ..."
 
 # Tidy First
 
---new is not working since the switch from / to . namespaces
+- split llm logs by which provider is being called, right now they all go to the same folder. make sure they are still .gitignore d
 
 - Additional learning clean up 
 	- the /logs folder could go under /history and be called /terminal-log or something like that
