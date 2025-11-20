@@ -50,7 +50,14 @@ class LLMProvider(ABC):
 class AnthropicProvider(LLMProvider):
     """Anthropic Claude provider"""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "claude-sonnet-4-5-20250929"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "claude-sonnet-4-5-20250929",
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        top_p: Optional[float] = None
+    ):
         try:
             import anthropic
         except ImportError:
@@ -61,20 +68,31 @@ class AnthropicProvider(LLMProvider):
             raise ValueError("ANTHROPIC_API_KEY not found in environment")
 
         self.model = model
+        self.temperature = temperature
+        self.default_max_tokens = max_tokens
+        self.top_p = top_p
         self.client = anthropic.Anthropic(api_key=self.api_key)
 
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
+        # Use method param, then instance default, then framework default
         if max_tokens is None:
-            max_tokens = get_max_tokens('default')
+            max_tokens = self.default_max_tokens or get_max_tokens('default')
+
+        # Build API params
+        api_params = {
+            'model': self.model,
+            'max_tokens': max_tokens,
+            'messages': [{"role": "user", "content": prompt}]
+        }
+
+        # Add optional parameters if configured
+        if self.temperature is not None:
+            api_params['temperature'] = self.temperature
+        if self.top_p is not None:
+            api_params['top_p'] = self.top_p
 
         try:
-            response = self.client.messages.create(
-                model=self.model,
-                max_tokens=max_tokens,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
+            response = self.client.messages.create(**api_params)
             response_text = response.content[0].text
             log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
             return response_text
@@ -89,7 +107,14 @@ class AnthropicProvider(LLMProvider):
 class OpenAIProvider(LLMProvider):
     """OpenAI GPT provider"""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4o"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "gpt-4o",
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        top_p: Optional[float] = None
+    ):
         try:
             import openai
         except ImportError:
@@ -100,20 +125,31 @@ class OpenAIProvider(LLMProvider):
             raise ValueError("OPENAI_API_KEY not found in environment")
 
         self.model = model
+        self.temperature = temperature
+        self.default_max_tokens = max_tokens
+        self.top_p = top_p
         self.client = openai.OpenAI(api_key=self.api_key)
 
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
+        # Use method param, then instance default, then framework default
         if max_tokens is None:
-            max_tokens = get_max_tokens('default')
+            max_tokens = self.default_max_tokens or get_max_tokens('default')
+
+        # Build API params
+        api_params = {
+            'model': self.model,
+            'max_tokens': max_tokens,
+            'messages': [{"role": "user", "content": prompt}]
+        }
+
+        # Add optional parameters if configured
+        if self.temperature is not None:
+            api_params['temperature'] = self.temperature
+        if self.top_p is not None:
+            api_params['top_p'] = self.top_p
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                max_tokens=max_tokens,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ]
-            )
+            response = self.client.chat.completions.create(**api_params)
             response_text = response.choices[0].message.content
             log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
             return response_text
@@ -128,7 +164,14 @@ class OpenAIProvider(LLMProvider):
 class GoogleProvider(LLMProvider):
     """Google Gemini provider"""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-2.0-flash-exp"):
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = "gemini-2.0-flash-exp",
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        top_p: Optional[float] = None
+    ):
         try:
             import google.generativeai as genai
         except ImportError:
@@ -139,17 +182,28 @@ class GoogleProvider(LLMProvider):
             raise ValueError("GOOGLE_API_KEY not found in environment")
 
         self.model = model
+        self.temperature = temperature
+        self.default_max_tokens = max_tokens
+        self.top_p = top_p
         genai.configure(api_key=self.api_key)
         self.client = genai.GenerativeModel(model)
 
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
+        # Use method param, then instance default, then framework default
         if max_tokens is None:
-            max_tokens = get_max_tokens('default')
+            max_tokens = self.default_max_tokens or get_max_tokens('default')
+
+        # Build generation config
+        gen_config = {"max_output_tokens": max_tokens}
+        if self.temperature is not None:
+            gen_config['temperature'] = self.temperature
+        if self.top_p is not None:
+            gen_config['top_p'] = self.top_p
 
         try:
             response = self.client.generate_content(
                 prompt,
-                generation_config={"max_output_tokens": max_tokens}
+                generation_config=gen_config
             )
             response_text = response.text
             log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
@@ -165,7 +219,14 @@ class GoogleProvider(LLMProvider):
 class OllamaProvider(LLMProvider):
     """Ollama local LLM provider"""
 
-    def __init__(self, model: str = "llama3.1", base_url: str = "http://localhost:11434"):
+    def __init__(
+        self,
+        model: str = "llama3.1",
+        base_url: str = "http://localhost:11434",
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        top_p: Optional[float] = None
+    ):
         try:
             import requests
         except ImportError:
@@ -174,20 +235,29 @@ class OllamaProvider(LLMProvider):
         self.model = model
         self.base_url = base_url
         self.endpoint = f"{base_url}/api/generate"
+        self.temperature = temperature
+        self.default_max_tokens = max_tokens
+        self.top_p = top_p
 
     def complete(self, prompt: str, max_tokens: Optional[int] = None) -> str:
+        # Use method param, then instance default, then framework default
         if max_tokens is None:
-            max_tokens = get_max_tokens('default')
+            max_tokens = self.default_max_tokens or get_max_tokens('default')
 
         import requests
+
+        # Build options dict
+        options = {"num_predict": max_tokens}
+        if self.temperature is not None:
+            options['temperature'] = self.temperature
+        if self.top_p is not None:
+            options['top_p'] = self.top_p
 
         payload = {
             "model": self.model,
             "prompt": prompt,
             "stream": False,
-            "options": {
-                "num_predict": max_tokens
-            }
+            "options": options
         }
 
         try:
@@ -213,6 +283,9 @@ class LLMProviderFactory:
         provider_type: str = "anthropic",
         api_key: Optional[str] = None,
         model: Optional[str] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        top_p: Optional[float] = None,
         **kwargs
     ) -> LLMProvider:
         """
@@ -222,6 +295,9 @@ class LLMProviderFactory:
             provider_type: One of: anthropic, openai, google, ollama
             api_key: Optional API key (will use env var if not provided)
             model: Optional model name (uses provider default if not provided)
+            temperature: Optional temperature (0.0-1.0) for response randomness
+            max_tokens: Optional max tokens for response
+            top_p: Optional top_p (0.0-1.0) for nucleus sampling
             **kwargs: Additional provider-specific arguments
 
         Returns:
@@ -232,22 +308,34 @@ class LLMProviderFactory:
         if provider_type == "anthropic":
             return AnthropicProvider(
                 api_key=api_key,
-                model=model or "claude-sonnet-4-5-20250929"
+                model=model or "claude-sonnet-4-5-20250929",
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p
             )
         elif provider_type == "openai":
             return OpenAIProvider(
                 api_key=api_key,
-                model=model or "gpt-4o"
+                model=model or "gpt-4o",
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p
             )
         elif provider_type == "google":
             return GoogleProvider(
                 api_key=api_key,
-                model=model or "gemini-2.0-flash-exp"
+                model=model or "gemini-2.0-flash-exp",
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p
             )
         elif provider_type == "ollama":
             return OllamaProvider(
                 model=model or "llama3.1",
-                base_url=kwargs.get("base_url", "http://localhost:11434")
+                base_url=kwargs.get("base_url", "http://localhost:11434"),
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=top_p
             )
         else:
             raise ValueError(f"Unknown provider type: {provider_type}")

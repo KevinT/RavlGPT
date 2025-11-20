@@ -36,13 +36,16 @@ class LLMMixin:
 
     def detect_llm_provider(self):
         """
-        Auto-detect LLM provider based on available API keys
+        Resolve LLM provider using hierarchical configuration
 
-        Checks for API keys in this order:
-        1. ANTHROPIC_API_KEY
-        2. OPENAI_API_KEY
-        3. GOOGLE_API_KEY
-        4. Falls back to local Ollama
+        Checks in priority order:
+        1. Loop config (llm_provider in ravl.yml)
+        2. Parent configs (parent's config/ravl.yml)
+        3. Project config (ravl_loops/config/ravl.yml)
+        4. .env file (RAVL_DEFAULT_LLM_PROVIDER)
+        5. Auto-detect from API keys (ANTHROPIC > OPENAI > GOOGLE > OLLAMA)
+
+        Falls back to auto-detection if loop context is not available.
 
         Returns:
             LLMProvider instance
@@ -51,18 +54,43 @@ class LLMMixin:
 
         loop_name = getattr(self, 'loop_name', 'RAVL Loop')
 
-        if os.environ.get("ANTHROPIC_API_KEY"):
-            log_execution(f"{loop_name}: Auto-detected Anthropic API key", status='info')
-            return LLMProviderFactory.create_provider("anthropic")
-        elif os.environ.get("OPENAI_API_KEY"):
-            log_execution(f"{loop_name}: Auto-detected OpenAI API key", status='info')
-            return LLMProviderFactory.create_provider("openai")
-        elif os.environ.get("GOOGLE_API_KEY"):
-            log_execution(f"{loop_name}: Auto-detected Google API key", status='info')
-            return LLMProviderFactory.create_provider("google")
+        # Get loop directory if available
+        loop_dir = getattr(self, 'loop_dir', None)
+        loop_config = getattr(self, 'config', None)
+        project_root = getattr(self, 'project_root', None)
+
+        if loop_dir:
+            # Use hierarchical resolution
+            from ravl_runner import RAVLRunner
+            llm_config = RAVLRunner.resolve_llm_config(
+                loop_dir=loop_dir,
+                loop_config=loop_config,
+                project_root=project_root
+            )
+            provider_name = llm_config.get('provider', 'anthropic')
+            log_execution(f"{loop_name}: Using LLM provider from config: {provider_name}", status='info')
+
+            return LLMProviderFactory.create_provider(
+                provider_name,
+                model=llm_config.get('model'),
+                temperature=llm_config.get('temperature'),
+                max_tokens=llm_config.get('max_tokens'),
+                top_p=llm_config.get('top_p')
+            )
         else:
-            log_execution(f"{loop_name}: No API keys found, trying local Ollama", status='info')
-            return LLMProviderFactory.create_provider("ollama")
+            # Fallback: auto-detect from API keys
+            if os.environ.get("ANTHROPIC_API_KEY"):
+                log_execution(f"{loop_name}: Auto-detected Anthropic API key", status='info')
+                return LLMProviderFactory.create_provider("anthropic")
+            elif os.environ.get("OPENAI_API_KEY"):
+                log_execution(f"{loop_name}: Auto-detected OpenAI API key", status='info')
+                return LLMProviderFactory.create_provider("openai")
+            elif os.environ.get("GOOGLE_API_KEY"):
+                log_execution(f"{loop_name}: Auto-detected Google API key", status='info')
+                return LLMProviderFactory.create_provider("google")
+            else:
+                log_execution(f"{loop_name}: No API keys found, trying local Ollama", status='info')
+                return LLMProviderFactory.create_provider("ollama")
 
     def extract_json(self, response_text: str) -> Any:
         """

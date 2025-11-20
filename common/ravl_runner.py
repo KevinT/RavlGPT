@@ -442,6 +442,132 @@ class RAVLRunner:
             return (loop_dir.parent.parent / '.ravl' / 'venv').resolve()
 
     @staticmethod
+    def resolve_llm_config(
+        loop_dir: Path,
+        loop_config: Optional[Dict[str, Any]] = None,
+        project_root: Optional[Path] = None
+    ) -> Dict[str, Any]:
+        """
+        Resolve the LLM provider configuration with precedence:
+        1. Loop config (llm_provider in ravl.yml)
+        2. Parent config (parent's config/ravl.yml llm_provider)
+        3. Project config (ravl_loops/config/ravl.yml llm_provider)
+        4. Project .env file (RAVL_DEFAULT_LLM_PROVIDER)
+        5. Auto-detect from API keys (anthropic > openai > google > ollama)
+
+        Configuration formats supported:
+        - Simple string: llm_provider: anthropic
+        - Full dict: llm_provider: {provider: anthropic, model: claude-sonnet-4-5, temperature: 0.7}
+
+        Args:
+            loop_dir: Path to the loop directory
+            loop_config: Parsed loop configuration (from ravl.yml)
+            project_root: Project root for loading .env and project config
+
+        Returns:
+            Dict with keys: provider (str), model (Optional[str]), and optional parameters
+            like temperature, max_tokens, top_p, etc.
+        """
+        # Priority 1: Loop config
+        if loop_config and 'llm_provider' in loop_config:
+            return RAVLRunner._normalize_llm_config(loop_config['llm_provider'])
+
+        # Priority 2: Parent configs (walk full parent chain from immediate to root)
+        all_parents = RAVLRunner._find_all_parent_loops(loop_dir)
+        for parent_dir in all_parents:
+            parent_config_file = parent_dir / 'config' / 'ravl.yml'
+            if parent_config_file.exists():
+                try:
+                    import yaml
+                    with open(parent_config_file, 'r') as f:
+                        parent_config = yaml.safe_load(f) or {}
+                        if 'llm_provider' in parent_config:
+                            return RAVLRunner._normalize_llm_config(parent_config['llm_provider'])
+                except Exception:
+                    pass  # If parent config is malformed, try next parent
+
+        # Priority 3: Project config (ravl_loops/config/ravl.yml)
+        if project_root:
+            project_config_file = project_root / 'ravl_loops' / 'config' / 'ravl.yml'
+            if project_config_file.exists():
+                try:
+                    import yaml
+                    with open(project_config_file, 'r') as f:
+                        project_config = yaml.safe_load(f) or {}
+                        if 'llm_provider' in project_config:
+                            return RAVLRunner._normalize_llm_config(project_config['llm_provider'])
+                except Exception:
+                    pass  # If project config is malformed, fall through to next priority
+
+        # Priority 4: Project .env file
+        if project_root:
+            env_vars = RAVLRunner.load_env_file(project_root)
+            if 'RAVL_DEFAULT_LLM_PROVIDER' in env_vars:
+                env_value = env_vars['RAVL_DEFAULT_LLM_PROVIDER']
+                # Try to parse as JSON first (for dict format in .env)
+                try:
+                    import json
+                    parsed = json.loads(env_value)
+                    if isinstance(parsed, dict):
+                        return RAVLRunner._normalize_llm_config(parsed)
+                except (json.JSONDecodeError, ValueError):
+                    pass
+                # Otherwise treat as simple string
+                return RAVLRunner._normalize_llm_config(env_value)
+
+        # Priority 5: Auto-detect from API keys (lowest)
+        return RAVLRunner._autodetect_llm_provider()
+
+    @staticmethod
+    def _normalize_llm_config(config: Any) -> Dict[str, Any]:
+        """
+        Normalize LLM config from various formats to standard dict
+
+        Supports:
+        - String: "anthropic" -> {provider: "anthropic"}
+        - Dict: {provider: "anthropic", model: "...", temperature: 0.7, ...}
+
+        Args:
+            config: String or dict config value
+
+        Returns:
+            Normalized dict with at least 'provider' key
+        """
+        if isinstance(config, str):
+            return {'provider': config}
+        elif isinstance(config, dict):
+            # Ensure 'provider' key exists
+            if 'provider' not in config:
+                raise ValueError("llm_provider dict must have 'provider' key")
+            return config
+        else:
+            raise ValueError(f"Invalid llm_provider format: {type(config).__name__}. Must be string or dict.")
+
+    @staticmethod
+    def _autodetect_llm_provider() -> Dict[str, Any]:
+        """
+        Auto-detect LLM provider from available API keys
+
+        Checks in priority order:
+        1. ANTHROPIC_API_KEY
+        2. OPENAI_API_KEY
+        3. GOOGLE_API_KEY
+        4. Falls back to ollama (local, no key needed)
+
+        Returns:
+            Dict with 'provider' key
+        """
+        import os
+        if os.environ.get("ANTHROPIC_API_KEY"):
+            return {'provider': 'anthropic'}
+        elif os.environ.get("OPENAI_API_KEY"):
+            return {'provider': 'openai'}
+        elif os.environ.get("GOOGLE_API_KEY"):
+            return {'provider': 'google'}
+        else:
+            return {'provider': 'ollama'}
+
+    @staticmethod
     def find_project_root(start_path: Path) -> Path:
         """
         Find the project root by looking for .git directory

@@ -390,11 +390,38 @@ class MarkdownRAVLExecutor:
         # Ensure learnings directory exists
         self.learnings_dir.mkdir(parents=True, exist_ok=True)
 
-        # Setup LLM provider
-        self.llm = llm_provider or LLMProviderFactory.create_provider("anthropic")
-
-        # Load loop configuration (for data ingress detection)
+        # Load loop configuration (needed for LLM resolution)
         self.config = self._load_config()
+
+        # Setup LLM provider with hierarchical configuration resolution
+        if llm_provider:
+            # Use provided LLM provider (typically from parent loops or tests)
+            self.llm = llm_provider
+        else:
+            # Resolve LLM config from hierarchy: loop → parent → project → .env → auto-detect
+            from ravl_runner import RAVLRunner
+            llm_config = RAVLRunner.resolve_llm_config(
+                loop_dir=self.loop_dir,
+                loop_config=self.config,
+                project_root=self.project_root
+            )
+
+            # Validate API key for selected provider (hard failure if missing)
+            provider_name = llm_config.get('provider', 'anthropic')
+            api_key_valid, error_message = self._validate_provider_api_key(provider_name)
+            if not api_key_valid:
+                # Log to execution learning before failing
+                self._log_configuration_failure('llm_provider', provider_name, error_message)
+                raise ValueError(error_message)
+
+            # Create provider with full config (model + parameters)
+            self.llm = LLMProviderFactory.create_provider(
+                provider_name,
+                model=llm_config.get('model'),
+                temperature=llm_config.get('temperature'),
+                max_tokens=llm_config.get('max_tokens'),
+                top_p=llm_config.get('top_p')
+            )
 
         # Initialize markdown parser (needed for _parse_markdown)
         self.markdown_parser = MarkdownParser(self.loop_dir, self.learnings_dir, llm_provider=self.llm)
@@ -2122,6 +2149,100 @@ class MarkdownRAVLExecutor:
                 summary_parts.append("")
 
         return '\n'.join(summary_parts)
+
+    def _validate_provider_api_key(self, provider_type: str) -> Tuple[bool, str]:
+        """
+        Validate that API key exists for selected LLM provider
+
+        Args:
+            provider_type: Provider name (anthropic, openai, google, ollama)
+
+        Returns:
+            Tuple of (valid: bool, error_message: str)
+        """
+        # Map providers to required API keys
+        key_map = {
+            'anthropic': 'ANTHROPIC_API_KEY',
+            'openai': 'OPENAI_API_KEY',
+            'google': 'GOOGLE_API_KEY',
+            'ollama': None  # Local, no key needed
+        }
+
+        required_key = key_map.get(provider_type)
+
+        # Ollama doesn't need API key
+        if required_key is None:
+            return (True, "")
+
+        # Check if key exists
+        if not os.environ.get(required_key):
+            error = f"""
+LLM Provider Configuration Error:
+  Provider: {provider_type}
+  Required API Key: {required_key}
+  Status: NOT FOUND
+
+The loop is configured to use '{provider_type}' but the required API key is missing.
+
+To fix this:
+1. Add API key to .env file at project root:
+   {required_key}=your-api-key-here
+
+2. Or change provider in config/ravl.yml:
+   llm_provider:
+     provider: anthropic  # or openai, google, ollama
+
+3. Or use auto-detection (remove llm_provider config entirely)
+
+Configuration hierarchy checked:
+  - Loop config: {self.loop_dir}/config/ravl.yml
+  - Parent configs: (checked full parent chain)
+  - Project config: ravl_loops/config/ravl.yml
+  - .env file: RAVL_DEFAULT_LLM_PROVIDER
+"""
+            return (False, error)
+
+        return (True, "")
+
+    def _log_configuration_failure(self, config_type: str, config_value: str, error_message: str):
+        """
+        Log configuration failure to execution learning directory
+
+        Creates:
+        - execution_learning/current_state/configuration_failure.json
+        - execution_learning/history/configuration_failures.jsonl
+
+        Args:
+            config_type: Type of configuration that failed (e.g., 'llm_provider')
+            config_value: Value that failed (e.g., 'anthropic')
+            error_message: Full error message explaining the failure
+        """
+        failure_data = {
+            'timestamp': datetime.now(timezone.utc).isoformat(),
+            'failure_type': 'configuration_error',
+            'config_type': config_type,
+            'config_value': config_value,
+            'error_message': error_message,
+            'loop_dir': str(self.loop_dir),
+            'loop_name': self.loop_dir.name
+        }
+
+        # Log to execution_learning/current_state/
+        execution_learning_dir = self.learnings_dir / 'execution_learning'
+        execution_learning_dir.mkdir(parents=True, exist_ok=True)
+
+        failure_file = execution_learning_dir / 'current_state' / 'configuration_failure.json'
+        failure_file.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(failure_file, 'w', encoding='utf-8') as f:
+            json.dump(failure_data, f, indent=2)
+
+        # Also append to history
+        history_file = execution_learning_dir / 'history' / 'configuration_failures.jsonl'
+        history_file.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(history_file, 'a', encoding='utf-8') as f:
+            f.write(json.dumps(failure_data) + '\n')
 
 
 def main():
