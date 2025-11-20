@@ -40,12 +40,29 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 - Framework now distinguishes between code logic issues vs transient failures for smarter recovery
 - Reduced "stuck loop" scenarios where the same broken code runs repeatedly
 
+### Loop Creation & Discovery
+- **ravl --new command**: Creates loops interactively with parent validation and automatic path building
+- **Enhanced loop listing**: `--namespaces-only` flag provides clean loop names for easy copy-paste
+- **Better error messages**: Shows loop namespaces instead of full file paths when ambiguous
+- **Targeted diagnostics**: `--focus` parameter in health check commands analyzes specific issues
+
+### Code Generation & Caching
+- **Force regeneration**: `--force-code-regeneration` flag bypasses cache for single runs
+- **Performance optimization**: Enhancement LLM calls skipped when using valid cached code
+- **Smarter caching**: Improved cache regeneration logic distinguishes code issues from transient failures
+
 ### Execution & Output Improvements
-- Real-time output streaming for generated code (print statements visible during execution, better UX for long-running operations)
-- Self-healing execution failure tracking and cache invalidation (loops recover from failures automatically)
-- Path resolution fixes for orchestrator loops and stdlib module detection
-- Custom delimiter support for code extraction from LLM responses
-- Cross-platform compatibility improvements for subprocess execution
+- **Organized logging**: LLM interaction logs organized by provider into subdirectories (anthropic/, openai/, google/, ollama/)
+- **Clean output management**: Clear separation between state tracking files and deliverable outputs
+- **Real-time streaming**: Print statements visible during generated code execution for better UX
+- **Path resolution**: Fixed project root resolution to work with all loop types
+- **Custom delimiters**: Support for code extraction from LLM responses with custom delimiters
+- **Cross-platform compatibility**: Improved subprocess execution across operating systems
+
+### Multi-Provider Support & Compatibility
+- **OpenAI enhancements**: GPT-5 compatibility and improved loop resilience
+- **Google Workspace**: Fixed Shared Drive file access, better error handling for missing configurations
+- **Improved reliability**: Better handling of edge cases across all LLM providers
 
 ### Learning Architecture
 - **LLM-based cross-run learning system**: Synthesizes domain insights from previous runs and feeds them back into next iteration
