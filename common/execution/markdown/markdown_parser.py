@@ -366,21 +366,34 @@ class MarkdownParser:
         # Load related loop examples
         examples_text = ""
 
-        # Load parent loop example
-        parent_loop = self.loop_dir.parent.parent if self.loop_dir.parent.name == 'ravl_loops' else None
-        if parent_loop and (parent_loop / 'ravl_loop.md').exists():
-            with open(parent_loop / 'ravl_loop.md', 'r', encoding='utf-8') as f:
-                parent_content = f.read()[:1500]
-                examples_text += f"## Parent Loop Example:\n{parent_content}\n\n"
+        # Check if this is a top-level parent (should be isolated from other top-level parents)
+        sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+        from core.learning.learning_access_helper import LearningAccessHelper
 
-        # Load sibling/child examples
-        siblings_dir = self.loop_dir.parent if self.loop_dir.parent.name == 'ravl_loops' else self.loop_dir
-        if siblings_dir.exists():
-            for sibling in list(siblings_dir.iterdir())[:2]:  # First 2 siblings
-                if sibling.is_dir() and sibling != self.loop_dir and (sibling / 'ravl_loop.md').exists():
-                    with open(sibling / 'ravl_loop.md', 'r', encoding='utf-8') as f:
+        helper = LearningAccessHelper(self.loop_dir, self.learnings_dir)
+        is_top_level = helper.is_top_level_parent()
+
+        # Only child loops should load parent/sibling examples
+        # Top-level parents must remain isolated from each other
+        if not is_top_level:
+            # Load parent loop example
+            parent_loop = self.loop_dir.parent.parent if self.loop_dir.parent.name == 'ravl_loops' else None
+            if parent_loop and (parent_loop / 'ravl_loop.md').exists():
+                with open(parent_loop / 'ravl_loop.md', 'r', encoding='utf-8') as f:
+                    parent_content = f.read()[:1500]
+                    examples_text += f"## Parent Loop Example:\n{parent_content}\n\n"
+
+            # Load sibling examples using proper isolation
+            from execution.markdown.loop_context_builder import LoopContextBuilder
+            context_builder = LoopContextBuilder(self.loop_dir, self.learnings_dir)
+            related = context_builder.discover_related_loops(exclude_top_level_parents=True)
+
+            for sibling_dir in related.get('siblings', [])[:2]:
+                if (sibling_dir / 'ravl_loop.md').exists():
+                    with open(sibling_dir / 'ravl_loop.md', 'r', encoding='utf-8') as f:
                         sibling_content = f.read()[:1000]
-                        examples_text += f"## Similar Loop ({sibling.name}):\n{sibling_content}\n\n"
+                        examples_text += f"## Similar Loop ({sibling_dir.name}):\n{sibling_content}\n\n"
+        # else: Top-level parents get NO sibling examples (proper isolation)
 
         # Build and load prompt from template file
         prompts_dir = Path(__file__).parent / 'prompts'

@@ -174,6 +174,36 @@ ravl_loops/
 - `clickup_intelligence` CANNOT read `frontier_delivery` learning
 - `task_velocity` CANNOT read `context_management` learning (different top-level parent)
 
+### Markdown Enhancement Isolation
+
+**Context**: The RAVL framework automatically enhances markdown-defined loops by adding structure (explicit Act/Verify sections) using an LLM. During enhancement, the framework can load "similar loop" examples to provide context.
+
+**Isolation Rule**: Top-level parent loops **must NOT** load other top-level parents as similar loop examples during markdown enhancement. This prevents organizational context contamination.
+
+**Implementation** (`markdown_parser.py:366-396`):
+```python
+# Check if this is a top-level parent
+helper = LearningAccessHelper(self.loop_dir, self.learnings_dir)
+is_top_level = helper.is_top_level_parent()
+
+# Only child loops load sibling examples
+if not is_top_level:
+    # Load parent and sibling examples using proper isolation
+    context_builder = LoopContextBuilder(...)
+    related = context_builder.discover_related_loops(exclude_top_level_parents=True)
+# else: Top-level parents get NO sibling examples
+```
+
+**Example Bug This Fixes**:
+- Before fix: `simple_loop_tree` (3-word instruction) would load `experimental` loop's elaborate report-generation instructions as a "similar loop" example
+- LLM would enhance the simple instruction to match the elaborate pattern
+- Result: Contamination between organizationally separate loops
+
+**After fix**:
+- Top-level parents remain isolated during enhancement
+- Child loops still benefit from sibling examples
+- Organizational boundaries respected
+
 ---
 
 ## Using LearningAccessHelper
