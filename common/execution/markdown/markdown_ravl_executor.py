@@ -46,6 +46,11 @@ from code_cache_manager import CodeCacheManager
 from code_generator import CodeGenerator
 from loop_context_builder import LoopContextBuilder
 from child_loop_executor import ChildLoopExecutor
+from llm_response_helper import LLMResponseHelper
+from verification_manager import VerificationManager
+from learning_coordinator import LearningCoordinator
+from reflection_orchestrator import ReflectionOrchestrator
+from act_orchestrator import ActOrchestrator
 
 # Import utilities
 from file_utils import load_json_file, save_json_file, append_to_jsonl, load_yaml_file
@@ -475,6 +480,61 @@ class MarkdownRAVLExecutor:
         # Prompts directory
         self.prompts_dir = _script_dir / 'prompts'
 
+        # Initialize LLM Response Helper
+        self.llm_helper = LLMResponseHelper(self.prompts_dir)
+
+        # Initialize SimpleCodeExecutor for general-purpose code execution
+        self.simple_code_executor = SimpleCodeExecutor(self.loop_dir, self.project_root)
+
+        # Initialize orchestrators for RAVL phases
+        self.reflection_orchestrator = ReflectionOrchestrator(
+            loop_dir=self.loop_dir,
+            learnings_dir=self.learnings_dir,
+            context_vars=self.context_vars,
+            llm_provider=self.llm,
+            llm_helper=self.llm_helper,
+            context_builder=self.context_builder,
+            should_skip_cache_fn=self._should_skip_cache,
+            check_has_domain_learnings_fn=self._check_has_domain_learnings
+        )
+
+        self.act_orchestrator = ActOrchestrator(
+            loop_dir=self.loop_dir,
+            learnings_dir=self.learnings_dir,
+            project_root=self.project_root,
+            context_vars=self.context_vars,
+            config=self.config,
+            llm_provider=self.llm,
+            llm_helper=self.llm_helper,
+            phases_accessor=lambda: self.phases,
+            code_generator=self.code_gen,
+            cache_manager=self.cache_manager,
+            child_executor=self.child_executor,
+            simple_code_executor=self.simple_code_executor,
+            should_attempt_code_generation_fn=self._should_attempt_code_generation,
+            is_data_ingress_loop_fn=self._is_data_ingress_loop,
+            get_available_credentials_fn=self._get_available_notion_credentials
+        )
+
+        self.verification_manager = VerificationManager(
+            llm_provider=self.llm,
+            llm_helper=self.llm_helper,
+            phases_accessor=lambda: self.phases,  # Lazy accessor
+            code_generator=self.code_gen,
+            should_attempt_code_generation=self._should_attempt_code_generation
+        )
+
+        self.learning_coordinator = LearningCoordinator(
+            learnings_dir=self.learnings_dir,
+            execution_learning_mgr=self.execution_learning_mgr,
+            loop_learning_mgr=self.loop_learning_mgr,
+            llm_provider=self.llm,
+            llm_helper=self.llm_helper,
+            phases_accessor=lambda: self.phases,  # Lazy accessor
+            cache_manager=self.cache_manager,
+            should_attempt_code_generation=self._should_attempt_code_generation
+        )
+
     @property
     def phases(self) -> Dict[str, Any]:
         """
@@ -690,14 +750,8 @@ class MarkdownRAVLExecutor:
         return result
 
     def _load_prompt(self, prompt_name: str, **variables) -> str:
-        """Load a prompt template and substitute variables"""
-        prompt_file = self.prompts_dir / f'{prompt_name}.md'
-
-        with open(prompt_file, 'r', encoding='utf-8') as f:
-            prompt_template = f.read()
-
-        # Substitute variables
-        return prompt_template.format(**variables)
+        """Load a prompt template and substitute variables - delegates to LLMResponseHelper"""
+        return self.llm_helper.load_prompt(prompt_name, **variables)
 
     def _parse_markdown(self) -> Dict[str, str]:
         """
@@ -814,83 +868,11 @@ class MarkdownRAVLExecutor:
         """
         REFLECT phase: Automatic context gathering
 
-        Scans all learnings from:
-        - This loop's learnings/
-        - Parent loop's learnings/ (if exists)
-        - Child loops' learnings/ (if exist)
-        - Sibling loops' learnings/ (if exist)
+        Delegates to ReflectionOrchestrator for implementation.
         """
-        log_message("Reflecting...", status='info')
+        reflection = self.reflection_orchestrator.reflect(read_learnings_fn=self._read_learnings_files)
 
-        reflection = {
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'context_vars': self.context_vars,
-            'learnings': {}
-        }
-
-        # Check for domain learnings specifically (not execution artifacts)
-        has_domain_learnings = self._check_has_domain_learnings()
-
-        # Read this loop's learnings (both execution and domain)
-        reflection['learnings']['this_loop'] = self._read_learnings_files(self.learnings_dir)
-
-        # Report domain learning status to user
-        if has_domain_learnings:
-            log_execution("Found domain learnings from previous runs", status='info', indent=4)
-        else:
-            log_execution("No prior domain learnings (fresh start)", status='info', indent=4)
-        
-        # Synthesize domain guidance from this loop's learnings
-        reflection['domain_guidance'] = self._synthesize_domain_context(
-            reflection['learnings']['this_loop']
-        )
-
-        # Discover and read related loops
-        log_execution("Discovering related loops...", status='debug', indent=4)
-        related_loops = self._discover_related_loops()
-
-        if related_loops['parent']:
-            parent_learnings_dir = related_loops['parent'] / 'learnings'
-            reflection['learnings']['parent_loop'] = self._read_learnings_files(parent_learnings_dir)
-            log_execution(f"Found parent loop learnings: {related_loops['parent'].name}", status='info', indent=4)
-            log_execution(f"  Parent learning path: {parent_learnings_dir}", status='debug', indent=6)
-
-        if related_loops['children']:
-            reflection['learnings']['child_loops'] = {}
-            child_names = []
-            for child_dir in related_loops['children']:
-                child_name = child_dir.name
-                child_names.append(child_name)
-                child_learnings_dir = child_dir / 'learnings'
-                reflection['learnings']['child_loops'][child_name] = self._read_learnings_files(child_learnings_dir)
-                log_execution(f"  Child: {child_name} at {child_learnings_dir}", status='debug', indent=6)
-            log_execution(f"Found {len(related_loops['children'])} child loop(s): {', '.join(child_names)}", status='info', indent=4)
-
-        if related_loops['siblings']:
-            reflection['learnings']['sibling_loops'] = {}
-            sibling_names = []
-            for sibling_dir in related_loops['siblings']:
-                sibling_name = sibling_dir.name
-                sibling_names.append(sibling_name)
-                sibling_learnings_dir = sibling_dir / 'learnings'
-                reflection['learnings']['sibling_loops'][sibling_name] = self._read_learnings_files(sibling_learnings_dir)
-                log_execution(f"  Sibling: {sibling_name} at {sibling_learnings_dir}", status='debug', indent=6)
-            log_execution(f"Found {len(related_loops['siblings'])} sibling loop(s): {', '.join(sibling_names)}", status='info', indent=4)
-        else:
-            # Check if this is a top-level parent (would explain no siblings)
-            from core.learning.learning_access_helper import LearningAccessHelper
-            helper = LearningAccessHelper(self.loop_dir, self.learnings_dir)
-            if helper.is_top_level_parent():
-                log_execution("This is a top-level parent (isolated from other top-level parents)", status='debug', indent=4)
-
-        # Check if code caching should be skipped
-        skip_cache, skip_reason = self._should_skip_cache()
-        if skip_cache:
-            reflection['skip_cache'] = True
-            reflection['skip_cache_reason'] = skip_reason
-            log_execution(f"Cache will be skipped: {skip_reason}", status='info', indent=4)
-
-        # Store reflection for lazy phase parsing (enhancement will use fresh domain_guidance)
+        # Store reflection for lazy phase parsing and later use
         self._last_reflection = reflection
 
         return reflection
@@ -1002,114 +984,19 @@ class MarkdownRAVLExecutor:
         """
         ACT phase: Execute instructions from markdown
 
-        For data ingestion loops: infers DSL, checks cache, and generates code accordingly
+        Delegates to ActOrchestrator for implementation.
         """
-        log_message("Acting...", status='info')
-
         # Store reflection for LEARN phase synthesis
         self._last_reflection = reflection
 
-        # Check cache FIRST, before any phase access (which triggers enhancement LLM call)
-        # We check cache before even determining if this is a code generation loop,
-        # because if there's cached code, we don't need to access phases at all
-        skip_cache = reflection.get('skip_cache', False)
-
-        if not skip_cache:
-            cache_result = self._check_code_cache()
-            if cache_result:
-                # Cache hit - return immediately without accessing phases
-                cached_code, cached_dsl = cache_result
-                log_execution("Using cached verified code - executing...")
-
-                timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
-                action_result = {
-                    'timestamp': reflection['timestamp'],
-                    'context_vars': self.context_vars,
-                    'output': cached_code,
-                    'code_executed': False,
-                    'execution_result': None,
-                    'using_cached_code': True,
-                    'cached_dsl': cached_dsl,
-                }
-
-                # Execute the cached code
-                action_result = self._execute_generated_code(cached_code, action_result)
-
-                # Save human-readable companion files for cached code
-                if action_result.get('output'):
-                    self._save_generated_code_artifacts(action_result['output'], timestamp)
-
-                log_execution("Cached code executed", status='success')
-                return action_result
-
-        # Cache miss or cache skipped - proceed with phase parsing
-        # (This triggers enhancement LLM call via lazy-loaded @property phases)
-        act_instructions = self.phases.get('act', '')
-        if not act_instructions:
-            raise ValueError("Markdown must define an 'Act' section")
-
-        verify_instructions = self.phases.get('verify', 'No verification criteria defined')
-
-        # For loops that need code generation: use DSL-guided code generation
-        if self._should_attempt_code_generation():
-            return self._act_with_dsl_inference(
-                act_instructions, verify_instructions, reflection
-            )
-
-        # Standard act phase for non-data-ingestion loops
-        # Process run_child directives first
-        act_instructions, child_results = self._process_run_child_directives(act_instructions)
-
-        # Build context summary
-        context_summary = self._build_context_summary(reflection)
-
-        # Add child results to context if any were executed
-        if child_results:
-            context_summary += "\n\n## Child Loop Execution Results\n"
-            for child_name, result in child_results.items():
-                context_summary += f"\n### {child_name}\n"
-                context_summary += f"```json\n{json.dumps(result, indent=2)}\n```\n"
-
-        # Load and format prompt
-        prompt = self._load_prompt(
-            'act_phase',
-            act_instructions=act_instructions,
-            context_summary=context_summary,
-            verify_instructions=verify_instructions
+        # Delegate to ActOrchestrator
+        action_result = self.act_orchestrator.act(
+            reflection=reflection,
+            build_context_fn=self._build_context_summary
         )
 
-        llm_response = self.llm.complete(prompt, max_tokens=get_max_tokens('act_phase_code_generation', 16384))
-
-        # Build action result (saved by LearningManager, not here)
-        timestamp = datetime.now().strftime('%Y-%m-%d-%H%M%S')
-
-        action_result = {
-            'timestamp': reflection['timestamp'],
-            'context_vars': self.context_vars,
-            'output': llm_response,
-            'code_executed': False,
-            'execution_result': None
-        }
-
-        # For loops with code generation: execute the generated code
-        if self._should_attempt_code_generation():
-            log_execution("Code generation detected - executing generated code...")
-            action_result = self._execute_generated_code(llm_response, action_result)
-
-        # Save human-readable companion files for generated code
-        if action_result.get('output'):
-            self._save_generated_code_artifacts(action_result['output'], timestamp)
-
-        log_execution("Action phase completed", status='success')
-
-        # Check if verification criteria specifies additional file outputs
-        additional_files = self._create_additional_outputs(
-            llm_response,
-            verify_instructions,
-            timestamp
-        )
-        if additional_files:
-            action_result['additional_output_files'] = additional_files
+        # Track generated code for learning
+        self._last_generated_code = self.act_orchestrator.last_generated_code
 
         return action_result
 
@@ -1304,28 +1191,13 @@ class MarkdownRAVLExecutor:
         """
         VERIFY phase: Check both execution and domain independently
 
-        Returns:
-            Dict with 'execution' and 'domain' keys containing separate verification results
+        Delegates to VerificationManager for implementation.
         """
-        log_message("Verifying...", status='info')
-
-        # EXECUTION VERIFICATION: Did code run successfully?
-        execution_verification = self._verify_execution(action_result)
-
-        # DOMAIN VERIFICATION: Did it solve the problem?
-        domain_verification = self._verify_domain(action_result, current_reflection)
-
-        # DSL-based learning: cache successful code or save failure analysis
-        if self._should_attempt_code_generation() and action_result:
-            self._handle_dsl_verification_outcome(execution_verification, domain_verification, action_result)
-
-        # Combined result
-        return {
-            'execution': execution_verification,
-            'domain': domain_verification,
-            'overall_passed': execution_verification['passed'] and domain_verification.get('overall_passed', True),
-            'timestamp': datetime.now(timezone.utc).isoformat()
-        }
+        return self.verification_manager.verify(
+            action_result=action_result,
+            current_reflection=current_reflection,
+            save_verified_code_fn=self.save_verified_code
+        )
 
     def _verify_execution(self, action_result: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         """
@@ -1524,47 +1396,15 @@ class MarkdownRAVLExecutor:
         """
         LEARN phase: Automatic learning from verification outcomes
 
-        Splits learning into execution (infrastructure) and domain (problem space).
+        Delegates to LearningCoordinator for implementation.
         """
-        log_message("Learning...", status='info')
-
-        # EXECUTION LEARNING: How to make code work
-        if 'execution' in verification:
-            # Pass domain verification too, so execution learning can check regeneration recommendation
-            domain_verification = verification.get('domain', {})
-            self._learn_execution(verification['execution'], action_result, domain_verification)
-
-        # DOMAIN LEARNING: What the loop learned about its problem (THE "L" IN RAVL)
-        if 'domain' in verification:
-            self._learn_domain(verification['domain'], action_result)
-
-        # REGENERATION ANALYSIS: Should code be regenerated next run?
-        # Only analyze if we're generating code (not for pure markdown loops)
-        if self._should_attempt_code_generation() and self._last_reflection and 'execution' in verification and 'domain' in verification:
-            log_execution("Analyzing code regeneration need...", status='working')
-            regeneration_analysis = self._analyze_regeneration_need(
-                reflection=self._last_reflection,
-                action_result=action_result,
-                execution_verification=verification['execution'],
-                domain_verification=verification['domain']
-            )
-
-            # Save recommendation for next REFLECT to read
-            execution_learning_dir = self.learnings_dir / 'execution_learning'
-            current_state_dir = execution_learning_dir / 'current_state'
-            current_state_dir.mkdir(parents=True, exist_ok=True)
-
-            recommendation_file = current_state_dir / 'regeneration_recommendation.json'
-            with open(recommendation_file, 'w', encoding='utf-8') as f:
-                json.dump(regeneration_analysis, f, indent=2)
-
-            if regeneration_analysis.get('recommend_regeneration', False):
-                rationale = regeneration_analysis.get('rationale', 'See regeneration_recommendation.json')
-                log_execution(f"💡 Regeneration recommended: {rationale[:80]}", status='info')
-            else:
-                log_execution("✓ Code is working well - will reuse if successful", status='success')
-
-        log_execution("Learning saved to execution_learning/ and loop_learning/", status='success')
+        self.learning_coordinator.learn(
+            verification=verification,
+            action_result=action_result,
+            last_reflection=self._last_reflection,
+            last_generated_code=self._last_generated_code,
+            save_verified_code_fn=self.save_verified_code
+        )
 
     def _learn_execution(
         self,
