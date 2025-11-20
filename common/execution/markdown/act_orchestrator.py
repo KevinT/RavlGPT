@@ -31,6 +31,11 @@ if str(_config_dir) not in sys.path:
 
 from config_loader import get_max_tokens
 
+# Add integrations to path
+_integrations_dir = Path(__file__).parent.parent.parent / 'integrations'
+if str(_integrations_dir) not in sys.path:
+    sys.path.insert(0, str(_integrations_dir))
+
 # Lazy import to avoid circular dependencies
 DataIngressExecutor = None
 
