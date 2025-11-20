@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 
 try:
     import requests
@@ -70,7 +71,8 @@ class Context7Fetcher:
 
         Args:
             api_name: Name of the API (for cache file naming)
-            context7_path: Path on Context7.com (e.g., /websites/developers_notion)
+            context7_path: Path or full URL on Context7.com
+                          (e.g., /websites/developers_notion or https://context7.com/websites/developers_notion)
             cache_ttl_hours: Cache TTL in hours (defaults to 168 = 1 week)
 
         Returns:
@@ -94,7 +96,12 @@ class Context7Fetcher:
             raise ImportError("requests library not available - cannot fetch Context7 docs")
 
         try:
-            url = f"https://context7.com{context7_path}"
+            # Handle both full URLs and path-only strings
+            parsed = urlparse(context7_path)
+            if parsed.scheme:  # Full URL provided
+                url = context7_path
+            else:  # Path-only, prepend base URL
+                url = f"https://context7.com{context7_path}"
             response = requests.get(url, timeout=30)
             response.raise_for_status()
 
