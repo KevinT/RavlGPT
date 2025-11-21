@@ -27,13 +27,24 @@ class LoopDiscovery:
         Initialize loop discovery
 
         Args:
-            project_root: Path to project root (containing .ravl/)
+            project_root: Path to project root (containing .ravl/ or flat structure if installed)
             loops_dir: Optional custom path for project loops (defaults to project_root/ravl_loops)
         """
         self.project_root = project_root
-        self.loops_dir = loops_dir if loops_dir else (project_root / 'ravl_loops')
-        self.framework_loops_dir = project_root / '.ravl' / 'ravl_loops'
-        self.examples_dir = project_root / '.ravl' / 'examples'
+
+        # Detect directory structure: nested (.ravl/) or flat (installed package)
+        has_ravl_subdir = (project_root / '.ravl').exists()
+
+        if has_ravl_subdir:
+            # Source or project structure with .ravl/ subdirectory
+            self.loops_dir = loops_dir if loops_dir else (project_root / 'ravl_loops')
+            self.framework_loops_dir = project_root / '.ravl' / 'ravl_loops'
+            self.examples_dir = project_root / '.ravl' / 'examples'
+        else:
+            # Installed package structure (flat, no .ravl/ subdirectory)
+            self.loops_dir = loops_dir if loops_dir else (project_root / 'ravl_loops')
+            self.framework_loops_dir = project_root / 'ravl_loops'
+            self.examples_dir = project_root / 'examples'
 
     def _build_namespace_from_path(self, loop_path: Path) -> str:
         """

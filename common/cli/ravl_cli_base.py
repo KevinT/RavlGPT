@@ -46,15 +46,20 @@ class RAVLCLIBase:
             current = current.parent
 
         # Not found in project hierarchy - fall back to framework installation directory
-        # __file__ is this file (ravl_cli_base.py) at .ravl/common/cli/ravl_cli_base.py
+        # __file__ is this file (ravl_cli_base.py)
         # Use parents[N] to go up the directory tree:
-        #   parents[0] = cli/, parents[1] = common/, parents[2] = .ravl/
-        framework_ravl = Path(__file__).resolve().parents[2]  # .ravl directory
-        framework_root = framework_ravl.parent  # project root (parent of .ravl/)
+        #   parents[0] = cli/, parents[1] = common/, parents[2] = .ravl/ OR site-packages/
+        framework_dir = Path(__file__).resolve().parents[2]
 
-        # Verify this is actually a .ravl directory
-        if framework_ravl.name == '.ravl' and (framework_ravl / 'common').exists():
-            return framework_root
+        # Detect if running from source (.ravl/ directory) or installed package (site-packages/)
+        if framework_dir.name == '.ravl' and (framework_dir / 'common').exists():
+            # Running from source: .ravl/ directory exists
+            # Return project root (parent of .ravl/)
+            return framework_dir.parent
+        elif (framework_dir / 'common').exists():
+            # Running from installed package: flat structure in site-packages/
+            # The framework_dir IS the root (no .ravl/ subdirectory)
+            return framework_dir
 
         # Shouldn't reach here, but handle gracefully
         if required:

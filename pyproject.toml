@@ -72,7 +72,7 @@ build-backend = "setuptools.build_meta"
 # Tell setuptools which packages to include (find all packages recursively)
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["common*", "bin*", "config*"]
+# Include everything - templates, examples, ravl_loops, docs, etc.
 
 [tool.setuptools.package-data]
 "*" = ["*.yml", "*.yaml", "*.md", "*.txt", "*.sh"]
