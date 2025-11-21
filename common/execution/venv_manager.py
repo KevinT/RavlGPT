@@ -46,6 +46,97 @@ class VenvManager:
         self.venv_path = Path(venv_path).resolve()
         self.python_executable = self._get_python_executable()
         self.pip_executable = self._get_pip_executable()
+        self.has_uv = self._detect_uv()
+
+    @staticmethod
+    def _detect_uv() -> bool:
+        """Check if UV is installed and available in PATH"""
+        try:
+            result = subprocess.run(
+                ["uv", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            return result.returncode == 0
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return False
+
+    def _create_venv_with_uv(self, python_version: str) -> Tuple[bool, Optional[str]]:
+        """
+        Create venv using UV (200x faster than Python's venv module)
+
+        Args:
+            python_version: Required Python version (e.g., "3.12")
+
+        Returns:
+            Tuple of (success, error_message)
+        """
+        try:
+            # Create parent directory if needed
+            self.venv_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # UV can automatically install the required Python version
+            cmd = ["uv", "venv", str(self.venv_path), "--python", python_version]
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30  # UV is fast, 30s is plenty
+            )
+
+            if result.returncode != 0:
+                return (False, f"UV venv creation failed: {result.stderr}")
+
+            return (True, None)
+
+        except subprocess.TimeoutExpired:
+            return (False, "UV venv creation timed out")
+        except Exception as e:
+            return (False, f"Error creating venv with UV: {str(e)}")
+
+    def _install_with_uv(self, requirements_path: Path, quiet: bool = True) -> Tuple[bool, Optional[str]]:
+        """
+        Install requirements using UV (10-100x faster than pip)
+
+        Args:
+            requirements_path: Path to requirements.txt file
+            quiet: If True, suppress output
+
+        Returns:
+            Tuple of (success, error_message)
+        """
+        if not requirements_path.exists():
+            return (True, None)
+
+        try:
+            cmd = ["uv", "pip", "install", "-r", str(requirements_path)]
+
+            if quiet:
+                cmd.append("--quiet")
+
+            # Set VIRTUAL_ENV to tell UV which venv to use
+            env = os.environ.copy()
+            env["VIRTUAL_ENV"] = str(self.venv_path)
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=300  # 5 minutes timeout
+            )
+
+            if result.returncode != 0:
+                return (False, f"UV install failed: {result.stderr}")
+
+            return (True, None)
+
+        except subprocess.TimeoutExpired:
+            return (False, "UV install timed out")
+        except Exception as e:
+            return (False, f"Error installing with UV: {str(e)}")
 
     def _get_python_executable(self) -> Path:
         """Get path to python executable in venv"""
@@ -69,6 +160,7 @@ class VenvManager:
         """
         Create a new virtual environment and install RAVL framework.
 
+        Uses UV if available (200x faster), falls back to Python's venv module.
         Uses the required Python version from framework config to ensure
         compatibility with dependencies.
 
@@ -81,6 +173,22 @@ class VenvManager:
             # Load framework config to get required Python version
             config = load_framework_config()
             required_version = config.get('framework', {}).get('required_python_version', '3.12')
+
+            # Prefer UV if available (much faster)
+            if self.has_uv:
+                print(f"📦 Creating venv with UV (Python {required_version})...")
+                success, error = self._create_venv_with_uv(required_version)
+                if success:
+                    # Install RAVL framework in editable mode
+                    success, error = self.install_framework()
+                    if not success:
+                        return (False, error)
+                    return (True, None)
+                else:
+                    print(f"⚠️  UV venv creation failed, falling back to Python venv: {error}")
+
+            # Fallback to traditional Python venv
+            print(f"📦 Creating venv with Python's venv module...")
 
             # Find the required Python version
             python_path, error = find_required_python(required_version)
@@ -139,21 +247,38 @@ class VenvManager:
             # Assuming this file is in .ravl/common/execution/venv_manager.py
             framework_root = Path(__file__).parent.parent.parent.resolve()
 
-            # Verify setup.py exists
+            # Check if pyproject.toml exists (modern package format)
+            pyproject_toml = framework_root / "pyproject.toml"
             setup_py = framework_root / "setup.py"
-            if not setup_py.exists():
-                return (False, f"RAVL framework setup.py not found at {setup_py}")
 
-            # Install in editable mode (-e flag)
-            # This creates a symlink so changes to framework code are immediately available
-            cmd = [str(self.pip_executable), "install", "-e", str(framework_root), "-q"]
+            if not pyproject_toml.exists() and not setup_py.exists():
+                return (False, f"RAVL framework package definition not found at {framework_root}")
 
-            subprocess.run(
-                cmd,
-                check=True,
-                capture_output=True,
-                timeout=120,  # 2 minutes for framework install
-            )
+            # Prefer UV if available (much faster)
+            if self.has_uv:
+                # UV pip install with editable mode
+                cmd = ["uv", "pip", "install", "-e", str(framework_root), "--quiet"]
+
+                # Set VIRTUAL_ENV to tell UV which venv to use
+                env = os.environ.copy()
+                env["VIRTUAL_ENV"] = str(self.venv_path)
+
+                subprocess.run(
+                    cmd,
+                    check=True,
+                    capture_output=True,
+                    env=env,
+                    timeout=120,
+                )
+            else:
+                # Fallback to pip
+                cmd = [str(self.pip_executable), "install", "-e", str(framework_root), "-q"]
+                subprocess.run(
+                    cmd,
+                    check=True,
+                    capture_output=True,
+                    timeout=120,
+                )
 
             # Also install framework requirements (pyyaml, anthropic, etc.)
             requirements_file = framework_root / "requirements.txt"
@@ -175,11 +300,11 @@ class VenvManager:
         self, requirements_path: Path, quiet: bool = True
     ) -> Tuple[bool, Optional[str]]:
         """
-        Install requirements into venv
+        Install requirements into venv using UV (preferred) or pip (fallback)
 
         Args:
             requirements_path: Path to requirements.txt file
-            quiet: If True, suppress pip output
+            quiet: If True, suppress output
 
         Returns:
             Tuple of (success, error_message)
@@ -187,6 +312,21 @@ class VenvManager:
         if not requirements_path.exists():
             # No requirements to install
             return (True, None)
+
+        # Prefer UV if available (10-100x faster)
+        if self.has_uv:
+            if not quiet:
+                print(f"📦 Installing dependencies with UV...")
+            success, error = self._install_with_uv(requirements_path, quiet=quiet)
+            if success:
+                return (True, None)
+            else:
+                if not quiet:
+                    print(f"⚠️  UV install failed, falling back to pip: {error}")
+
+        # Fallback to pip
+        if not quiet:
+            print(f"📦 Installing dependencies with pip...")
 
         try:
             cmd = [str(self.pip_executable), "install", "-r", str(requirements_path)]

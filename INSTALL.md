@@ -2,7 +2,29 @@
 
 Get RAVL running in 2 minutes.
 
-## Quick Install
+## Recommended: UV Install
+
+**[UV](https://docs.astral.sh/uv/)** is a fast Python package manager that makes RAVL installation simple and fast.
+
+### 1. Install UV
+
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### 2. Install RAVL Globally
+
+```bash
+uv tool install ravl-framework --from git+https://github.com/KevinT/RavlGPT
+```
+
+This installs all RAVL commands (`ravl`, `ravl-list`, `ravl-health`, etc.) globally on your system.
+
+## Alternative: Project Specific Install
 
 From your project root directory:
 
@@ -50,7 +72,7 @@ export GOOGLE_API_KEY="..."
 
 ### Option 4: Ollama (Local, No API Key)
 
-No setup needed - runs locally.
+No setup needed - runs locally. (UNTESTED!)
 
 ## Run Your First Loop
 
@@ -154,6 +176,12 @@ The framework creates a virtual environment on first run. If it fails:
 # Remove and let it recreate
 rm -rf .ravl/venv
 ./ravl --list
+```
+
+**With UV (recommended):** UV automatically manages Python versions and creates venvs 200x faster. If you're experiencing venv issues, try installing UV:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Framework will automatically detect and use UV
 ```
 
 ## Manual Installation

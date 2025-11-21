@@ -4,11 +4,13 @@ Requirements Generator
 
 Analyzes generated Python code and extracts package imports to create requirements.txt.
 Handles package name mapping (e.g., import google_auth_oauthlib -> package google-auth-oauthlib).
+Optionally generates lock files using UV for reproducible dependency resolution.
 """
 
 import re
+import subprocess
 from pathlib import Path
-from typing import Set, Dict, Optional
+from typing import Set, Dict, Optional, Tuple
 
 
 class RequirementsGenerator:
@@ -204,3 +206,70 @@ class RequirementsGenerator:
         except Exception as e:
             print(f"Error generating requirements: {str(e)}")
             return False
+
+    @staticmethod
+    def _detect_uv() -> bool:
+        """Check if UV is installed and available in PATH"""
+        try:
+            result = subprocess.run(
+                ["uv", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            return result.returncode == 0
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return False
+
+    @staticmethod
+    def generate_lock_file(requirements_path: Path, quiet: bool = True) -> Tuple[bool, Optional[str]]:
+        """
+        Generate lock file from requirements.txt using UV
+
+        Creates a .lock file with pinned dependencies for reproducible installs.
+        Only works if UV is available - silently skips otherwise.
+
+        Args:
+            requirements_path: Path to requirements.txt file
+            quiet: If True, suppress output
+
+        Returns:
+            Tuple of (success, error_message)
+            - If UV not available: (True, None) - silently succeeds
+            - If successful: (True, None)
+            - If failed: (False, error_message)
+        """
+        # Check if UV is available
+        if not RequirementsGenerator._detect_uv():
+            # UV not available - this is OK, lock files are optional
+            return (True, None)
+
+        if not requirements_path.exists():
+            # No requirements file - nothing to lock
+            return (True, None)
+
+        try:
+            lock_path = requirements_path.with_suffix(".lock")
+
+            # UV pip compile generates a lock file with pinned versions
+            cmd = ["uv", "pip", "compile", str(requirements_path), "-o", str(lock_path)]
+
+            if quiet:
+                cmd.append("--quiet")
+
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60  # 1 minute timeout
+            )
+
+            if result.returncode != 0:
+                return (False, f"UV lock file generation failed: {result.stderr}")
+
+            return (True, None)
+
+        except subprocess.TimeoutExpired:
+            return (False, "UV lock file generation timed out")
+        except Exception as e:
+            return (False, f"Error generating lock file: {str(e)}")

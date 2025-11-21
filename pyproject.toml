@@ -1,0 +1,93 @@
+[project]
+name = "ravl-framework"
+version = "0.1.0"
+description = "RAVL (Reflect-Act-Verify-Learn) autonomous agent framework for building self-improving loops"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Kevin Trethewey", email = "kevin@sandtech.com"}
+]
+keywords = ["ai", "agents", "llm", "autonomous", "self-learning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+# Core dependencies (minimal - only what framework core needs)
+dependencies = [
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# LLM provider dependencies
+anthropic = ["anthropic>=0.39.0"]
+openai = ["openai>=1.0.0"]
+google = ["google-generativeai>=0.3.0"]
+ollama = ["requests>=2.31.0"]
+
+# Google Workspace integration
+google-workspace = [
+    "google-api-python-client>=2.0.0",
+    "google-auth>=2.0.0",
+]
+
+# All LLM providers
+llm = [
+    "anthropic>=0.39.0",
+    "openai>=1.0.0",
+    "google-generativeai>=0.3.0",
+    "requests>=2.31.0",
+]
+
+# Everything (all optional dependencies)
+all = [
+    "anthropic>=0.39.0",
+    "openai>=1.0.0",
+    "google-generativeai>=0.3.0",
+    "requests>=2.31.0",
+    "google-api-python-client>=2.0.0",
+    "google-auth>=2.0.0",
+]
+
+# CLI entry points - makes these commands available globally
+[project.scripts]
+ravl = "bin.ravl_wrapper:main"
+ravl-list = "bin.ravl_list:main"
+ravl-health = "bin.ravl_health:main"
+ravl-loop-health = "bin.ravl_loop_health:main"
+ravl-execution-health = "bin.ravl_execution_health:main"
+ravl-clean = "bin.ravl_clean:main"
+ravl-clone = "bin.ravl_clone:main"
+ravl-new-loop = "bin.ravl_new_loop:main"
+ravl-sync-claude = "bin.ravl_sync_claude:main"
+ravl-init-venv = "bin.ravl_init_venv:main"
+
+[project.urls]
+Homepage = "https://github.com/KevinT/RavlGPT"
+Documentation = "https://github.com/KevinT/RavlGPT/blob/main/README.md"
+Repository = "https://github.com/KevinT/RavlGPT"
+Issues = "https://github.com/KevinT/RavlGPT/issues"
+
+# Build system configuration
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# Tell setuptools which packages to include
+[tool.setuptools]
+packages = ["common", "bin", "config", "docs", "templates", "examples"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yml", "*.yaml", "*.md", "*.txt"]
+
+# UV-specific configuration
+[tool.uv]
+# Prefer using UV for package installation
+dev-dependencies = [
+    "pytest>=7.0",
+]

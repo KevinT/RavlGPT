@@ -8,7 +8,38 @@
 
 ## 🚀 Installation
 
-**Quick Install (Recommended):**
+### Option 1: UV Install (Recommended)
+
+**[UV](https://docs.astral.sh/uv/)** is a Python package manager.
+
+**Install UV:**
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Windows
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Install RAVL globally:**
+```bash
+uv tool install ravl-framework --from git+https://github.com/KevinT/RavlGPT
+```
+
+This makes `ravl`, `ravl-list`, `ravl-health`, and all other RAVL commands available globally.
+
+**Set up your API keys (at least one is required):**
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."  # Get key from console.anthropic.com
+export OPENAI_API_KEY="sk-svc-..."  # Get key from platform.openai.com
+```
+
+**Run your first loop:**
+```bash
+ravl example_2_intelligence_loop
+```
+
+### Option 2: Traditional Install
 
 From your project root directory:
 
@@ -22,13 +53,7 @@ This automatically:
 - Checks prerequisites
 - Verifies your environment
 
-**Set up your API keys (at least one is required):**
-```bash
-export ANTHROPIC_API_KEY="sk-ant-..."  # Get key from console.anthropic.com
-export OPENAI_API_KEY="sk-svc-..."  # Get key from platform.openai.com
-```
-
-**Run your first loop:**
+**Then run your first loop:**
 ```bash
 ./ravl example_2_intelligence_loop
 ```
@@ -157,7 +182,13 @@ Suppress framework output for cleaner logs:
 ```
 
 ### Dependency Management
-Framework uses whitelist-based security for generated code dependencies - see project documentation for details.
+Framework automatically manages dependencies for generated code:
+- **UV-powered (when available)**: 10-100x faster dependency installation
+- **Automatic fallback**: Uses pip if UV not installed
+- **Whitelist-based security**: User approval required for new packages
+- **Lock file generation**: Reproducible dependency resolution with UV
+
+See project documentation for whitelist configuration and security details.
 
 ### Configurable Learning & Venv Paths
 Store learning artifacts and virtual environments anywhere - see project documentation for configuration options.
