@@ -676,9 +676,9 @@ class LoopDiscovery:
         search_dirs = []
         if self.loops_dir.exists():
             search_dirs.append(self.loops_dir)
-        if self.framework_loops_dir.exists():
+        if self.framework_loops_dir.exists() and self.framework_loops_dir not in search_dirs:
             search_dirs.append(self.framework_loops_dir)
-        if self.examples_dir.exists():
+        if self.examples_dir.exists() and self.examples_dir not in search_dirs:
             search_dirs.append(self.examples_dir)
 
         # Recursively find all ravl_loop.py and ravl_loop.md files
