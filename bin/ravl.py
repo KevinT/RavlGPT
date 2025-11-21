@@ -39,14 +39,13 @@ from typing import Dict, Any, Optional
 
 # Bootstrap: Find .ravl framework (for direct execution)
 # When installed as package, these imports will use the installed common package
-_current = Path(__file__).resolve().parent.parent
+_current = Path(__file__).resolve().parent.parent  # .ravl directory
 if not (_current / 'common').exists():
     # Running from installed package - common is at top level
     pass
 else:
-    # Running from source - add to path
-    sys.path.insert(0, str(_current / 'common'))
-    sys.path.insert(0, str(_current / 'common' / 'cli'))
+    # Running from source - add .ravl to path so common.* imports work
+    sys.path.insert(0, str(_current))
 
 # Use absolute imports that work both from source and installed package
 from common.cli.ravl_cli_base import RAVLCLIBase
@@ -1031,7 +1030,48 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
 
 def main():
-    """Main entry point"""
+    """Main entry point with command routing"""
+
+    # Route subcommands before argument parsing
+    # This allows --list, --clean, etc. to work identically in local and UV-installed versions
+    if len(sys.argv) > 1:
+        cmd = sys.argv[1]
+
+        if cmd in ['--list', '-l']:
+            from bin.ravl_list import main as list_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return list_main()
+
+        elif cmd in ['--clean', '-c']:
+            from bin.ravl_clean import main as clean_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return clean_main()
+
+        elif cmd == '--clone':
+            from bin.ravl_clone import main as clone_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return clone_main()
+
+        elif cmd == '--new':
+            from bin.ravl_new_loop import main as new_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return new_main()
+
+        elif cmd == '--health':
+            from bin.ravl_health import main as health_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return health_main()
+
+        elif cmd == '--execution-health':
+            from bin.ravl_execution_health import main as exec_health_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return exec_health_main()
+
+        elif cmd == '--loop-health':
+            from bin.ravl_loop_health import main as loop_health_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return loop_health_main()
+
     # Stage 1: Parse loop name and check for --help
     initial_parser = argparse.ArgumentParser(add_help=False)
     initial_parser.add_argument('loop', nargs='?')
