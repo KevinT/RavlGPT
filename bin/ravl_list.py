@@ -94,19 +94,20 @@ class RAVLListCommand(RAVLCLIBase):
             all_project = [l for l in all_loops if l.get('loop_type') == 'project']
             all_framework = [l for l in all_loops if l.get('loop_type') == 'framework']
 
-            # Further filter framework loops to only those in .ravl/ravl_loops/
-            # (exclude those in .ravl/examples/ and .ravl/templates/)
+            # Further filter framework loops to only those in ravl_loops/ directory
+            # (exclude those in examples/ and templates/)
             framework_loops_only = []
             for loop in all_framework:
                 loop_path_str = str(loop['path'])
-                # Check if this is in the actual ravl_loops directory, not examples or templates
-                if '/.ravl/ravl_loops/' in loop_path_str:
+                # Check if path contains examples or templates (to exclude them)
+                is_example = '/examples/' in loop_path_str or loop_path_str.endswith('/examples')
+                is_template = '/templates/' in loop_path_str or loop_path_str.endswith('/templates')
+
+                # Include if in ravl_loops directory (either .ravl/ravl_loops/ or flat ravl_loops/)
+                is_in_ravl_loops = '/ravl_loops/' in loop_path_str or loop_path_str.endswith('/ravl_loops')
+
+                if is_in_ravl_loops and not is_example and not is_template:
                     framework_loops_only.append(loop)
-                elif '/.ravl/examples/' not in loop_path_str and '/.ravl/templates/' not in loop_path_str:
-                    # Also include framework loops that aren't in examples/templates subdirs
-                    # but are still in .ravl/ (for backward compatibility)
-                    if '/.ravl/' in loop_path_str:
-                        framework_loops_only.append(loop)
 
             # Apply loop type filters
             if only_project_loops:

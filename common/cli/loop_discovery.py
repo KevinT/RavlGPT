@@ -34,6 +34,7 @@ class LoopDiscovery:
 
         # Detect directory structure: nested (.ravl/) or flat (installed package)
         has_ravl_subdir = (project_root / '.ravl').exists()
+        self.is_installed_package = not has_ravl_subdir
 
         if has_ravl_subdir:
             # Source or project structure with .ravl/ subdirectory
@@ -544,11 +545,16 @@ class LoopDiscovery:
                 continue
 
             # Determine if this is a framework or project loop
-            is_framework = loop_dir.parts[:-1] == self.framework_loops_dir.parts if self.framework_loops_dir.exists() else False
-            for i, part in enumerate(loop_dir.parts):
-                if i < len(loop_dir.parts) - 1 and loop_dir.parts[i] == '.ravl':
-                    is_framework = True
-                    break
+            if self.is_installed_package:
+                # In installed package mode, all loops are framework loops
+                is_framework = True
+            else:
+                # In project/source mode, check if loop is under .ravl/
+                is_framework = loop_dir.parts[:-1] == self.framework_loops_dir.parts if self.framework_loops_dir.exists() else False
+                for i, part in enumerate(loop_dir.parts):
+                    if i < len(loop_dir.parts) - 1 and loop_dir.parts[i] == '.ravl':
+                        is_framework = True
+                        break
 
             # Get parent loop if nested
             parent_path = None
