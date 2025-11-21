@@ -54,18 +54,9 @@ all = [
     "google-auth>=2.0.0",
 ]
 
-# CLI entry points - makes these commands available globally
+# CLI entry point - single command with subcommand routing
 [project.scripts]
-ravl = "bin.ravl_wrapper:main"
-ravl-list = "bin.ravl_list:main"
-ravl-health = "bin.ravl_health:main"
-ravl-loop-health = "bin.ravl_loop_health:main"
-ravl-execution-health = "bin.ravl_execution_health:main"
-ravl-clean = "bin.ravl_clean:main"
-ravl-clone = "bin.ravl_clone:main"
-ravl-new-loop = "bin.ravl_new_loop:main"
-ravl-sync-claude = "bin.ravl_sync_claude:main"
-ravl-init-venv = "bin.ravl_init_venv:main"
+ravl = "bin.ravl:main"
 
 [project.urls]
 Homepage = "https://github.com/KevinT/RavlGPT"
@@ -78,12 +69,13 @@ Issues = "https://github.com/KevinT/RavlGPT/issues"
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# Tell setuptools which packages to include
-[tool.setuptools]
-packages = ["common", "bin", "config", "docs", "templates", "examples"]
+# Tell setuptools which packages to include (find all packages recursively)
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["common*", "bin*", "config*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.yml", "*.yaml", "*.md", "*.txt"]
+"*" = ["*.yml", "*.yaml", "*.md", "*.txt", "*.sh"]
 
 # UV-specific configuration
 [tool.uv]

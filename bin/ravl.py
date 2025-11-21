@@ -37,17 +37,24 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
-# Bootstrap: Find .ravl framework
+# Bootstrap: Find .ravl framework (for direct execution)
+# When installed as package, these imports will use the installed common package
 _current = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(_current / 'common'))
-sys.path.insert(0, str(_current / 'common' / 'cli'))
+if not (_current / 'common').exists():
+    # Running from installed package - common is at top level
+    pass
+else:
+    # Running from source - add to path
+    sys.path.insert(0, str(_current / 'common'))
+    sys.path.insert(0, str(_current / 'common' / 'cli'))
 
-from ravl_cli_base import RAVLCLIBase
-from loop_discovery import LoopDiscovery
-from ravl_runner import RAVLRunner
-from config_display import ConfigDisplay
-from utils.constants import DEFAULT_EXECUTION_TIMEOUT
-from core.initialization_failure_tracker import InitializationFailureTracker
+# Use absolute imports that work both from source and installed package
+from common.cli.ravl_cli_base import RAVLCLIBase
+from common.cli.loop_discovery import LoopDiscovery
+from common.ravl_runner import RAVLRunner
+from common.cli.config_display import ConfigDisplay
+from common.utils.constants import DEFAULT_EXECUTION_TIMEOUT
+from common.core.initialization_failure_tracker import InitializationFailureTracker
 
 # Show helpful message if called directly (not via wrapper)
 def _show_wrapper_hint():
@@ -265,7 +272,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         # Initialize execution logging visibility
         # This must be set before any loop execution to control message visibility
-        from utils.logging_utils import set_show_execution
+        from common.utils.logging_utils import set_show_execution
         if hasattr(args, 'show_execution') and args.show_execution:
             set_show_execution(True)
             os.environ['RAVL_SHOW_EXECUTION'] = '1'  # For subprocess consistency
