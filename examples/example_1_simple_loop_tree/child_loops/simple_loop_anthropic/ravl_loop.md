@@ -1,0 +1,1 @@
+Append a single line to './output/simple-example-loop-output.md' in the root of this project. Start with the date and time, then 'Hello RAVL from Anthropic!', then a one liner diss of the llm that added the last entry.
