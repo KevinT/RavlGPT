@@ -541,14 +541,14 @@ class LoopDiscovery:
 
             # Get parent loop if nested
             parent_path = None
-            # Count occurrences of 'ravl_loops' in path
-            ravl_loops_indices = [i for i, part in enumerate(loop_dir.parts) if part == 'ravl_loops']
-
-            if len(ravl_loops_indices) >= 2:
-                # Nested loop: parent is everything before the last 'ravl_loops'
-                last_ravl_loops_idx = ravl_loops_indices[-1]
-                parent_path = Path(*loop_dir.parts[:last_ravl_loops_idx])
-            # If only one 'ravl_loops' occurrence, it's a top-level loop (parent = None)
+            # Check if this is a child loop (contains 'child_loops' in path)
+            if 'child_loops' in loop_dir.parts:
+                # Find the last index of 'child_loops' (for deeply nested loops)
+                child_loops_indices = [i for i, part in enumerate(loop_dir.parts) if part == 'child_loops']
+                last_child_loops_idx = child_loops_indices[-1]
+                # Parent is everything before the last 'child_loops'
+                parent_path = Path(*loop_dir.parts[:last_child_loops_idx])
+            # If no 'child_loops' in path, it's a top-level loop (parent = None)
 
             # Get last run date (pass config for custom learning path resolution)
             last_run = self._get_last_run_date(loop_dir, config)
@@ -627,12 +627,11 @@ class LoopDiscovery:
 
         # Exclude learnings subdirectories (contain artifacts, not actual loops)
         # e.g., loop/learnings/current_state/ravl_loop.md is an artifact
-        if 'learnings' in path.parts:
-            # Check if this is a subdirectory under learnings
-            for i, part in enumerate(path.parts):
-                if part == 'learnings' and i < len(path.parts) - 1:
-                    # This path is inside a learnings directory
-                    return False
+        # e.g., loop/ravl_learning/donnas_loop/current_state/ravl_loop.md is an artifact
+        for i, part in enumerate(path.parts):
+            if part in ('learnings', 'ravl_learning') and i < len(path.parts) - 1:
+                # This path is inside a learnings directory
+                return False
 
         return True
 

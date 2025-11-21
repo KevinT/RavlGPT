@@ -20,30 +20,49 @@ class RAVLCLIBase:
     """Base class with shared utilities for RAVL CLI tools"""
 
     @staticmethod
-    def find_project_root(start_path: Optional[Path] = None) -> Path:
+    def find_project_root(start_path: Optional[Path] = None, required: bool = True) -> Optional[Path]:
         """
         Find project root by looking for .ravl/ directory
 
+        Searches up from start_path (or cwd) for a .ravl/ directory.
+        If not found, falls back to the UV-installed framework directory.
+
         Args:
             start_path: Starting path for search (default: cwd)
+            required: If True, raise error when not found. If False, return None.
 
         Returns:
-            Path to project root
+            Path to project root (or framework installation root if outside project)
 
         Raises:
-            RuntimeError: If .ravl/ directory not found
+            RuntimeError: If .ravl/ directory not found and required=True (should never happen with fallback)
         """
         current = (start_path or Path.cwd()).resolve()
 
+        # Search up for .ravl/ directory
         while current != current.parent:
             if (current / '.ravl').exists():
                 return current
             current = current.parent
 
-        raise RuntimeError(
-            "Could not find RAVL framework (.ravl/ directory). "
-            "Are you in a RAVL project?"
-        )
+        # Not found in project hierarchy - fall back to framework installation directory
+        # __file__ is this file (ravl_cli_base.py) at .ravl/common/cli/ravl_cli_base.py
+        # Use parents[N] to go up the directory tree:
+        #   parents[0] = cli/, parents[1] = common/, parents[2] = .ravl/
+        framework_ravl = Path(__file__).resolve().parents[2]  # .ravl directory
+        framework_root = framework_ravl.parent  # project root (parent of .ravl/)
+
+        # Verify this is actually a .ravl directory
+        if framework_ravl.name == '.ravl' and (framework_ravl / 'common').exists():
+            return framework_root
+
+        # Shouldn't reach here, but handle gracefully
+        if required:
+            raise RuntimeError(
+                "Could not find RAVL framework (.ravl/ directory). "
+                "Are you in a RAVL project?"
+            )
+        return None
 
     @staticmethod
     def print_success(message: str):

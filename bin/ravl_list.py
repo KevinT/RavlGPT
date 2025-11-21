@@ -46,8 +46,13 @@ class RAVLListCommand(RAVLCLIBase):
         Args:
             loops_dir: Optional custom path for project loops
         """
-        self.project_root = self.find_project_root()
-        self.discovery = LoopDiscovery(self.project_root, loops_dir=loops_dir)
+        # Find project root (falls back to UV-installed framework if outside project)
+        self.project_root = self.find_project_root(required=True)
+
+        # Use custom loops_dir if provided, otherwise default to project_root/ravl_loops
+        effective_loops_dir = loops_dir if loops_dir else None
+
+        self.discovery = LoopDiscovery(self.project_root, loops_dir=effective_loops_dir)
 
     def run(self, args: argparse.Namespace):
         """
@@ -232,6 +237,7 @@ class RAVLListCommand(RAVLCLIBase):
         """Print loops in flat list, separated by type"""
         if project_loops:
             self.print_header("[Project Loops]", "")
+
             for loop_info in sorted(project_loops, key=lambda x: str(x['path'])):
                 config = loop_info['config']
                 emoji = config.get('emoji', '➰')
