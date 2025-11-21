@@ -661,9 +661,11 @@ def main():
         sys.argv = [sys.argv[0]] + remaining_argv
         args = parser.parse_args()
 
-        # Pass learning path to runner if provided
+        # Pass learning path to runner if provided (from CLI or config)
         if initial_args.learning_path:
             args.learning_path = initial_args.learning_path
+        elif 'learning_path' in runner.config:
+            args.learning_path = runner.config['learning_path']
 
         # Handle --show-config: Display configuration and exit
         if initial_args.show_config:
