@@ -155,6 +155,43 @@ class ConfigBasedRAVLRunner:
 
         return template_vars
 
+    def _check_consecutive_failures(self, learnings_dir: Path) -> tuple[bool, int]:
+        """
+        Check if there have been 3+ consecutive failures
+
+        Returns:
+            (should_show_config: bool, failure_count: int)
+        """
+        recent_attempts_dir = learnings_dir / "execution_learning" / "recent_attempts"
+
+        if not recent_attempts_dir.exists():
+            return False, 0
+
+        # Get last 3 attempts
+        attempts = []
+        for i in range(1, 4):
+            attempt_dir = recent_attempts_dir / f"attempt_{i}"
+            result_file = attempt_dir / "execution_result.json"
+            if result_file.exists():
+                try:
+                    import json
+                    with open(result_file) as f:
+                        result = json.load(f)
+                        passed = result.get("execution", {}).get("passed", True)
+                        attempts.append(not passed)  # True if failed
+                except:
+                    pass
+
+        # Count consecutive failures from end
+        consecutive = 0
+        for failed in reversed(attempts):
+            if failed:
+                consecutive += 1
+            else:
+                break
+
+        return consecutive >= 3, consecutive
+
     def run(self, args: argparse.Namespace):
         """
         Execute the RAVL loop
@@ -170,6 +207,42 @@ class ConfigBasedRAVLRunner:
             learnings_dir = Path(args.learning_path)
         else:
             learnings_dir = self.loop_dir / 'learnings'
+
+        # Check for consecutive failures and auto-enable debug mode
+        should_show_config, failure_count = self._check_consecutive_failures(learnings_dir)
+        if should_show_config:
+            log_message(f"⚠️  Detected {failure_count} consecutive failures - auto-enabling --show-config for diagnostics", status='info')
+
+            # Display configuration
+            from cli.config_display import ConfigDisplay
+            from cli.ravl_cli_base import RAVLCLIBase
+
+            project_root = RAVLCLIBase.find_project_root()
+            learning_path = RAVLRunner.resolve_learning_path(
+                loop_dir=self.loop_dir,
+                loop_config=self.config,
+                cli_learning_path=Path(args.learning_path) if hasattr(args, 'learning_path') and args.learning_path else None,
+                project_root=project_root
+            )
+            venv_path = RAVLRunner.resolve_venv_path(
+                loop_dir=self.loop_dir,
+                loop_config=self.config,
+                cli_venv_path=None,
+                project_root=project_root
+            )
+
+            ConfigDisplay.show(
+                loop_dir=self.loop_dir,
+                learning_path=learning_path,
+                venv_path=venv_path,
+                loop_config=self.config,
+                args=args,
+                project_root=project_root,
+                learning_path_source="Auto-debug",
+                venv_path_source="Auto-debug",
+                loop_dir_source="Auto-debug"
+            )
+            log_message("Continuing with loop execution...", status='info')
 
         logs_dir = learnings_dir / 'logs'
 

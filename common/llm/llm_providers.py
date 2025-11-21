@@ -46,6 +46,24 @@ class LLMProvider(ABC):
         """Return the name of this provider"""
         pass
 
+    @staticmethod
+    def _format_api_error(exception: Exception, provider_name: str) -> str:
+        """Format API error with helpful message for common issues"""
+        error_str = str(exception)
+
+        # Detect credit/quota errors
+        if provider_name == "anthropic":
+            if "credit_balance_exceeded" in error_str or "429" in error_str:
+                return "❌ Anthropic API credit balance exhausted. Add credits at https://console.anthropic.com/settings/billing"
+        elif provider_name == "openai":
+            if "insufficient_quota" in error_str or "rate_limit_exceeded" in error_str:
+                return "❌ OpenAI API quota exceeded. Check usage at https://platform.openai.com/usage"
+        elif provider_name == "google":
+            if "quota" in error_str.lower():
+                return "❌ Google API quota exceeded. Check quota at https://console.cloud.google.com/apis/dashboard"
+
+        return f"❌ {provider_name} API error: {error_str}"
+
 
 class AnthropicProvider(LLMProvider):
     """Anthropic Claude provider"""
@@ -97,7 +115,9 @@ class AnthropicProvider(LLMProvider):
             log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
             return response_text
         except Exception as e:
-            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=str(e))
+            formatted_error = self._format_api_error(e, self.get_provider_name())
+            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error)
+            print(formatted_error)  # Show to user immediately
             raise
 
     def get_provider_name(self) -> str:
@@ -168,7 +188,9 @@ class OpenAIProvider(LLMProvider):
             log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
             return response_text
         except Exception as e:
-            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=str(e))
+            formatted_error = self._format_api_error(e, self.get_provider_name())
+            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error)
+            print(formatted_error)  # Show to user immediately
             raise
 
     def get_provider_name(self) -> str:
@@ -223,7 +245,9 @@ class GoogleProvider(LLMProvider):
             log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
             return response_text
         except Exception as e:
-            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=str(e))
+            formatted_error = self._format_api_error(e, self.get_provider_name())
+            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error)
+            print(formatted_error)  # Show to user immediately
             raise
 
     def get_provider_name(self) -> str:
