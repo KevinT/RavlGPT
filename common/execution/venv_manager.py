@@ -22,6 +22,7 @@ _parent_dir = Path(__file__).parent.parent
 _sys.path.insert(0, str(_parent_dir))
 from utils.python_validator import find_required_python, get_venv_python_version, check_python_compatibility
 from config.config_loader import load_framework_config
+from cli.ravl_cli_base import RAVLCLIBase
 
 
 class VenvManager:
@@ -228,9 +229,27 @@ class VenvManager:
             Tuple of (success, error_message)
         """
         if self.exists():
+            # Venv exists, verify framework is installed
+            if not self._is_framework_installed():
+                success, error = self.install_framework()
+                if not success:
+                    return (False, error)
             return (True, None)
 
         return self.create()
+
+    def _is_framework_installed(self) -> bool:
+        """Check if RAVL framework is installed in this venv"""
+        try:
+            # Check if anthropic (key framework dependency) is importable
+            result = subprocess.run(
+                [str(self.python_executable), "-c", "import anthropic"],
+                capture_output=True,
+                timeout=5
+            )
+            return result.returncode == 0
+        except:
+            return False
 
     def install_framework(self) -> Tuple[bool, Optional[str]]:
         """
@@ -243,9 +262,8 @@ class VenvManager:
             Tuple of (success, error_message)
         """
         try:
-            # Find .ravl directory (framework root)
-            # Assuming this file is in .ravl/common/execution/venv_manager.py
-            framework_root = Path(__file__).parent.parent.parent.resolve()
+            # Find framework root (works for both submodule and UV installation)
+            framework_root = RAVLCLIBase.find_framework_root()
 
             # Check if pyproject.toml exists (modern package format)
             pyproject_toml = framework_root / "pyproject.toml"
