@@ -72,8 +72,8 @@ build-backend = "setuptools.build_meta"
 # Find all packages at the root level
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["bin*", "common*"]
-exclude = ["tests*", "docs*", "build*", "dist*"]
+# Include everything by default (no include line needed)
+exclude = ["tests*", "build*", "dist*", ".*"]
 
 # Include all data files
 [tool.setuptools.package-data]
