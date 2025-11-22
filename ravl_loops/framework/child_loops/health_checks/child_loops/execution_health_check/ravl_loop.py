@@ -18,16 +18,11 @@ from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 from collections import Counter
 
-# Bootstrap: Find project root
-_current = Path(__file__).resolve().parent
-while not (_current / '.ravl').exists() and _current.parent != _current:
-    _current = _current.parent
-if not (_current / '.ravl').exists():
-    _current = Path(__file__).resolve().parent.parent.parent
-elif _current.name == '.ravl':
-    _current = _current.parent
-
-sys.path.insert(0, str(_current / '.ravl' / 'common'))
+# Bootstrap: Add framework common/ to path
+# This file is at: ravl_loops/framework/child_loops/health_checks/child_loops/execution_health_check/ravl_loop.py
+# Framework root is 6 levels up
+_framework_root = Path(__file__).resolve().parents[5]
+sys.path.insert(0, str(_framework_root / 'common'))
 from ravl_base import BaseRAVLLoop
 
 # Import sophisticated infrastructure

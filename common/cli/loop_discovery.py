@@ -17,6 +17,7 @@ import os
 # Import RAVLRunner for learning path resolution
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from ravl_runner import RAVLRunner
+from cli.ravl_cli_base import RAVLCLIBase
 
 
 class LoopDiscovery:
@@ -35,10 +36,8 @@ class LoopDiscovery:
         # Set loops directory (project loops)
         self.loops_dir = loops_dir if loops_dir else (project_root / 'ravl_loops')
 
-        # Detect if .ravl/ subdirectory exists (source/project) or flat structure (installed package)
-        # Framework loops are always in ravl_loops/ - either .ravl/ravl_loops/ or just ravl_loops/
-        has_ravl_subdir = (project_root / '.ravl').exists()
-        self.framework_loops_dir = (project_root / '.ravl' / 'ravl_loops') if has_ravl_subdir else (project_root / 'ravl_loops')
+        # Framework loops are always at framework root (discovered via __file__)
+        self.framework_loops_dir = RAVLCLIBase.find_framework_root() / 'ravl_loops'
 
     def _build_namespace_from_path(self, loop_path: Path) -> str:
         """
@@ -536,9 +535,12 @@ class LoopDiscovery:
                 continue
 
             # Determine if this is a framework or project loop
-            # Framework loops are under .ravl/ravl_loops/ (or ravl_loops/ if flat installed)
-            # Simple check: if path contains '.ravl' it's framework, or if loops_dir == framework_loops_dir (flat install)
-            is_framework = '.ravl' in loop_dir.parts or (self.loops_dir == self.framework_loops_dir)
+            # Check if loop is under framework directory
+            try:
+                loop_dir.relative_to(self.framework_loops_dir)
+                is_framework = True
+            except ValueError:
+                is_framework = False
 
             # Get parent loop if nested
             parent_path = None
