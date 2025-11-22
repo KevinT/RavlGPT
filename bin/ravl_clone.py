@@ -84,7 +84,9 @@ class RAVLCloneCommand(RAVLCLIBase):
         """
         # Find project root (uses CWD as fallback if outside RAVL project)
         self.project_root = self.find_project_root(required=False)
-        self.ravl_dir = self.project_root / '.ravl'
+
+        # Find framework root (where templates/examples live)
+        self.ravl_dir = self.find_framework_root()
         self.templates_dir = self.ravl_dir / 'templates'
         self.examples_dir = self.ravl_dir / 'examples'
         self.project_loops_dir = project_loops_dir if project_loops_dir else (self.project_root / 'ravl_loops')

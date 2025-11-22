@@ -44,9 +44,12 @@ class RAVLSyncOpenCodeCommand(RAVLCLIBase):
 
     def __init__(self):
         """Initialize command"""
+        # Project root = where user content (.opencode/) lives
         self.project_root = self.find_project_root()
         self.opencode_command_dir = self.project_root / '.opencode' / 'command'
-        self.ravl_bin_dir = self.project_root / '.ravl' / 'bin'
+
+        # Framework root = where RAVL commands live
+        self.ravl_bin_dir = self.find_framework_root() / 'bin'
 
     def run(self, args: argparse.Namespace):
         """

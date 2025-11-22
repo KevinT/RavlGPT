@@ -44,9 +44,12 @@ class RAVLSyncClaudeCommand(RAVLCLIBase):
 
     def __init__(self):
         """Initialize command"""
+        # Project root = where user content (.claude/) lives
         self.project_root = self.find_project_root()
         self.claude_commands_dir = self.project_root / '.claude' / 'commands'
-        self.ravl_bin_dir = self.project_root / '.ravl' / 'bin'
+
+        # Framework root = where RAVL commands live
+        self.ravl_bin_dir = self.find_framework_root() / 'bin'
 
     def run(self, args: argparse.Namespace):
         """

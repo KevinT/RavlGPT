@@ -19,6 +19,12 @@ if str(_utils_dir) not in sys.path:
     sys.path.insert(0, str(_utils_dir))
 from logging_utils import log_execution, log_message
 
+# Add cli to path for framework root discovery
+_cli_dir = Path(__file__).parent.parent.parent / 'cli'
+if str(_cli_dir) not in sys.path:
+    sys.path.insert(0, str(_cli_dir))
+from ravl_cli_base import RAVLCLIBase
+
 
 class ChildLoopExecutor:
     """
@@ -88,13 +94,9 @@ class ChildLoopExecutor:
                 continue
 
             # Execute child loop using the universal ravl runner
-            project_root = self.loop_dir
-            while project_root.parent != project_root:
-                if (project_root / '.ravl').exists():
-                    break
-                project_root = project_root.parent
-
-            ravl_cmd = [str(project_root / '.ravl' / 'bin' / 'ravl'), child_name] + child_args
+            # Find framework root (where ravl command lives)
+            framework_root = RAVLCLIBase.find_framework_root()
+            ravl_cmd = [str(framework_root / 'bin' / 'ravl'), child_name] + child_args
 
             try:
                 result = subprocess.run(

@@ -241,7 +241,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
                     # Clone the example (ravl-clone will auto-strip the prefix)
                     import subprocess
                     clone_cmd = [
-                        str(self.project_root / '.ravl' / 'bin' / 'ravl-clone'),
+                        str(self.find_framework_root() / 'bin' / 'ravl-clone'),
                         loop_name
                         # No target name - let ravl-clone auto-strip the prefix
                     ]
@@ -496,7 +496,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
             # Run markdown loop with final loop dir but wrapper learning path
             import subprocess
-            markdown_runner_path = self.project_root / '.ravl' / 'common' / 'llm' / 'run_markdown_ravl.py'
+            markdown_runner_path = self.find_framework_root() / 'common' / 'llm' / 'run_markdown_ravl.py'
             cmd = [
                 sys.executable,
                 str(markdown_runner_path),
@@ -645,7 +645,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
             args: Parsed arguments from universal runner
         """
         # Import markdown runner
-        markdown_runner_path = self.project_root / '.ravl' / 'common' / 'llm' / 'run_markdown_ravl.py'
+        markdown_runner_path = self.find_framework_root() / 'common' / 'llm' / 'run_markdown_ravl.py'
 
         if not markdown_runner_path.exists():
             self.print_error(

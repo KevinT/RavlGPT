@@ -64,6 +64,26 @@ class RAVLCLIBase:
         return Path.cwd().resolve()
 
     @staticmethod
+    def find_framework_root() -> Path:
+        """
+        Find framework installation root (where framework code lives).
+
+        **IMPORTANT - SEPARATE FROM PROJECT ROOT:**
+        This finds where FRAMEWORK code lives, NOT where user content lives.
+        Framework location is discovered via Python imports (__file__).
+
+        Works identically for:
+        - Submodule installation: Returns path to .ravl/ directory
+        - UV installation: Returns path to site-packages directory
+
+        Returns:
+            Path to framework root directory
+        """
+        # This file is at: common/cli/ravl_cli_base.py
+        # Framework root is 2 levels up: common/cli/ → common/ → root
+        return Path(__file__).resolve().parent.parent.parent
+
+    @staticmethod
     def print_success(message: str):
         """Print success message with ✅"""
         log_message(f"✅ {message}", status='success', indent=0)

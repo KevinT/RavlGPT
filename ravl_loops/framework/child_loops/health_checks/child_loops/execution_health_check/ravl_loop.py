@@ -108,7 +108,11 @@ class ExecutionHealthCheckLoop(BaseRAVLLoop):
 
     def _find_target_loop(self) -> Path:
         """Find target loop directory using LoopDiscovery"""
-        sys.path.insert(0, str(self.project_root / '.ravl' / 'common' / 'cli'))
+        # Find framework root (where common/cli lives)
+        # This file is at: ravl_loops/framework/child_loops/health_checks/child_loops/execution_health_check/ravl_loop.py
+        # Framework root is 6 levels up
+        framework_root = Path(__file__).resolve().parents[5]
+        sys.path.insert(0, str(framework_root / 'common' / 'cli'))
         from loop_discovery import LoopDiscovery
 
         discovery = LoopDiscovery(self.project_root)
@@ -119,7 +123,9 @@ class ExecutionHealthCheckLoop(BaseRAVLLoop):
 
     def _load_target_config(self) -> Dict[str, Any]:
         """Load configuration for target loop"""
-        sys.path.insert(0, str(self.project_root / '.ravl' / 'common' / 'cli'))
+        # Find framework root (where common/cli lives)
+        framework_root = Path(__file__).resolve().parents[5]
+        sys.path.insert(0, str(framework_root / 'common' / 'cli'))
         from loop_discovery import LoopDiscovery
 
         discovery = LoopDiscovery(self.project_root)
