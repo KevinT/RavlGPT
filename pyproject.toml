@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "RAVL (Reflect-Act-Verify-Learn) autonomous agent framework for building self-improving loops"
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Kevin Trethewey", email = "kevin@sandtech.com"}
 ]
@@ -69,13 +69,11 @@ Issues = "https://github.com/KevinT/RavlGPT/issues"
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# Install packages from .ravl/ but make them importable without .ravl prefix
-[tool.setuptools.package-dir]
-"" = ".ravl"
-
-# Find all packages under .ravl/
+# Find all packages at the root level
 [tool.setuptools.packages.find]
-where = [".ravl"]
+where = ["."]
+include = ["bin*", "common*"]
+exclude = ["tests*", "docs*", "build*", "dist*"]
 
 # Include all data files
 [tool.setuptools.package-data]
