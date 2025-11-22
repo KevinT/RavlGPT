@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = "MIT"
 authors = [
-    {name = "Kevin Trethewey", email = "kevin@sandtech.com"}
+    {name = "Kevin Trethewey", email = "kevint@gmail.com"}
 ]
 keywords = ["ai", "agents", "llm", "autonomous", "self-learning"]
 classifiers = [
