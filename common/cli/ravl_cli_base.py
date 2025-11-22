@@ -22,29 +22,25 @@ class RAVLCLIBase:
     @staticmethod
     def find_project_root(start_path: Optional[Path] = None, required: bool = True) -> Optional[Path]:
         """
-        Find project root by looking for .ravl/ directory
+        Find existing RAVL project root by looking for .ravl/ directory
 
         **IMPORTANT - SINGLE POINT OF TRUTH:**
-        This is the ONLY place in the codebase that should detect installation type
-        (UV installation vs .ravl submodule). All other code should use the returned
-        project_root without checking for .ravl existence.
-
-        DO NOT check for .ravl directory elsewhere - use this method instead.
-        DO NOT duplicate installation type detection - trust this method.
+        This finds where USER content (loops, data) lives, NOT where framework code lives.
+        Framework code location is discovered via Python imports (doesn't need to be at project root).
 
         Searches up from start_path (or cwd) for a .ravl/ directory.
-        If not found, falls back to the UV-installed framework directory.
+        Returns None if not found and required=False.
 
         Args:
             start_path: Starting path for search (default: cwd)
             required: If True, raise error when not found. If False, return None.
 
         Returns:
-            Path to project root (or framework installation root if outside project)
-            The returned path works identically whether using UV or submodule installation.
+            Path to existing project root (directory containing .ravl/), or None if not found.
+            When None, caller should use CWD as project root for creating new content.
 
         Raises:
-            RuntimeError: If .ravl/ directory not found and required=True (should never happen with fallback)
+            RuntimeError: If .ravl/ directory not found and required=True
         """
         current = (start_path or Path.cwd()).resolve()
 
@@ -54,28 +50,16 @@ class RAVLCLIBase:
                 return current
             current = current.parent
 
-        # Not found in project hierarchy - fall back to framework installation directory
-        # __file__ is this file (ravl_cli_base.py)
-        # Use parents[N] to go up the directory tree:
-        #   parents[0] = cli/, parents[1] = common/, parents[2] = .ravl/ OR site-packages/
-        framework_dir = Path(__file__).resolve().parents[2]
-
-        # Detect if running from source (.ravl/ directory) or installed package (site-packages/)
-        if framework_dir.name == '.ravl' and (framework_dir / 'common').exists():
-            # Running from source: .ravl/ directory exists
-            # Return project root (parent of .ravl/)
-            return framework_dir.parent
-        elif (framework_dir / 'common').exists():
-            # Running from installed package: flat structure in site-packages/
-            # The framework_dir IS the root (no .ravl/ subdirectory)
-            return framework_dir
-
-        # Shouldn't reach here, but handle gracefully
+        # Not found in project hierarchy
+        # Don't fall back to framework installation - that's where framework code lives,
+        # not where user content should be created!
         if required:
             raise RuntimeError(
-                "Could not find RAVL framework (.ravl/ directory). "
+                "Could not find RAVL project (.ravl/ directory). "
                 "Are you in a RAVL project?"
             )
+
+        # Return None to let caller use CWD as project root for user content
         return None
 
     @staticmethod
