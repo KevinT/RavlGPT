@@ -70,8 +70,8 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 # Install packages from .ravl/ but make them importable without .ravl prefix
-[tool.setuptools]
-package-dir = {"": ".ravl"}
+[tool.setuptools.package-dir]
+"" = ".ravl"
 
 # Find all packages under .ravl/
 [tool.setuptools.packages.find]
