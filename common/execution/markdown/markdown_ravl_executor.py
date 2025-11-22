@@ -494,7 +494,7 @@ class MarkdownRAVLExecutor:
         """
         # Compute relative path, handling case where learnings_dir is outside loop hierarchy
         try:
-            project_root = RAVLCLIBase.find_project_root(self.loop_dir)
+            project_root = RAVLCLIBase.find_project_root(self.loop_dir, required=False)
             relative_dir = str(learnings_dir.relative_to(project_root))
         except ValueError:
             # Learning path is outside the loop directory hierarchy (custom learning path)

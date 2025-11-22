@@ -360,9 +360,9 @@ class MarkdownParser:
 
         import os
 
-        # Load RAVL protocol
-        project_root = RAVLCLIBase.find_project_root(self.loop_dir)
-        protocol_file = project_root / '.ravl' / 'docs' / 'RAVL_PROTOCOL.md'
+        # Load RAVL protocol (from framework, not project)
+        framework_root = RAVLCLIBase.find_framework_root()
+        protocol_file = framework_root / 'docs' / 'RAVL_PROTOCOL.md'
         protocol_text = ""
         if protocol_file.exists():
             with open(protocol_file, 'r', encoding='utf-8') as f:
