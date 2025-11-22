@@ -24,6 +24,14 @@ class RAVLCLIBase:
         """
         Find project root by looking for .ravl/ directory
 
+        **IMPORTANT - SINGLE POINT OF TRUTH:**
+        This is the ONLY place in the codebase that should detect installation type
+        (UV installation vs .ravl submodule). All other code should use the returned
+        project_root without checking for .ravl existence.
+
+        DO NOT check for .ravl directory elsewhere - use this method instead.
+        DO NOT duplicate installation type detection - trust this method.
+
         Searches up from start_path (or cwd) for a .ravl/ directory.
         If not found, falls back to the UV-installed framework directory.
 
@@ -33,6 +41,7 @@ class RAVLCLIBase:
 
         Returns:
             Path to project root (or framework installation root if outside project)
+            The returned path works identically whether using UV or submodule installation.
 
         Raises:
             RuntimeError: If .ravl/ directory not found and required=True (should never happen with fallback)

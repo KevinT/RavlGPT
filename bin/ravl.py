@@ -37,15 +37,10 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 
-# Bootstrap: Find .ravl framework (for direct execution)
-# When installed as package, these imports will use the installed common package
-_current = Path(__file__).resolve().parent.parent  # .ravl directory
-if not (_current / 'common').exists():
-    # Running from installed package - common is at top level
-    pass
-else:
-    # Running from source - add .ravl to path so common.* imports work
-    sys.path.insert(0, str(_current))
+# Bootstrap: Add framework to path
+# Works for both UV installation and .ravl submodule
+_current = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_current))
 
 # Use absolute imports that work both from source and installed package
 from common.cli.ravl_cli_base import RAVLCLIBase
