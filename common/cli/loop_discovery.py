@@ -27,25 +27,18 @@ class LoopDiscovery:
         Initialize loop discovery
 
         Args:
-            project_root: Path to project root (containing .ravl/ or flat structure if installed)
+            project_root: Path to project root (containing .ravl/ subdirectory or ravl_loops/ if installed flat)
             loops_dir: Optional custom path for project loops (defaults to project_root/ravl_loops)
         """
         self.project_root = project_root
 
-        # Detect directory structure: nested (.ravl/) or flat (installed package)
-        has_ravl_subdir = (project_root / '.ravl').exists()
-        self.is_installed_package = not has_ravl_subdir
+        # Set loops directory (project loops)
+        self.loops_dir = loops_dir if loops_dir else (project_root / 'ravl_loops')
 
-        if has_ravl_subdir:
-            # Source or project structure with .ravl/ subdirectory
-            self.loops_dir = loops_dir if loops_dir else (project_root / 'ravl_loops')
-            self.framework_loops_dir = project_root / '.ravl' / 'ravl_loops'
-            self.examples_dir = project_root / '.ravl' / 'examples'
-        else:
-            # Installed package structure (flat, no .ravl/ subdirectory)
-            self.loops_dir = loops_dir if loops_dir else (project_root / 'ravl_loops')
-            self.framework_loops_dir = project_root / 'ravl_loops'
-            self.examples_dir = project_root / 'examples'
+        # Detect if .ravl/ subdirectory exists (source/project) or flat structure (installed package)
+        # Framework loops are always in ravl_loops/ - either .ravl/ravl_loops/ or just ravl_loops/
+        has_ravl_subdir = (project_root / '.ravl').exists()
+        self.framework_loops_dir = (project_root / '.ravl' / 'ravl_loops') if has_ravl_subdir else (project_root / 'ravl_loops')
 
     def _build_namespace_from_path(self, loop_path: Path) -> str:
         """
@@ -176,8 +169,6 @@ class LoopDiscovery:
             searched.append(str(self.loops_dir))
         if self.framework_loops_dir.exists():
             searched.append(str(self.framework_loops_dir))
-        if self.examples_dir.exists():
-            searched.append(str(self.examples_dir))
 
         raise ValueError(
             f"Loop not found: {identifier}\n"
@@ -545,16 +536,9 @@ class LoopDiscovery:
                 continue
 
             # Determine if this is a framework or project loop
-            if self.is_installed_package:
-                # In installed package mode, all loops are framework loops
-                is_framework = True
-            else:
-                # In project/source mode, check if loop is under .ravl/
-                is_framework = loop_dir.parts[:-1] == self.framework_loops_dir.parts if self.framework_loops_dir.exists() else False
-                for i, part in enumerate(loop_dir.parts):
-                    if i < len(loop_dir.parts) - 1 and loop_dir.parts[i] == '.ravl':
-                        is_framework = True
-                        break
+            # Framework loops are under .ravl/ravl_loops/ (or ravl_loops/ if flat installed)
+            # Simple check: if path contains '.ravl' it's framework, or if loops_dir == framework_loops_dir (flat install)
+            is_framework = '.ravl' in loop_dir.parts or (self.loops_dir == self.framework_loops_dir)
 
             # Get parent loop if nested
             parent_path = None
@@ -654,32 +638,32 @@ class LoopDiscovery:
 
     def is_example_loop(self, loop_path: Path) -> bool:
         """
-        Check if loop is in examples directory
+        Check if loop is in examples parent loop
 
         Args:
             loop_path: Path to loop directory
 
         Returns:
-            True if loop is in .ravl/examples/
+            True if loop is under examples parent loop
         """
+        # Examples are now under framework_loops_dir/examples/
+        examples_dir = self.framework_loops_dir / 'examples'
         try:
-            loop_path.relative_to(self.examples_dir)
+            loop_path.relative_to(examples_dir)
             return True
         except ValueError:
             return False
 
     def _find_all_loop_dirs(self) -> List[Path]:
-        """Find all directories containing ravl_loop.py or ravl_loop.md in project, framework, and examples"""
+        """Find all directories containing ravl_loop.py or ravl_loop.md in project and framework"""
         loop_dirs = []
 
-        # Search project, framework, and examples locations
+        # Search project and framework locations (framework includes templates and examples)
         search_dirs = []
         if self.loops_dir.exists():
             search_dirs.append(self.loops_dir)
         if self.framework_loops_dir.exists() and self.framework_loops_dir not in search_dirs:
             search_dirs.append(self.framework_loops_dir)
-        if self.examples_dir.exists() and self.examples_dir not in search_dirs:
-            search_dirs.append(self.examples_dir)
 
         # Recursively find all ravl_loop.py and ravl_loop.md files
         for search_dir in search_dirs:

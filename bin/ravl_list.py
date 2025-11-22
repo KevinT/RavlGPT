@@ -87,6 +87,7 @@ class RAVLListCommand(RAVLCLIBase):
         all_loops = []
         project_loops = []
         framework_loops = []
+        templates = []
 
         if show_loops:
             all_loops = self.discovery.find_all_loops()
@@ -94,36 +95,25 @@ class RAVLListCommand(RAVLCLIBase):
             all_project = [l for l in all_loops if l.get('loop_type') == 'project']
             all_framework = [l for l in all_loops if l.get('loop_type') == 'framework']
 
-            # Further filter framework loops to only those in ravl_loops/ directory
-            # (exclude those in examples/ and templates/)
-            framework_loops_only = []
-            for loop in all_framework:
-                loop_path_str = str(loop['path'])
-                # Check if path contains examples or templates (to exclude them)
-                is_example = '/examples/' in loop_path_str or loop_path_str.endswith('/examples')
-                is_template = '/templates/' in loop_path_str or loop_path_str.endswith('/templates')
-
-                # Include if in ravl_loops directory (either .ravl/ravl_loops/ or flat ravl_loops/)
-                is_in_ravl_loops = '/ravl_loops/' in loop_path_str or loop_path_str.endswith('/ravl_loops')
-
-                if is_in_ravl_loops and not is_example and not is_template:
-                    framework_loops_only.append(loop)
-
             # Apply loop type filters
             if only_project_loops:
                 project_loops = all_project
                 framework_loops = []
             elif only_framework_loops:
                 project_loops = []
-                framework_loops = framework_loops_only
+                framework_loops = all_framework
             else:
                 project_loops = all_project
-                framework_loops = framework_loops_only
+                framework_loops = all_framework
 
-        # Find all templates
-        templates = []
-        if show_templates:
-            templates = self._discover_templates()
+        # Templates and examples are now just regular framework loops
+        # For --templates flag, filter to show only templates/examples parent loops and their children
+        if show_templates and only_templates:
+            # Filter framework loops to only show templates and examples
+            templates = [l for l in all_framework
+                        if 'templates' in str(l['path']) or 'examples' in str(l['path'])]
+            framework_loops = []
+            project_loops = []
 
         # Apply filter to all lists if provided (works for all output formats)
         if filter_text:
@@ -154,67 +144,18 @@ class RAVLListCommand(RAVLCLIBase):
             else:
                 self._print_tree_with_templates(project_loops, framework_loops, templates)
 
-    def _discover_templates(self) -> List[Dict[str, Any]]:
+    def _is_template_or_example(self, loop_info: Dict[str, Any]) -> bool:
         """
-        Discover available templates and examples
+        Check if a loop is under templates/ or examples/ parent loops
+
+        Args:
+            loop_info: Loop information dict
 
         Returns:
-            List of template information dicts
+            True if loop is a template or example
         """
-        templates = []
-
-        # Scan both templates and examples directories
-        # Use discovery object's paths which handle both nested and flat structures
-        templates_dir = self.project_root / '.ravl' / 'templates' if (self.project_root / '.ravl').exists() else self.project_root / 'templates'
-        examples_dir = self.discovery.examples_dir  # Already handles both structures
-
-        source_dirs = [
-            (templates_dir, 'template'),
-            (examples_dir, 'example'),
-        ]
-
-        for source_dir, source_type in source_dirs:
-            if not source_dir.exists():
-                continue
-
-            # Scan directories
-            for item_dir in sorted(source_dir.iterdir()):
-                if not item_dir.is_dir():
-                    continue
-
-                # Check for required files
-                config_file = item_dir / 'config' / 'ravl.yml'
-                loop_file_md = item_dir / 'ravl_loop.md'
-                loop_file_py = item_dir / 'ravl_loop.py'
-
-                has_config = config_file.exists()
-                has_loop = loop_file_md.exists() or loop_file_py.exists()
-
-                if has_config and has_loop:
-                    try:
-                        with open(config_file, 'r') as f:
-                            config = yaml.safe_load(f) or {}
-
-                        # Determine type based on file presence
-                        if loop_file_py.exists():
-                            type_label = 'Python'
-                        else:
-                            type_label = 'Markdown'
-
-                        templates.append({
-                            'name': item_dir.name,
-                            'config': config,
-                            'path': item_dir,
-                            'source_type': source_type,
-                            'loop_type': type_label,
-                            'description': config.get('description', f'{type_label} loop'),
-                            'emoji': config.get('emoji', '📋')
-                        })
-                    except Exception as e:
-                        # Skip items with invalid config
-                        continue
-
-        return templates
+        loop_path_str = str(loop_info['path'])
+        return 'templates' in loop_path_str or 'examples' in loop_path_str
 
     def _print_tree(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]]):
         """Print loops in tree view, separated by type"""
@@ -397,7 +338,7 @@ class RAVLListCommand(RAVLCLIBase):
 
     def _print_tree_with_templates(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
         """Print loops and templates in tree view"""
-        # Print project loops only
+        # Print project loops
         if project_loops:
             self.print_header("[Project Loops]", "")
             print(" │", file=sys.stderr)
@@ -408,9 +349,16 @@ class RAVLListCommand(RAVLCLIBase):
                 is_last = (idx == len(hierarchy) - 1)
                 self._print_project_loop_tree(loop_info, is_last)
 
-        # Print framework resources (framework loops, templates, examples) together
-        if framework_loops or templates:
-            self._print_framework_resources(framework_loops, templates)
+        # Print framework loops (includes templates and examples as regular loops)
+        # Combine framework_loops and templates since templates are now just framework loops
+        all_framework = framework_loops + templates
+        if all_framework:
+            self.print_header("[Framework Loops]", "")
+            print(" │", file=sys.stderr)
+            hierarchy = self._build_hierarchy(all_framework)
+            for idx, loop_info in enumerate(hierarchy):
+                is_last = (idx == len(hierarchy) - 1)
+                self._print_project_loop_tree(loop_info, is_last)
 
     def _build_loop_namespace(self, loop_path: Path) -> str:
         """
@@ -550,16 +498,15 @@ class RAVLListCommand(RAVLCLIBase):
 
     def _print_flat_with_templates(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
         """Print loops and templates in flat view"""
-        self._print_flat(project_loops, framework_loops)
-        if templates:
-            self._print_templates(templates)
+        # Combine framework loops and templates (templates are now just framework loops)
+        all_framework = framework_loops + templates
+        self._print_flat(project_loops, all_framework)
 
     def _print_json_with_templates(self, project_loops: List[Dict[str, Any]], framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
         """Print loops and templates as JSON"""
         output = {
             'project_loops': [],
-            'framework_loops': [],
-            'templates': []
+            'framework_loops': []
         }
 
         # Add project loops
@@ -577,8 +524,9 @@ class RAVLListCommand(RAVLCLIBase):
                 'run_command': f"./ravl {namespace}"
             })
 
-        # Add framework loops
-        for loop_info in framework_loops:
+        # Add framework loops (combines framework_loops and templates)
+        all_framework = framework_loops + templates
+        for loop_info in all_framework:
             loop_name = loop_info['config']['name']
             namespace = self._build_loop_namespace(loop_info['path'])
             output['framework_loops'].append({
@@ -592,79 +540,8 @@ class RAVLListCommand(RAVLCLIBase):
                 'run_command': f"./ravl {namespace}"
             })
 
-        # Add templates
-        for template_info in templates:
-            output['templates'].append({
-                'name': template_info['name'],
-                'description': template_info.get('description', ''),
-                'emoji': template_info.get('emoji', '📋'),
-                'path': str(template_info['path'].relative_to(self.project_root)),
-                'clone_command': f"./ravl --clone {template_info['name']} <loop_name>"
-            })
-
         print(json.dumps(output, indent=2))
 
-    def _print_templates(self, templates: List[Dict[str, Any]]):
-        """Print available templates and examples"""
-        # This method is kept for backward compatibility but delegates to new method
-        self._print_framework_resources([], templates)
-
-    def _print_framework_resources(self, framework_loops: List[Dict[str, Any]], templates: List[Dict[str, Any]]):
-        """Print framework resources: loops, templates, and examples"""
-        self.print_header("[Framework Resources]", "")
-
-        # Group templates by source type
-        examples = [t for t in templates if t.get('source_type') == 'example']
-        templates_only = [t for t in templates if t.get('source_type') == 'template']
-
-        # Print tree structure
-        print(" │", file=sys.stderr)
-
-        # Framework Loops subsection
-        if framework_loops:
-            print(" ├── Framework Loops (built-in loops)", file=sys.stderr)
-            # Build hierarchy for framework loops to show nesting
-            hierarchy = self._build_hierarchy(framework_loops)
-            # Print top-level framework loops with tree structure
-            for idx, loop_info in enumerate(hierarchy):
-                is_last = (idx == len(hierarchy) - 1)
-                self._print_framework_loop_tree(loop_info, " │    ", is_last)
-            print(" │", file=sys.stderr)
-
-        # Templates subsection
-        if templates_only:
-            print(" ├── Templates (useful starting points to clone):", file=sys.stderr)
-            if templates_only:
-                print(" │    Clone with: ./ravl-clone <name> <new_name>", file=sys.stderr)
-            for idx, template in enumerate(sorted(templates_only, key=lambda x: x['name'])):
-                emoji = template.get('emoji', '📋')
-                template_name = template['name']
-                description = template.get('description', 'Template loop')
-                # Truncate description to fit on one line
-                if len(description) > 50:
-                    description = description[:47] + "..."
-
-                is_last = (idx == len(templates_only) - 1)
-                branch = " │    └──" if is_last else " │    ├──"
-                print(f"{branch} {emoji} {template_name} - {description}", file=sys.stderr)
-            print(" │", file=sys.stderr)
-
-        # Examples subsection
-        if examples:
-            print(" └── Examples (working examples to clone):", file=sys.stderr)
-            if examples:
-                print("      Clone with: ./ravl-clone <name> <new_name>", file=sys.stderr)
-            for idx, example in enumerate(sorted(examples, key=lambda x: x['name'])):
-                emoji = example.get('emoji', '📋')
-                example_name = example['name']
-                description = example.get('description', 'Example loop')
-                # Truncate description to fit on one line
-                if len(description) > 50:
-                    description = description[:47] + "..."
-
-                is_last = (idx == len(examples) - 1)
-                branch = "      └──" if is_last else "      ├──"
-                print(f"{branch} {emoji} {example_name} - {description}", file=sys.stderr)
 
     def _print_project_loop_tree(self, loop_info: Dict[str, Any], is_last: bool):
         """
@@ -719,34 +596,6 @@ class RAVLListCommand(RAVLCLIBase):
         for idx, child in enumerate(children):
             is_child_last = (idx == len(children) - 1)
             self._print_project_loop_child(child, child_prefix, is_child_last)
-
-    def _print_framework_loop_tree(self, loop_info: Dict[str, Any], prefix: str, is_last: bool):
-        """
-        Print a framework loop with tree structure and truncated description
-
-        Args:
-            loop_info: Loop information dict
-            prefix: Prefix string for indentation (e.g., " │    ")
-            is_last: Whether this is the last loop in the list
-        """
-        config = loop_info['config']
-        emoji = config.get('emoji', '➿')
-        loop_name = loop_info['path'].name
-        description = config.get('description', '')
-
-        # Truncate description to fit on one line
-        if len(description) > 50:
-            description = description[:47] + "..."
-
-        branch = "└──" if is_last else "├──"
-        print(f"{prefix}{branch} {emoji} {loop_name} - {description}", file=sys.stderr)
-
-        # Print children with proper indentation
-        children = loop_info.get('children', [])
-        child_prefix = prefix + ("    " if is_last else "│   ")
-        for idx, child in enumerate(children):
-            is_child_last = (idx == len(children) - 1)
-            self._print_framework_loop_tree(child, child_prefix, is_child_last)
 
     def _format_loop_name(self, name: str) -> str:
         """Format loop name for display (snake_case to Title Case)"""

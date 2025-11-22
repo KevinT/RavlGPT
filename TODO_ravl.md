@@ -8,6 +8,9 @@ allow loops to create new loops themselves, by calling "ravl --new ..."
 
 # Tidy First
 
+rename example_1_ to example_1_parent_loops
+make example_0_single_loops
+
 - split llm logs by which provider is being called, right now they all go to the same folder. make sure they are still .gitignore d
 
 - Additional learning clean up 

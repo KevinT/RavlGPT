@@ -69,13 +69,17 @@ Issues = "https://github.com/KevinT/RavlGPT/issues"
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# Tell setuptools which packages to include (find all packages recursively)
-[tool.setuptools.packages.find]
-where = ["."]
-# Include everything - templates, examples, ravl_loops, docs, etc.
+# Install packages from .ravl/ but make them importable without .ravl prefix
+[tool.setuptools]
+package-dir = {"": ".ravl"}
 
+# Find all packages under .ravl/
+[tool.setuptools.packages.find]
+where = [".ravl"]
+
+# Include all data files
 [tool.setuptools.package-data]
-"*" = ["*.yml", "*.yaml", "*.md", "*.txt", "*.sh"]
+"*" = ["*.yml", "*.yaml", "*.md", "*.txt", "*.sh", "ravl_loops/**/*"]
 
 # UV-specific configuration
 [tool.uv]
