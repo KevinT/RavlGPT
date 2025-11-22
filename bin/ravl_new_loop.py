@@ -99,9 +99,9 @@ class RAVLNewLoopCommand(RAVLCLIBase):
         Args:
             project_loops_dir: Optional custom path for project loops
         """
-        # Get project root (works for both UV and submodule installations)
-        # find_project_root() abstracts installation type detection
-        self.project_root = self.find_project_root(required=False) or Path.cwd().resolve()
+        # Get project root (uses CWD as fallback if outside RAVL project)
+        # Works identically for UV installation or .ravl submodule
+        self.project_root = self.find_project_root(required=False)
 
         # Always use ravl_loops/ convention for consistency
         # Works identically whether using UV installation or .ravl submodule

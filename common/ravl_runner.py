@@ -441,7 +441,8 @@ class RAVLRunner:
             return (project_root / '.ravl' / 'venv').resolve()
         else:
             # Find project root from loop_dir when project_root not provided
-            project_root = RAVLCLIBase.find_project_root(loop_dir)
+            # Uses loop_dir as fallback if outside RAVL project
+            project_root = RAVLCLIBase.find_project_root(loop_dir, required=False)
             return (project_root / '.ravl' / 'venv').resolve()
 
     @staticmethod

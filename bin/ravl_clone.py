@@ -82,7 +82,8 @@ class RAVLCloneCommand(RAVLCLIBase):
         Args:
             project_loops_dir: Optional custom path for project loops
         """
-        self.project_root = self.find_project_root()
+        # Find project root (uses CWD as fallback if outside RAVL project)
+        self.project_root = self.find_project_root(required=False)
         self.ravl_dir = self.project_root / '.ravl'
         self.templates_dir = self.ravl_dir / 'templates'
         self.examples_dir = self.ravl_dir / 'examples'

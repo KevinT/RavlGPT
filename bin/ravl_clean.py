@@ -64,7 +64,8 @@ class RAVLResetCommand(RAVLCLIBase):
         Args:
             loops_dir: Optional custom path for project loops
         """
-        self.project_root = self.find_project_root()
+        # Find project root (uses CWD as fallback if outside RAVL project)
+        self.project_root = self.find_project_root(required=False)
         self.discovery = LoopDiscovery(self.project_root, loops_dir=loops_dir)
         self.stats = {
             'files_deleted': 0,

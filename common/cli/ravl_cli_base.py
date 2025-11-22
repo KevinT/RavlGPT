@@ -20,24 +20,25 @@ class RAVLCLIBase:
     """Base class with shared utilities for RAVL CLI tools"""
 
     @staticmethod
-    def find_project_root(start_path: Optional[Path] = None, required: bool = True) -> Optional[Path]:
+    def find_project_root(start_path: Optional[Path] = None, required: bool = True) -> Path:
         """
-        Find existing RAVL project root by looking for .ravl/ directory
+        Find project root for user content.
 
         **IMPORTANT - SINGLE POINT OF TRUTH:**
         This finds where USER content (loops, data) lives, NOT where framework code lives.
         Framework code location is discovered via Python imports (doesn't need to be at project root).
 
         Searches up from start_path (or cwd) for a .ravl/ directory.
-        Returns None if not found and required=False.
+        If not found and required=False, returns CWD as the project root.
 
         Args:
             start_path: Starting path for search (default: cwd)
-            required: If True, raise error when not found. If False, return None.
+            required: If True, raise error when .ravl/ not found.
+                     If False, return CWD as default project root.
 
         Returns:
-            Path to existing project root (directory containing .ravl/), or None if not found.
-            When None, caller should use CWD as project root for creating new content.
+            Path to project root (directory containing .ravl/),
+            or CWD if .ravl/ not found and required=False.
 
         Raises:
             RuntimeError: If .ravl/ directory not found and required=True
@@ -59,8 +60,8 @@ class RAVLCLIBase:
                 "Are you in a RAVL project?"
             )
 
-        # Return None to let caller use CWD as project root for user content
-        return None
+        # Use CWD as project root for user content
+        return Path.cwd().resolve()
 
     @staticmethod
     def print_success(message: str):

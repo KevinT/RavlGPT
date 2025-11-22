@@ -97,7 +97,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
         Args:
             loops_dir: Optional custom path for project loops
         """
-        self.project_root = self.find_project_root()
+        # Find project root (uses CWD as fallback if outside RAVL project)
+        self.project_root = self.find_project_root(required=False)
 
         # Load .env file and set all variables in environment
         env_vars = RAVLRunner.load_env_file(self.project_root)

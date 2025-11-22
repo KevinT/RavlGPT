@@ -46,8 +46,8 @@ class RAVLListCommand(RAVLCLIBase):
         Args:
             loops_dir: Optional custom path for project loops
         """
-        # Find project root (falls back to UV-installed framework if outside project)
-        self.project_root = self.find_project_root(required=True)
+        # Find project root (uses CWD as fallback if outside RAVL project)
+        self.project_root = self.find_project_root(required=False)
 
         # Use custom loops_dir if provided, otherwise default to project_root/ravl_loops
         effective_loops_dir = loops_dir if loops_dir else None
