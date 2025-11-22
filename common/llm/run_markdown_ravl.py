@@ -217,7 +217,7 @@ class ConfigBasedRAVLRunner:
             from cli.config_display import ConfigDisplay
             from cli.ravl_cli_base import RAVLCLIBase
 
-            project_root = RAVLCLIBase.find_project_root()
+            project_root = RAVLCLIBase.find_project_root(required=False)
             learning_path = RAVLRunner.resolve_learning_path(
                 loop_dir=self.loop_dir,
                 loop_config=self.config,
@@ -744,7 +744,7 @@ def main():
         if initial_args.show_config:
             # Find project root
             from cli.ravl_cli_base import RAVLCLIBase
-            project_root = RAVLCLIBase.find_project_root()
+            project_root = RAVLCLIBase.find_project_root(required=False)
 
             # Resolve all paths
             learning_path = RAVLRunner.resolve_learning_path(
