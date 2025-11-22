@@ -99,9 +99,34 @@ class RAVLNewLoopCommand(RAVLCLIBase):
         Args:
             project_loops_dir: Optional custom path for project loops
         """
-        self.project_root = self.find_project_root()
-        self.ravl_dir = self.project_root / '.ravl'
-        self.project_loops_dir = project_loops_dir if project_loops_dir else (self.project_root / 'ravl_loops')
+        # Try to find project root, but don't require it
+        potential_root = self.find_project_root(required=False)
+        cwd = Path.cwd().resolve()
+
+        # Check if we're actually inside a RAVL project
+        # We're inside a project if:
+        # 1. A project root was found AND
+        # 2. It has a .ravl/ directory AND
+        # 3. Current working directory is under the project root
+        if potential_root and (potential_root / '.ravl').exists():
+            try:
+                # Check if CWD is under project root
+                cwd.relative_to(potential_root)
+                # We're inside the project - use project structure
+                self.project_root = potential_root
+                self.ravl_dir = self.project_root / '.ravl'
+                self.project_loops_dir = project_loops_dir if project_loops_dir else (self.project_root / 'ravl_loops')
+            except ValueError:
+                # CWD is not under project root - we're outside the project
+                self.project_root = cwd
+                self.ravl_dir = None
+                self.project_loops_dir = project_loops_dir if project_loops_dir else cwd
+        else:
+            # No project root found - use current directory
+            self.project_root = cwd
+            self.ravl_dir = None
+            self.project_loops_dir = project_loops_dir if project_loops_dir else cwd
+
         self.discovery = LoopDiscovery(self.project_root, loops_dir=project_loops_dir)
 
     def run(self, args: argparse.Namespace):
