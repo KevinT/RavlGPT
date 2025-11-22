@@ -164,9 +164,13 @@ class RAVLListCommand(RAVLCLIBase):
         templates = []
 
         # Scan both templates and examples directories
+        # Use discovery object's paths which handle both nested and flat structures
+        templates_dir = self.project_root / '.ravl' / 'templates' if (self.project_root / '.ravl').exists() else self.project_root / 'templates'
+        examples_dir = self.discovery.examples_dir  # Already handles both structures
+
         source_dirs = [
-            (self.project_root / '.ravl' / 'templates', 'template'),
-            (self.project_root / '.ravl' / 'examples', 'example'),
+            (templates_dir, 'template'),
+            (examples_dir, 'example'),
         ]
 
         for source_dir, source_type in source_dirs:
