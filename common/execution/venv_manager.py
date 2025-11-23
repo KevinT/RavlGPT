@@ -253,7 +253,10 @@ class VenvManager:
 
     def install_framework(self) -> Tuple[bool, Optional[str]]:
         """
-        Install RAVL framework in editable mode and its dependencies.
+        Make RAVL framework available in this venv and install its dependencies.
+
+        For source installations (submodule): Uses editable mode (pip install -e)
+        For UV tool installations: Creates .pth file to link to existing framework
 
         This makes common.llm.llm_logger and other framework utilities available
         to generated code running in this venv.
@@ -265,38 +268,52 @@ class VenvManager:
             # Find framework root (works for both submodule and UV installation)
             framework_root = RAVLCLIBase.find_framework_root()
 
-            # Check if pyproject.toml exists (modern package format)
+            # Check if pyproject.toml exists (source installation vs installed package)
             pyproject_toml = framework_root / "pyproject.toml"
             setup_py = framework_root / "setup.py"
 
-            if not pyproject_toml.exists() and not setup_py.exists():
-                return (False, f"RAVL framework package definition not found at {framework_root}")
+            if pyproject_toml.exists() or setup_py.exists():
+                # Source installation (submodule) - use editable mode
+                # Prefer UV if available (much faster)
+                if self.has_uv:
+                    # UV pip install with editable mode
+                    cmd = ["uv", "pip", "install", "-e", str(framework_root), "--quiet"]
 
-            # Prefer UV if available (much faster)
-            if self.has_uv:
-                # UV pip install with editable mode
-                cmd = ["uv", "pip", "install", "-e", str(framework_root), "--quiet"]
+                    # Set VIRTUAL_ENV to tell UV which venv to use
+                    env = os.environ.copy()
+                    env["VIRTUAL_ENV"] = str(self.venv_path)
 
-                # Set VIRTUAL_ENV to tell UV which venv to use
-                env = os.environ.copy()
-                env["VIRTUAL_ENV"] = str(self.venv_path)
-
-                subprocess.run(
-                    cmd,
-                    check=True,
-                    capture_output=True,
-                    env=env,
-                    timeout=120,
-                )
+                    subprocess.run(
+                        cmd,
+                        check=True,
+                        capture_output=True,
+                        env=env,
+                        timeout=120,
+                    )
+                else:
+                    # Fallback to pip
+                    cmd = [str(self.pip_executable), "install", "-e", str(framework_root), "-q"]
+                    subprocess.run(
+                        cmd,
+                        check=True,
+                        capture_output=True,
+                        timeout=120,
+                    )
             else:
-                # Fallback to pip
-                cmd = [str(self.pip_executable), "install", "-e", str(framework_root), "-q"]
-                subprocess.run(
-                    cmd,
-                    check=True,
-                    capture_output=True,
-                    timeout=120,
-                )
+                # UV tool installation - framework is already installed, use .pth file
+                # Find site-packages directory in this venv
+                python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+                site_packages = self.venv_path / "lib" / f"python{python_version}" / "site-packages"
+
+                # Ensure site-packages exists
+                site_packages.mkdir(parents=True, exist_ok=True)
+
+                # Write .pth file pointing to framework location
+                pth_file = site_packages / "ravl-framework.pth"
+                with open(pth_file, 'w') as f:
+                    f.write(str(framework_root) + '\n')
+
+                # Note: Framework dependencies (anthropic, openai, etc.) will be installed below
 
             # Also install framework requirements (pyyaml, anthropic, etc.)
             requirements_file = framework_root / "requirements.txt"
