@@ -10,6 +10,8 @@
 
 ### Option 1: UV Install (Recommended)
 
+Use this option if you want to explore RAVL and run a few local loops.
+
 **[UV](https://docs.astral.sh/uv/)** is a Python package manager.
 
 **Install UV:**
@@ -39,9 +41,11 @@ export OPENAI_API_KEY="sk-svc-..."  # Get key from platform.openai.com
 ravl example_3_analysis_loop
 ```
 
-### Option 2: Traditional Install
+### Option 2: Submodule Install
 
-From your project root directory:
+Use this option if you want to take a dependency on RAVL in your project, or be able to dig into how the framework works. Be warned though that RAVL is still in it's early stages, so expect breaking changes as it settles and stabilises into the most effective shape.
+
+From the root directory of a git repository:
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/KevinT/RavlGPT/main/install.sh | bash
@@ -55,7 +59,7 @@ This automatically:
 
 **Then run your first loop:**
 ```bash
-./ravl example_3_analysis_loop
+ravl example_3_analysis_loop
 ```
 
 📖 **[Full Installation Guide](INSTALL.md)** - Detailed instructions, troubleshooting, and manual installation.
@@ -78,12 +82,12 @@ RAVL comes with a set of powerful helper commands:
 
 | Command | Description |
 |---------|-------------|
-| `./ravl {loop name}` | Run a RAVL loop. Use `--help` for options |
-| `./ravl --list` | List all project RAVLs with last execution times |
-| `./ravl --clone {source} {dest}` | Clone a RAVL from existing loop or template |
-| `./ravl --clean {loop name}` | Remove all learning artifacts (keeps code) |
-| `./ravl --execution-health {loop}` | Diagnose execution/code generation issues |
-| `./ravl --loop-health {loop}` | Diagnose domain learning issues |
+| `ravl {loop name}` | Run a RAVL loop. Use `--help` for options |
+| `ravl --list` | List all project RAVLs with last execution times |
+| `ravl --clone {source} {dest}` | Clone a RAVL from existing loop or template |
+| `ravl --clean {loop name}` | Remove all learning artifacts (keeps code) |
+| `ravl --execution-health {loop}` | Diagnose execution/code generation issues |
+| `ravl --loop-health {loop}` | Diagnose domain learning issues |
 | `.ravl/bin/ravl-sync-claude` | Install `/ravl-*` slash commands in Claude Code |
 | `.ravl/bin/ravl-sync-opencode` | Install `/ravl-*` slash commands in Opencode |
 
@@ -96,12 +100,12 @@ The project includes a `./ravl` symlink that provides a unified interface:
 chmod +x .ravl/bin/*
 
 # From project root, use the unified wrapper:
-./ravl --list              # List all loops
-./ravl my_loop            # Run a loop
-./ravl --clean my_loop    # Clean up learnings
-./ravl --clone            # Clone a loop
-./ravl --health my_loop   # Check loop health
-./ravl --help             # Show all options
+ravl --list              # List all loops
+ravl my_loop            # Run a loop
+ravl --clean my_loop    # Clean up learnings
+ravl --clone            # Clone a loop
+ravl --health my_loop   # Check loop health
+ravl --help             # Show all options
 ```
 
 If the `./ravl` symlink doesn't exist in your project, create it:
@@ -140,22 +144,22 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 **Using RAVL CLI:**
 ```bash
 # List all loops in your project
-./ravl --list
+$ ravl --list
 
 # Run a loop
-./ravl example_3_analysis_loop --mode fast
+$ ravl example_3_analysis_loop --mode fast
 
 # Clone a new loop from template
-./ravl --clone empty_loop_template ravl_loops/my_analytics
+$ ravl --clone empty_loop_template ravl_loops/my_analytics
 
 # Diagnose a failing loop (execution issues)
-./ravl --execution-health my_analytics
+$ ravl --execution-health my_analytics
 
 # Diagnose loop health (domain learning issues)
-./ravl --loop-health my_analytics
+$ ravl --loop-health my_analytics
 
 # Clean learning artifacts to start fresh
-./ravl --clean my_analytics
+$ ravl --clean my_analytics
 ```
 
 ## 🔧 Key Framework Features
@@ -178,7 +182,7 @@ The **health check loop** provides intelligent diagnostics:
 ### Quiet Mode
 Suppress framework output for cleaner logs:
 ```bash
-./ravl my_loop --quiet
+ravl my_loop --quiet
 ```
 
 ### Dependency Management

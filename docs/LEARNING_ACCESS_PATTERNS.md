@@ -345,7 +345,7 @@ reflection = {
 
 Learning paths follow a 6-level priority hierarchy:
 
-1. **CLI flag**: `./ravl my_loop --learning-path /custom/path` (highest priority)
+1. **CLI flag**: `ravl my_loop --learning-path /custom/path` (highest priority)
 2. **Loop config**: `learning_path` in `config/ravl.yml`
 3. **Parent configs**: Walk parent chain for `learning_path`
 4. **Project config**: `ravl_loops/config/ravl.yml` learning_path
@@ -366,7 +366,7 @@ RAVL_DEFAULT_LEARNING_DIRECTORY=/data/ravl-learning
 
 **CLI override**:
 ```bash
-./ravl my_loop --learning-path /tmp/debug-learning
+ravl my_loop --learning-path /tmp/debug-learning
 ```
 
 ### Child Loop Path Inheritance
@@ -454,7 +454,7 @@ related_loops = context_builder.discover_related_loops(exclude_top_level_parents
 **Diagnosis**:
 ```bash
 # Check where loop expects to find learnings
-./ravl my_loop --debug
+ravl my_loop --debug
 
 # Verify learning directory exists and has files
 ls -la /path/to/expected/learnings/

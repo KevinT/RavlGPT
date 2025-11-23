@@ -104,16 +104,16 @@ class DependencyValidator:
         Resolve whitelist with inheritance model
 
         Resolution order:
-        1. Loop-level config/ravl.yml (allowed_dependencies section)
-        2. Parent loop config/ravl.yml (if nested)
-        3. Project loops config ravl_loops/config/ravl.yml (project defaults)
-        4. Framework config .ravl/config/ravl.yml (framework defaults)
+        1. Loop-level config/ravl.toml (allowed_dependencies section)
+        2. Parent loop config/ravl.toml (if nested)
+        3. Project loops config ravl_loops/config/ravl.toml (project defaults)
+        4. Framework config .ravl/config/ravl.toml (framework defaults)
 
         Returns:
             Whitelist dict or None if not found anywhere
         """
-        # Try loop-level ravl.yml
-        loop_config_file = self.loop_dir / 'config' / 'ravl.yml'
+        # Try loop-level ravl.toml
+        loop_config_file = self.loop_dir / 'config' / 'ravl.toml'
         if loop_config_file.exists():
             whitelist = self._extract_allowed_dependencies(loop_config_file)
             if whitelist:
@@ -122,21 +122,21 @@ class DependencyValidator:
         # Try parent loop (if nested)
         parent_path = self._find_parent_loop()
         if parent_path:
-            parent_config_file = parent_path / 'config' / 'ravl.yml'
+            parent_config_file = parent_path / 'config' / 'ravl.toml'
             if parent_config_file.exists():
                 whitelist = self._extract_allowed_dependencies(parent_config_file)
                 if whitelist:
                     return whitelist
 
-        # Try project-level defaults (ravl_loops/config/ravl.yml)
-        project_loops_config = self.project_root / 'ravl_loops' / 'config' / 'ravl.yml'
+        # Try project-level defaults (ravl_loops/config/ravl.toml)
+        project_loops_config = self.project_root / 'ravl_loops' / 'config' / 'ravl.toml'
         if project_loops_config.exists():
             whitelist = self._extract_allowed_dependencies(project_loops_config)
             if whitelist:
                 return whitelist
 
-        # Try framework defaults (.ravl/config/ravl.yml)
-        framework_config = self.project_root / '.ravl' / 'config' / 'ravl.yml'
+        # Try framework defaults (.ravl/config/ravl.toml)
+        framework_config = self.project_root / '.ravl' / 'config' / 'ravl.toml'
         if framework_config.exists():
             whitelist = self._extract_allowed_dependencies(framework_config)
             if whitelist:
@@ -167,10 +167,10 @@ class DependencyValidator:
 
     def _extract_allowed_dependencies(self, ravl_yml_file: Path) -> Optional[Dict[str, Dict[str, str]]]:
         """
-        Extract allowed_dependencies section from a ravl.yml file
+        Extract allowed_dependencies section from a ravl.toml file
 
         Args:
-            ravl_yml_file: Path to ravl.yml
+            ravl_yml_file: Path to ravl.toml
 
         Returns:
             Whitelist dict (allowed_dependencies section) or None if not present or error
@@ -263,26 +263,26 @@ class DependencyValidator:
     def _error_no_whitelist(self) -> str:
         """Generate error message when no whitelist found"""
         search_locations = [
-            f"  - Loop config: {self.loop_dir / 'config' / 'ravl.yml'} (allowed_dependencies section)",
-            f"  - Project config: {self.project_root / 'ravl_loops' / 'config' / 'ravl.yml'} (allowed_dependencies section)",
-            f"  - Framework config: {self.project_root / '.ravl' / 'config' / 'ravl.yml'} (allowed_dependencies section)"
+            f"  - Loop config: {self.loop_dir / 'config' / 'ravl.toml'} (allowed_dependencies section)",
+            f"  - Project config: {self.project_root / 'ravl_loops' / 'config' / 'ravl.toml'} (allowed_dependencies section)",
+            f"  - Framework config: {self.project_root / '.ravl' / 'config' / 'ravl.toml'} (allowed_dependencies section)"
         ]
 
         parent = self._find_parent_loop()
         if parent:
             search_locations.insert(
                 1,
-                f"  - Parent config: {parent / 'config' / 'ravl.yml'} (allowed_dependencies section)"
+                f"  - Parent config: {parent / 'config' / 'ravl.toml'} (allowed_dependencies section)"
             )
 
         return f"""❌ Dependency whitelist not found
 
 Generated code requires pip to install packages, but no allowed_dependencies
-section was found in ravl.yml files at these locations:
+section was found in ravl.toml files at these locations:
 
 {chr(10).join(search_locations)}
 
-To fix this, add an allowed_dependencies section to config/ravl.yml:
+To fix this, add an allowed_dependencies section to config/ravl.toml:
 
   allowed_dependencies:
     google-api-python-client:
@@ -291,7 +291,7 @@ To fix this, add an allowed_dependencies section to config/ravl.yml:
     requests:
       min_version: '2.31.0'
 
-Or add it to the project-level ravl_loops/config/ravl.yml if you want all loops to use it.
+Or add it to the project-level ravl_loops/config/ravl.toml if you want all loops to use it.
 
 Then run the loop again."""
 
@@ -352,16 +352,16 @@ The approved version range prevents problems from old or new versions.
 """
 
     def _find_whitelist_path(self) -> Path:
-        """Find which ravl.yml file contains the whitelist (for error messages)"""
-        loop_config = self.loop_dir / 'config' / 'ravl.yml'
+        """Find which ravl.toml file contains the whitelist (for error messages)"""
+        loop_config = self.loop_dir / 'config' / 'ravl.toml'
         if loop_config.exists() and self._extract_allowed_dependencies(loop_config):
             return loop_config
 
         parent = self._find_parent_loop()
         if parent:
-            parent_config = parent / 'config' / 'ravl.yml'
+            parent_config = parent / 'config' / 'ravl.toml'
             if parent_config.exists() and self._extract_allowed_dependencies(parent_config):
                 return parent_config
 
         # Return the most relevant location for the error message
-        return self.loop_dir / 'config' / 'ravl.yml'
+        return self.loop_dir / 'config' / 'ravl.toml'

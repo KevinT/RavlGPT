@@ -269,10 +269,10 @@ Score
 
 ```bash
 # From framework root
-./ravl communication_learner
+ravl communication_learner
 
 # Run multiple times to see learning
-for i in {1..10}; do ./ravl communication_learner; done
+for i in {1..10}; do ravl communication_learner; done
 
 # Check the model evolution
 cat ravl_loops/communication_learner/learnings/loop_learning/model.yml

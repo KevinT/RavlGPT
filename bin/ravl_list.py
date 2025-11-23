@@ -220,7 +220,7 @@ class RAVLListCommand(RAVLCLIBase):
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"./ravl {loop_name}"
+                'run_command': f"ravl {loop_name}"
             })
 
         output_framework = []
@@ -233,7 +233,7 @@ class RAVLListCommand(RAVLCLIBase):
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"./ravl {loop_name}"
+                'run_command': f"ravl {loop_name}"
             })
 
         output = {
@@ -525,7 +525,7 @@ class RAVLListCommand(RAVLCLIBase):
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"./ravl {namespace}"
+                'run_command': f"ravl {namespace}"
             })
 
         # Add framework loops (combines framework_loops and templates)
@@ -541,7 +541,7 @@ class RAVLListCommand(RAVLCLIBase):
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"./ravl {namespace}"
+                'run_command': f"ravl {namespace}"
             })
 
         print(json.dumps(output, indent=2))

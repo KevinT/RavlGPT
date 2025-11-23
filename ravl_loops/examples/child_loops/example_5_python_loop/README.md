@@ -37,17 +37,17 @@ Run this multiple times and watch:
 
 ```bash
 # From framework root
-./ravl hello_ravl_py
-./ravl hello_ravl_py --show-config # framework can also resolve loops by name alone
+ravl example_5_python_loop
+ravl example_5_python_loop --show-config # framework can also resolve loops by name alone
 
 # Or directly
-cd examples/hello_ravl_py
+cd examples/example_5_python_loop
 python3 ravl_loop.py
 ```
 
 ## Expected Output
 
-The first time you run an example the framework will clone a local copy for you into a `./ravl_loops/hello_ravl_py` directory. The loop will output it's progress to the screen, and it's learning and logs to a `hello_ravl_py/learnings` folder in the loop (this is configurable per project and per loop).
+The first time you run an example the framework will clone a local copy for you into a `./ravl_loops/python_loop` directory. The loop will output it's progress to the screen, and it's learning and logs to a `python_loop/learnings` folder in the loop (this is configurable per project and per loop).
 
 Each subsequent run will show increasing run counts and maintain a success rate history. You can run the loop with either `--show-config` to show it's configuration settings, or with `--show-execution` to get it to show a lot more detailed execution information during that loop's run.
 
@@ -56,10 +56,10 @@ Each subsequent run will show increasing run counts and maintain a success rate 
 After running, you'll see:
 
 ```
-hello_ravl_py/
-├── ravl_loop.py              # The loop implementation
+python_loop/
+├── ravl_loop.py             # The loop implementation
 ├── config/
-│   └── ravl.yml             # Loop configuration
+│   └── ravl.toml            # Loop configuration
 ├── learnings/
 │   └── loop_learning/       # Domain learning (run statistics)
 │       ├── model.yml        # Current model

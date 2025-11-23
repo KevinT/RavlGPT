@@ -34,7 +34,7 @@ Complete reference for configuring RAVL loops at every level: CLI flags, configu
 Command-line flags override all other configuration:
 
 ```bash
-./ravl my_loop --learning-path /custom/path --quiet --mode fast
+ravl my_loop --learning-path /custom/path --quiet --mode fast
 ```
 
 Use CLI flags for:
@@ -45,7 +45,7 @@ Use CLI flags for:
 **Available Flags:**
 
 ```bash
-./ravl my_loop --help
+ravl my_loop --help
 
 Options:
   --mode {fast,full}        Execution mode (default: full)
@@ -151,7 +151,7 @@ If no configuration is provided, RAVL uses sensible defaults:
 
 **Priority (highest to lowest):**
 
-1. **CLI flag**: `./ravl my_loop --learning-path /tmp/test`
+1. **CLI flag**: `ravl my_loop --learning-path /tmp/test`
 2. **Loop config**: `learning_path: /custom/path` in `config/ravl.yml`
 3. **Parent config**: Child loops inherit parent's `learning_path` (appends child name)
 4. **Project config**: `ravl_loops/config/ravl.yml`
@@ -170,7 +170,7 @@ If no configuration is provided, RAVL uses sensible defaults:
 
 **Priority (highest to lowest):**
 
-1. **CLI flag**: `./ravl my_loop --venv-path /tmp/venv`
+1. **CLI flag**: `ravl my_loop --venv-path /tmp/venv`
 2. **Loop config**: `venv_path: /custom/venv` in `config/ravl.yml`
 3. **Project config**: `ravl_loops/config/ravl.yml`
 4. **Environment variable**: `RAVL_DEFAULT_VENV_DIRECTORY=/data/venvs`
@@ -275,7 +275,7 @@ Useful when loops need conflicting package versions.
 **CI/CD venv:**
 
 ```bash
-./ravl my_loop --venv-path /tmp/ci_venv_${BUILD_ID}
+ravl my_loop --venv-path /tmp/ci_venv_${BUILD_ID}
 ```
 
 Ephemeral venv for each build.
@@ -380,7 +380,7 @@ template_variables:
 **Usage:**
 
 ```bash
-./ravl my_loop --data-source https://api.example.com --start-date 2024-06-01
+ravl my_loop --data-source https://api.example.com --start-date 2024-06-01
 ```
 
 Variables are substituted into the markdown loop definition.
@@ -390,7 +390,7 @@ Variables are substituted into the markdown loop definition.
 **Quiet mode** (suppress framework output):
 
 ```bash
-./ravl my_loop --quiet
+ravl my_loop --quiet
 ```
 
 Useful for cron jobs or when piping output.
@@ -398,14 +398,14 @@ Useful for cron jobs or when piping output.
 **Execution mode:**
 
 ```bash
-./ravl my_loop --mode fast  # Skip expensive analysis
-./ravl my_loop --mode full  # Complete execution (default)
+ravl my_loop --mode fast  # Skip expensive analysis
+ravl my_loop --mode full  # Complete execution (default)
 ```
 
 **Timeout:**
 
 ```bash
-./ravl my_loop --timeout 600  # 10 minutes
+ravl my_loop --timeout 600  # 10 minutes
 ```
 
 Prevents hung processes.
@@ -413,7 +413,7 @@ Prevents hung processes.
 **Disable deep learning:**
 
 ```bash
-./ravl my_loop --no-deep-learning
+ravl my_loop --no-deep-learning
 ```
 
 Skips model-based pattern learning.
@@ -454,7 +454,7 @@ Generated code automatically reads `GOOGLE_CREDENTIALS` from environment and cre
 
 ```bash
 # Example: Test with isolated learning path
-./ravl my_loop --learning-path /tmp/test_learning --quiet
+ravl my_loop --learning-path /tmp/test_learning --quiet
 ```
 
 ### Use Configuration Files (ravl.yml) When:
@@ -510,7 +510,7 @@ Need to configure?
 
 ```bash
 # Just run the loop
-./ravl my_loop
+ravl my_loop
 ```
 
 Learning artifacts go to `ravl_loops/my_loop/learnings/`, venv at `.ravl/venv`.
@@ -548,7 +548,7 @@ ANTHROPIC_API_KEY=sk-ant-...  # Shared key
     RAVL_DEFAULT_LEARNING_DIRECTORY: /tmp/ci_learning_${{ github.run_id }}
     RAVL_DEFAULT_VENV_DIRECTORY: /tmp/ci_venv_${{ github.run_id }}
   run: |
-    ./ravl my_loop --mode fast --timeout 300 --quiet
+    ravl my_loop --mode fast --timeout 300 --quiet
 ```
 
 **Result:**
@@ -638,7 +638,7 @@ allowed_dependencies:
 **A:** Run with verbose output to see resolved path:
 
 ```bash
-./ravl my_loop
+ravl my_loop
 # Look for: "Learning path: /actual/resolved/path"
 ```
 
@@ -663,7 +663,7 @@ Or check health output:
 cat .env | grep RAVL_DEFAULT_LEARNING_DIRECTORY
 
 # Verify priority
-./ravl my_loop --learning-path /tmp/test  # CLI overrides .env
+ravl my_loop --learning-path /tmp/test  # CLI overrides .env
 ```
 
 ### Q: How do I share configuration across a team?
@@ -718,7 +718,7 @@ venv_path: /data/venvs/loop_b_venv
 
 4. **Verify**:
    ```bash
-   ./ravl my_loop
+   ravl my_loop
    # Check logs confirm new paths
    ```
 
@@ -736,7 +736,7 @@ venv_path: /data/venvs/loop_b_venv
 - **[.env.example](../../.env.example)** - Environment variable template with detailed comments
 - **[RAVL_PROTOCOL.md](RAVL_PROTOCOL.md)** - Four-phase loop specification
 - **[RAVL_VISION.md](RAVL_VISION.md)** - Design principles and philosophy
-- **CLI Help**: Run `./ravl --help` for flag reference
+- **CLI Help**: Run `ravl --help` for flag reference
 
 **For LLM-specific configuration:**
 - **[llm/README.md](llm/README.md)** - LLM infrastructure overview

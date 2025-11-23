@@ -217,7 +217,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
             print(f"  3. Run it:", file=sys.stderr)
             # Use dot notation path for display
             run_path = '.'.join(path_segments)
-            print(f"     ./ravl {run_path} --mode fast", file=sys.stderr)
+            print(f"     ravl {run_path} --mode fast", file=sys.stderr)
             print(f"\nNote: Learning artifacts (learnings/) will be auto-created on first run", file=sys.stderr)
 
         except Exception as e:
@@ -410,7 +410,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
                        f"  {str(e)}\n"
                        f"  \n"
                        f"  Create the parent loop first:\n"
-                       f"    ./ravl --new {parent_path_str} --content \"...\"")
+                       f"    ravl --new {parent_path_str} --content \"...\"")
 
         return (True, None)
 

@@ -28,13 +28,13 @@ Each run builds on previous learning. The loop becomes more sophisticated.
 ## How to Run
 
 ```bash
-# From framework root (will clone to project/ravl_loops/simple_learning_loop on first run)
-./ravl example_4_learning_loop
+# From framework root (will clone to project/ravl_loops/learning_loop on first run)
+ravl example_4_learning_loop
 
 # Watch multiple runs to see learning
-./ravl simple_learning_loop
-./ravl simple_learning_loop
-./ravl simple_learning_loop  # By run 3-4, you'll see strategic exploration
+ravl learning_loop
+ravl learning_loop
+ravl learning_loop  # By run 3-4, you'll see strategic exploration
 ```
 
 ## What You'll See
@@ -105,7 +105,7 @@ environment:
     typical_runtime: "~3 seconds"
 
   location:
-    cwd: "/Users/you/ravl_loops/simple_learning_loop"
+    cwd: "/Users/you/ravl_loops/learning_loop"
     project_root: "/Users/you/project"
     in_git_repo: true
 
@@ -159,7 +159,7 @@ This example shows that markdown loops aren't just about generating code. They'r
 ## File Structure
 
 ```
-simple_learning_loop/
+learning_loop/
 ├── ravl_loop.md              # Loop definition (what you read)
 ├── README.md                 # This file
 ├── config/

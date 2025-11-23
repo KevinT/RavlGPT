@@ -566,7 +566,7 @@ def create_minimal_config(loop_dir: Path) -> bool:
         return False
 
     if response != 'y':
-        log_message("\nℹ️  To create a config manually, create config/ravl.yml with:", status='info', indent=0)
+        log_message("\nℹ️  To create a config manually, create config/ravl.toml with:", status='info', indent=0)
         log_message("    description: Your loop description", status='info', indent=0)
         log_message("    loop_type: markdown  # or python", status='info', indent=0)
         return False
@@ -589,43 +589,41 @@ def create_minimal_config(loop_dir: Path) -> bool:
     config_dir = loop_dir / "config"
     config_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate config content
+    # Generate config content (TOML format)
     config_content = f"""# RAVL loop configuration
 # Note: Loop name is always derived from the folder name: {loop_name}
-description: {description}
-loop_type: {loop_type}
+description = "{description}"
+loop_type = "{loop_type}"
 
 # Optional: Override execution timeout (default: 300 seconds)
-# execution_timeout: 120
+# execution_timeout = 120
 
 # Optional: Specify Python packages for generated code (markdown loops)
-# allowed_dependencies:
-#   requests:
-#     min_version: '2.31.0'
-#     max_version: '3.0.0'
+# [allowed_dependencies.requests]
+# min_version = "2.31.0"
+# max_version = "3.0.0"
 
 # Optional: Custom learning directory (default: ./learnings)
-# learning_path: /path/to/custom/learnings
+# learning_path = "/path/to/custom/learnings"
 
 # Optional: Custom virtual environment (default: .ravl/venv)
-# venv_path: /path/to/custom/venv
+# venv_path = "/path/to/custom/venv"
 
 # Optional: Template variables for parameterized loops
-# template_variables:
-#   variable_name:
-#     cli_arg: --variable
-#     required: true
-#     type: string
-#     help: Description of variable
+# [template_variables.variable_name]
+# cli_arg = "--variable"
+# required = true
+# type = "string"
+# help = "Description of variable"
 
 # Optional: Metadata for categorization
-# metadata:
-#   author: Your Name
-#   tags: [tag1, tag2]
+# [metadata]
+# author = "Your Name"
+# tags = ["tag1", "tag2"]
 """
 
     # Write config file
-    config_path = config_dir / "ravl.yml"
+    config_path = config_dir / "ravl.toml"
     try:
         with open(config_path, 'w') as f:
             f.write(config_content)
@@ -689,20 +687,17 @@ def main():
         config_path = initial_args.config
     elif initial_args.loop_dir:
         # Try config locations in order:
-        # 1. config/config.yml (old markdown loops with separate config)
-        # 2. config/ravl.yml (new: everything in ravl.yml)
-        # 3. config.yml (legacy: root level)
-        config_path = initial_args.loop_dir / 'config' / 'config.yml'
+        # 1. config/ravl.toml (standard location)
+        # 2. config/config.toml (old markdown loops with separate config)
+        config_path = initial_args.loop_dir / 'config' / 'ravl.toml'
         if not config_path.exists():
-            config_path = initial_args.loop_dir / 'config' / 'ravl.yml'
-        if not config_path.exists():
-            config_path = initial_args.loop_dir / 'config.yml'
+            config_path = initial_args.loop_dir / 'config' / 'config.toml'
     else:
         log_message("Error: Must specify either --config or --loop-dir", status='error', indent=0)
         log_message("", status='info', indent=0)
         log_message("Usage:", status='info', indent=0)
         log_message("  python3 run_markdown_ravl.py --loop-dir path/to/loop [options]", status='info', indent=0)
-        log_message("  python3 run_markdown_ravl.py --config path/to/config.yml [options]", status='info', indent=0)
+        log_message("  python3 run_markdown_ravl.py --config path/to/config.toml [options]", status='info', indent=0)
         sys.exit(1)
 
     if not config_path.exists():
@@ -712,7 +707,7 @@ def main():
                 # Config was created, check if it exists now
                 if not config_path.exists():
                     # Try the standard location we just created
-                    config_path = initial_args.loop_dir / 'config' / 'ravl.yml'
+                    config_path = initial_args.loop_dir / 'config' / 'ravl.toml'
                     if not config_path.exists():
                         log_message(f"Error: Config creation succeeded but file not found: {config_path}", status='error', indent=0)
                         sys.exit(1)

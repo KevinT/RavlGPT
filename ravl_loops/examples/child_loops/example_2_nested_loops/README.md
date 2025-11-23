@@ -7,7 +7,7 @@ Demonstrates multi-LLM support with two child loops that playfully compete.
 Run directly - the system will clone a local copy for you, you will find it in `./ravl_loops/simple_loop_tree`:
 
 ```bash
-./ravl example_2_nested_loops
+ravl example_2_nested_loops
 ```
 
 ## Run Individual Loops
@@ -15,13 +15,13 @@ Run directly - the system will clone a local copy for you, you will find it in `
 ```bash
 
 # Start the parent loop (which will start the child loops)
-./ravl simple_loop_tree
+ravl simple_loop_tree
 
 # Start the Anthropic child loop only
-./ravl simple_loop_tree.simple_loop_anthropic
+ravl simple_loop_tree.simple_loop_anthropic
 
 # Start the OpenAI child loop only
-./ravl simple_loop_tree.simple_loop_openai
+ravl simple_loop_tree.simple_loop_openai
 ```
 
 ## View Learning

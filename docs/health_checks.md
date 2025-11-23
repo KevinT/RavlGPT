@@ -34,7 +34,7 @@ These health checks are **completely separate** and must never be mixed. They an
 - "Cached code is invalidated when pip install fails"
 - "Import errors indicate missing dependencies in requirements.txt"
 
-**Health Check**: `./ravl --execution-health <loop_name>`
+**Health Check**: `ravl --execution-health <loop_name>`
 
 **Purpose**: Diagnose and fix infrastructure problems so the loop can execute successfully
 
@@ -60,7 +60,7 @@ These health checks are **completely separate** and must never be mixed. They an
 - "Documentation imports should preserve hierarchical structure"
 - "Verification passes when all required domain fields are present"
 
-**Health Check**: `./ravl --loop-health <loop_name>`
+**Health Check**: `ravl --loop-health <loop_name>`
 
 **Purpose**: Diagnose and improve domain knowledge acquisition and verification quality
 
@@ -102,15 +102,15 @@ Both health checks use the same sophisticated architecture, but with **completel
 
 ### Use Execution Health Check When:
 
-- ❌ Loop fails to start or crashes during execution
-- ❌ Code generation is failing or producing invalid code
-- ❌ DSL inference isn't converging
-- ❌ Execution errors (syntax, imports, runtime exceptions)
-- ❌ Cache invalidation is happening repeatedly
-- ❌ Dependency installation problems
-- ❌ Virtual environment setup issues
+- Loop fails to start or crashes during execution
+- Code generation is failing or producing invalid code
+- DSL inference isn't converging
+- Execution errors (syntax, imports, runtime exceptions)
+- Cache invalidation is happening repeatedly
+- Dependency installation problems
+- Virtual environment setup issues
 
-**Command**: `./ravl --execution-health <loop_name>`
+**Command**: `ravl --execution-health <loop_name>`
 
 **Example Output**:
 ```
@@ -130,14 +130,14 @@ Both health checks use the same sophisticated architecture, but with **completel
 
 ### Use Loop Health Check When:
 
-- ✅ Loop executes successfully BUT verification is failing
-- ✅ Domain model isn't evolving or capturing key concepts
-- ✅ Verification criteria are consistently not met
-- ✅ Domain patterns aren't being recognized
-- ✅ Business rules aren't being learned
-- ✅ Data quality is poor despite successful execution
+- Loop executes successfully BUT verification is failing
+- Domain model isn't evolving or capturing key concepts
+- Verification criteria are consistently not met
+- Domain patterns aren't being recognized
+- Business rules aren't being learned
+- Data quality is poor despite successful execution
 
-**Command**: `./ravl --loop-health <loop_name>`
+**Command**: `ravl --loop-health <loop_name>`
 
 **Example Output**:
 ```
@@ -345,7 +345,7 @@ Both health checks provide four report types, but analyze completely different m
 
 **Scenario**: Loop is crashing with import errors
 
-**Command**: `./ravl --execution-health my_loop`
+**Command**: `ravl --execution-health my_loop`
 
 **Diagnosis**:
 ```
@@ -368,7 +368,7 @@ Both health checks provide four report types, but analyze completely different m
 
 **Scenario**: Loop runs successfully but verification always fails
 
-**Command**: `./ravl --loop-health my_loop`
+**Command**: `ravl --loop-health my_loop`
 
 **Diagnosis**:
 ```
@@ -389,7 +389,7 @@ Both health checks provide four report types, but analyze completely different m
 
 ### Example 3: Healthy Loop with Improvement Suggestions
 
-**Command**: `./ravl --loop-health my_loop`
+**Command**: `ravl --loop-health my_loop`
 
 **Output**:
 ```
@@ -436,13 +436,13 @@ Both health checks provide four report types, but analyze completely different m
 
 ```bash
 # Check execution infrastructure health
-./ravl --execution-health <loop_name>
+ravl --execution-health <loop_name>
 
 # Check domain learning health
-./ravl --loop-health <loop_name>
+ravl --loop-health <loop_name>
 
 # Run both (sequentially)
-./ravl --execution-health <loop_name> && ./ravl --loop-health <loop_name>
+ravl --execution-health <loop_name> && ravl --loop-health <loop_name>
 ```
 
 ### Health Check Output Location
@@ -544,7 +544,7 @@ This ensures pattern repository quality remains high.
 | **Diagnoses** | Code gen, DSL, execution errors | Verification failures, model stagnation |
 | **Pattern Storage** | `execution_patterns.jsonl` | `domain_patterns.jsonl` |
 | **Thread Storage** | `threads/execution_{loop}.jsonl` | `threads/domain_{loop}.jsonl` |
-| **CLI Command** | `./ravl --execution-health <loop>` | `./ravl --loop-health <loop>` |
+| **CLI Command** | `ravl --execution-health <loop>` | `ravl --loop-health <loop>` |
 | **LLM Analyzer** | `ExecutionLLMAnalyzer` | `DomainLLMAnalyzer` |
 | **Example Issue** | "Missing OAuth scopes in credentials" | "Model missing stakeholder fields" |
 
@@ -553,9 +553,9 @@ This ensures pattern repository quality remains high.
 ## Next Steps
 
 **To use health checks effectively**:
-1. Run normal loop: `./ravl my_loop`
-2. If execution fails → `./ravl --execution-health my_loop`
-3. If verification fails → `./ravl --loop-health my_loop`
+1. Run normal loop: `ravl my_loop`
+2. If execution fails → `ravl --execution-health my_loop`
+3. If verification fails → `ravl --loop-health my_loop`
 4. Follow recommended steps
 5. Re-run and verify fix worked
 

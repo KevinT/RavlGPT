@@ -200,9 +200,9 @@ class RAVLRunner:
         """
         Resolve the learning path with precedence:
         1. CLI flag (--learning-path) - highest priority
-        2. Loop config (learning_path in ravl.yml)
-        3. Parent config (parent's config/ravl.yml learning_path)
-        4. Project config (ravl_loops/config/ravl.yml learning_path)
+        2. Loop config (learning_path in ravl.toml)
+        3. Parent config (parent's config/ravl.toml learning_path)
+        4. Project config (ravl_loops/config/ravl.toml learning_path)
         5. Project .env file (RAVL_DEFAULT_LEARNING_DIRECTORY)
         6. Default (loop_dir/learnings) - lowest priority
 
@@ -219,7 +219,7 @@ class RAVLRunner:
 
         Args:
             loop_dir: Path to the loop directory
-            loop_config: Parsed loop configuration (from ravl.yml)
+            loop_config: Parsed loop configuration (from ravl.toml)
             cli_learning_path: CLI-provided learning path
             project_root: Project root for loading .env
 
@@ -246,7 +246,7 @@ class RAVLRunner:
         # Priority 3: Parent configs (walk full parent chain from immediate to root)
         all_parents = RAVLRunner._find_all_parent_loops(loop_dir)
         for parent_dir in all_parents:
-            parent_config_file = parent_dir / 'config' / 'ravl.yml'
+            parent_config_file = parent_dir / 'config' / 'ravl.toml'
             if parent_config_file.exists():
                 try:
                     import yaml
@@ -281,7 +281,7 @@ class RAVLRunner:
 
         # Priority 4: Project config (ravl_loops/config/ravl.yml)
         if project_root:
-            project_config_file = project_root / 'ravl_loops' / 'config' / 'ravl.yml'
+            project_config_file = project_root / 'ravl_loops' / 'config' / 'ravl.toml'
             if project_config_file.exists():
                 try:
                     import yaml
@@ -393,8 +393,8 @@ class RAVLRunner:
         """
         Resolve the venv path with precedence:
         1. CLI flag (--venv-path) - highest priority
-        2. Loop config (venv_path in ravl.yml)
-        3. Project config (venv_path in ravl_loops/config/ravl.yml)
+        2. Loop config (venv_path in ravl.toml)
+        3. Project config (venv_path in ravl_loops/config/ravl.toml)
         4. Project .env file (RAVL_DEFAULT_VENV_DIRECTORY)
         5. Default (.ravl/venv) - lowest priority
 
@@ -402,7 +402,7 @@ class RAVLRunner:
 
         Args:
             loop_dir: Path to the loop directory
-            loop_config: Parsed loop configuration (from ravl.yml)
+            loop_config: Parsed loop configuration (from ravl.toml)
             cli_venv_path: CLI-provided venv path
             project_root: Project root for loading .env and project config
 
@@ -419,7 +419,7 @@ class RAVLRunner:
 
         # Priority 3: Project-level config (ravl_loops/config/ravl.yml)
         if project_root:
-            project_loops_config = project_root / 'ravl_loops' / 'config' / 'ravl.yml'
+            project_loops_config = project_root / 'ravl_loops' / 'config' / 'ravl.toml'
             if project_loops_config.exists():
                 try:
                     import yaml
@@ -465,7 +465,7 @@ class RAVLRunner:
 
         Args:
             loop_dir: Path to the loop directory
-            loop_config: Parsed loop configuration (from ravl.yml)
+            loop_config: Parsed loop configuration (from ravl.toml)
             project_root: Project root for loading .env and project config
 
         Returns:
@@ -479,7 +479,7 @@ class RAVLRunner:
         # Priority 2: Parent configs (walk full parent chain from immediate to root)
         all_parents = RAVLRunner._find_all_parent_loops(loop_dir)
         for parent_dir in all_parents:
-            parent_config_file = parent_dir / 'config' / 'ravl.yml'
+            parent_config_file = parent_dir / 'config' / 'ravl.toml'
             if parent_config_file.exists():
                 try:
                     import yaml
@@ -492,7 +492,7 @@ class RAVLRunner:
 
         # Priority 3: Project config (ravl_loops/config/ravl.yml)
         if project_root:
-            project_config_file = project_root / 'ravl_loops' / 'config' / 'ravl.yml'
+            project_config_file = project_root / 'ravl_loops' / 'config' / 'ravl.toml'
             if project_config_file.exists():
                 try:
                     import yaml

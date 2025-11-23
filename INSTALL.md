@@ -78,14 +78,14 @@ No setup needed - runs locally. (UNTESTED!)
 
 ```bash
 # Run the rugby tips example
-./ravl example_3_analysis_loop
+$ ravl example_3_analysis_loop
 
 # List all available loops
-./ravl --list
+$ ravl --list
 
 # Clone and customize an example
-./ravl --clone example_3_analysis_loop my_tips
-./ravl my_tips
+$ ravl --clone example_3_analysis_loop my_tips
+$ ravl my_tips
 ```
 
 ## Prerequisites
@@ -175,7 +175,7 @@ The framework creates a virtual environment on first run. If it fails:
 ```bash
 # Remove and let it recreate
 rm -rf .ravl/venv
-./ravl --list
+$ ravl --list
 ```
 
 **With UV (recommended):** UV automatically manages Python versions and creates venvs 200x faster. If you're experiencing venv issues, try installing UV:
@@ -199,7 +199,7 @@ chmod +x .ravl/bin/*
 ln -s .ravl/bin/ravl-wrapper ./ravl
 
 # 4. Test
-./ravl --list
+$ ravl --list
 ```
 
 ## Installing in Existing Projects
@@ -218,7 +218,7 @@ git submodule update --init --recursive
 chmod +x .ravl/bin/*
 
 # Run
-./ravl --list
+$ ravl --list
 ```
 
 ## Updating RAVL

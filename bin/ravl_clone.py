@@ -235,10 +235,10 @@ class RAVLCloneCommand(RAVLCLIBase):
             print(f"  2. Run it:", file=sys.stderr)
             # Use hierarchical path for nested loops, simple name for flat loops
             run_path = new_name if not parent_segments else new_name
-            print(f"     ./ravl {run_path}", file=sys.stderr)
+            print(f"     ravl {run_path}", file=sys.stderr)
             if has_nested_loops:
                 print(f"  3. Or run child loops individually:", file=sys.stderr)
-                child_loops = [d.name for d in (target_path / 'child_loops').iterdir() if d.is_dir() and (d / 'config' / 'ravl.yml').exists()]
+                child_loops = [d.name for d in (target_path / 'child_loops').iterdir() if d.is_dir() and (d / 'config' / 'ravl.toml').exists()]
                 for child in child_loops:
                     # Show hierarchical path for nested child loops
                     child_run_path = f"{new_name}.{child}" if parent_segments else child
@@ -377,11 +377,11 @@ class RAVLCloneCommand(RAVLCLIBase):
         """
         Check if directory is a valid RAVL loop
 
-        Valid loops must have config/ravl.yml and either:
+        Valid loops must have config/ravl.toml and either:
         - An implementation file (ravl_loop.md or ravl_loop.py), OR
-        - A delegation directive in config/ravl.yml
+        - A delegation directive in config/ravl.toml
         """
-        config_file = path / 'config' / 'ravl.yml'
+        config_file = path / 'config' / 'ravl.toml'
 
         if not config_file.exists():
             return False
@@ -472,7 +472,7 @@ class RAVLCloneCommand(RAVLCLIBase):
 
         Validation:
             - Each parent must exist
-            - Each parent must be a valid RAVL loop (has config/ravl.yml and implementation)
+            - Each parent must be a valid RAVL loop (has config/ravl.toml and implementation)
             - Intermediate child_loops/ directories are checked/created
         """
         current_path = base_path
@@ -496,7 +496,7 @@ class RAVLCloneCommand(RAVLCLIBase):
                 return (False,
                        f"Parent directory exists but is not a valid RAVL loop: {parent}\n"
                        f"  Path: {parent_loop_dir}\n"
-                       f"  Expected: {parent_loop_dir}/config/ravl.yml\n"
+                       f"  Expected: {parent_loop_dir}/config/ravl.toml\n"
                        f"  Expected: {parent_loop_dir}/ravl_loop.py or ravl_loop.md\n"
                        f"  \n"
                        f"  Fix: Ensure {parent} is a complete RAVL loop with config and implementation")
@@ -527,17 +527,18 @@ class RAVLCloneCommand(RAVLCLIBase):
             loop_path: Path to the cloned loop
             description: New description
         """
-        import yaml
+        # Import TOML utilities
+        sys.path.insert(0, str(self.ravl_dir / 'common'))
+        from utils.file_utils import load_toml_file, save_toml_file
 
-        # Update main config/ravl.yml
-        config_file = loop_path / 'config' / 'ravl.yml'
+        # Update main config/ravl.toml
+        config_file = loop_path / 'config' / 'ravl.toml'
         if config_file.exists():
             try:
-                config = yaml.safe_load(config_file.read_text())
+                config = load_toml_file(config_file)
                 if config:
                     config['description'] = description
-                    with open(config_file, 'w') as f:
-                        yaml.dump(config, f, default_flow_style=False)
+                    save_toml_file(config_file, config, create_dirs=False)
             except Exception as e:
                 print(f"  ⚠️  Warning: Could not update description in {config_file.name}: {e}", file=sys.stderr)
 

@@ -2,8 +2,7 @@
 """
 Configuration Loader for RAVL Framework
 
-Loads and caches framework configuration from .ravl/config/ravl.toml (preferred)
-or .ravl/config/ravl.yml (backwards compatibility)
+Loads and caches framework configuration from .ravl/config/ravl.toml
 """
 
 from pathlib import Path
@@ -19,9 +18,7 @@ _config_cache: Optional[Dict[str, Any]] = None
 
 def load_config_file(config_dir: Path, base_name: str = 'ravl') -> Dict[str, Any]:
     """
-    Load configuration from TOML or YAML file (auto-detect).
-
-    Tries TOML first (preferred), falls back to YAML (backwards compatibility).
+    Load configuration from TOML file.
 
     Args:
         config_dir: Directory containing config file
@@ -30,7 +27,7 @@ def load_config_file(config_dir: Path, base_name: str = 'ravl') -> Dict[str, Any
     Returns:
         Parsed config dict, or empty dict if no config found
     """
-    # Try TOML first (preferred format)
+    # Load TOML config
     toml_path = config_dir / f'{base_name}.toml'
     if toml_path.exists():
         try:
@@ -38,15 +35,6 @@ def load_config_file(config_dir: Path, base_name: str = 'ravl') -> Dict[str, Any
             return config or {}
         except Exception as e:
             print(f"Warning: Failed to load TOML config from {toml_path}: {e}")
-
-    # Fall back to YAML (backwards compatibility)
-    yaml_path = config_dir / f'{base_name}.yml'
-    if yaml_path.exists():
-        try:
-            config = load_yaml_file(yaml_path)
-            return config or {}
-        except Exception as e:
-            print(f"Warning: Failed to load YAML config from {yaml_path}: {e}")
 
     # No config found
     return {}
@@ -72,7 +60,7 @@ def save_config_file(config_dir: Path, data: Dict[str, Any], base_name: str = 'r
 
 def load_framework_config() -> Dict[str, Any]:
     """
-    Load and cache framework configuration from .ravl/config/ravl.toml or .ravl/config/ravl.yml
+    Load and cache framework configuration from .ravl/config/ravl.toml
 
     Returns:
         Dict containing framework configuration

@@ -71,11 +71,11 @@ def _show_wrapper_hint():
 #            file=sys.stderr
 #        )
 #        print(
-#            "   Try: ./ravl --list    (list all loops)",
+#            "   Try: ravl --list    (list all loops)",
 #            file=sys.stderr
 #        )
 #        print(
-#            "        ./ravl --help    (show all options)",
+#            "        ravl --help    (show all options)",
 #            file=sys.stderr
 #        )
 #        print(
@@ -256,7 +256,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
                     loop_dir = target_path
                     print(f"\n✅ Example cloned successfully\n", file=sys.stderr)
                 else:
-                    print(f"\n❌ Clone declined. Use './ravl --clone {loop_name} <name>' to clone manually.\n", file=sys.stderr)
+                    print(f"\n❌ Clone declined. Use 'ravl --clone {loop_name} <name>' to clone manually.\n", file=sys.stderr)
                     sys.exit(0)
 
         # Load configuration

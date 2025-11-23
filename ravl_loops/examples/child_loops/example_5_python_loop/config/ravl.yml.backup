@@ -1,6 +1,0 @@
-description: Simplest possible RAVL loop - demonstrates basic RAVL structure
-type: example
-loop_type: python
-
-# Example configuration - no special settings needed
-execution_timeout: 30
