@@ -40,7 +40,7 @@ sys.path.insert(0, str(_common_dir / 'config'))
 from ravl_runner import RAVLRunner
 from execution.markdown.markdown_ravl_executor import MarkdownRAVLExecutor
 from constants import DEFAULT_EXECUTION_TIMEOUT
-from file_utils import load_yaml_file
+from file_utils import load_toml_file
 from logging_utils import log_message
 
 # Add CLI directory to path for ConfigDisplay
@@ -69,15 +69,15 @@ class ConfigBasedRAVLRunner:
             self.loop_dir = config_path.parent
 
         # Load configuration
-        self.config = load_yaml_file(config_path) or {}
+        self.config = load_toml_file(config_path) or {}
 
-        # If we loaded ravl.yml directly, it has everything
-        # If we loaded config.yml, merge metadata from ravl.yml
-        if config_path.name == 'config.yml' and self.config and 'description' not in self.config:
-            ravl_yml = self.loop_dir / 'config' / 'ravl.yml'
-            ravl_config = load_yaml_file(ravl_yml) or {}
+        # If we loaded ravl.toml directly, it has everything
+        # If we loaded config.toml, merge metadata from ravl.toml
+        if config_path.name == 'config.toml' and self.config and 'description' not in self.config:
+            ravl_toml = self.loop_dir / 'config' / 'ravl.toml'
+            ravl_config = load_toml_file(ravl_toml) or {}
             if ravl_config:
-                # Merge metadata from ravl.yml (except name which comes from folder)
+                # Merge metadata from ravl.toml (except name which comes from folder)
                 self.config.setdefault('description', ravl_config.get('description'))
                 self.config.setdefault('emoji', ravl_config.get('emoji'))
 

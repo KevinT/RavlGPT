@@ -119,31 +119,31 @@ class RAVLUniversalRunner(RAVLCLIBase):
         if cli_path:
             return "CLI (--learning-path)"
         if config and 'learning_path' in config:
-            return "Loop config (config/ravl.yml)"
+            return "Loop config (config/ravl.toml)"
 
         # Check parent configs (walk full parent chain)
         all_parents = RAVLRunner._find_all_parent_loops(loop_dir)
         for parent_dir in all_parents:
-            parent_config_file = parent_dir / 'config' / 'ravl.yml'
+            parent_config_file = parent_dir / 'config' / 'ravl.toml'
             if parent_config_file.exists():
                 try:
-                    import yaml
+                    import toml
                     with open(parent_config_file, 'r') as f:
-                        parent_config = yaml.safe_load(f) or {}
+                        parent_config = toml.load(f) or {}
                         if 'learning_path' in parent_config:
-                            return f"Parent config ({parent_dir.name}/config/ravl.yml)"
+                            return f"Parent config ({parent_dir.name}/config/ravl.toml)"
                 except Exception:
                     pass
 
         # Check project config
-        project_config_file = self.project_root / 'ravl_loops' / 'config' / 'ravl.yml'
+        project_config_file = self.project_root / 'ravl_loops' / 'config' / 'ravl.toml'
         if project_config_file.exists():
             try:
-                import yaml
+                import toml
                 with open(project_config_file, 'r') as f:
-                    project_config = yaml.safe_load(f) or {}
+                    project_config = toml.load(f) or {}
                     if 'learning_path' in project_config:
-                        return "Project config (ravl_loops/config/ravl.yml)"
+                        return "Project config (ravl_loops/config/ravl.toml)"
             except Exception:
                 pass
 
@@ -164,17 +164,17 @@ class RAVLUniversalRunner(RAVLCLIBase):
         if cli_path:
             return "CLI (--venv-path)"
         if config and 'venv_path' in config:
-            return "Loop config (config/ravl.yml)"
+            return "Loop config (config/ravl.toml)"
 
         # Check project config
-        project_config_file = self.project_root / 'ravl_loops' / 'config' / 'ravl.yml'
+        project_config_file = self.project_root / 'ravl_loops' / 'config' / 'ravl.toml'
         if project_config_file.exists():
             try:
-                import yaml
+                import toml
                 with open(project_config_file, 'r') as f:
-                    project_config = yaml.safe_load(f) or {}
+                    project_config = toml.load(f) or {}
                     if 'venv_path' in project_config:
-                        return "Project config (ravl_loops/config/ravl.yml)"
+                        return "Project config (ravl_loops/config/ravl.toml)"
             except Exception:
                 pass
 
@@ -739,7 +739,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
                     # Required parameter without default
                     self.print_warning(
                         f"Could not resolve required parameter: {param_name}\n"
-                        f"  Add to ravl.yml under 'init_params' or implement auto-resolution"
+                        f"  Add to ravl.toml under 'init_params' or implement auto-resolution"
                     )
 
         # Add parameters from config
@@ -793,7 +793,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
                 # Required parameter without default
                 self.print_warning(
                     f"Could not resolve required parameter: {param_name}\n"
-                    f"  Add to ravl.yml under 'init_params' or implement auto-resolution"
+                    f"  Add to ravl.toml under 'init_params' or implement auto-resolution"
                 )
 
         # Add parameters from config
