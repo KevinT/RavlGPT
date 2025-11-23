@@ -1,0 +1,7 @@
+description = "Fast test loop using OpenAI GPT"
+emoji = "🟢"
+
+[llm_provider]
+provider = "openai"
+model = "gpt-5"
+max_tokens = 2048

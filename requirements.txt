@@ -2,7 +2,9 @@
 # Install with: pip install -r requirements.txt
 
 # Configuration and data handling
-pyyaml>=6.0
+pyyaml>=6.0  # For learning artifacts and complex data structures
+tomli>=2.0.0; python_version < '3.11'  # TOML reading (built-in tomllib for 3.11+)
+tomli-w>=1.0.0  # TOML writing
 
 # LLM Providers (install the ones you need)
 anthropic>=0.39.0

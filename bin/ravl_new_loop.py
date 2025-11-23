@@ -25,8 +25,8 @@ Required Options:
                             Can be inline string or multiline
 
 Optional Options:
-    --config TEXT           Configuration for config/ravl.yml
-                            Format: YAML or JSON (auto-detected)
+    --config TEXT           Configuration for config/ravl.toml
+                            Format: YAML or JSON (auto-detected, converted to TOML)
                             Example YAML: 'description: My loop\\nemoji: 🔥'
                             Example JSON: '{"description": "My loop", "emoji": "🔥"}'
     --target PATH           Target directory (default: project_root/ravl_loops/)
@@ -88,6 +88,7 @@ sys.path.insert(0, str(_current / 'common' / 'cli'))
 
 from ravl_cli_base import RAVLCLIBase
 from loop_discovery import LoopDiscovery
+from utils.file_utils import save_toml_file
 
 
 class RAVLNewLoopCommand(RAVLCLIBase):
@@ -198,10 +199,9 @@ class RAVLNewLoopCommand(RAVLCLIBase):
             target_path.mkdir(parents=True, exist_ok=False)
             (target_path / 'config').mkdir(exist_ok=True)
 
-            # Write config/ravl.yml
-            config_file = target_path / 'config' / 'ravl.yml'
-            with open(config_file, 'w') as f:
-                yaml.dump(config, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            # Write config/ravl.toml
+            config_file = target_path / 'config' / 'ravl.toml'
+            save_toml_file(config_file, config, create_dirs=False)
 
             # Write ravl_loop.md
             loop_file = target_path / 'ravl_loop.md'
@@ -213,7 +213,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
             print(f"  1. Review the loop content:", file=sys.stderr)
             print(f"     {target_display}/ravl_loop.md", file=sys.stderr)
             print(f"  2. Configure if needed:", file=sys.stderr)
-            print(f"     {target_display}/config/ravl.yml", file=sys.stderr)
+            print(f"     {target_display}/config/ravl.toml", file=sys.stderr)
             print(f"  3. Run it:", file=sys.stderr)
             # Use dot notation path for display
             run_path = '.'.join(path_segments)

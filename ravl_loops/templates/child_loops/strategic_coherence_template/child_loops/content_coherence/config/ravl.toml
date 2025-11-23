@@ -1,0 +1,8 @@
+description = "Checks internal consistency and coherence of document content"
+emoji = "➿"
+
+[delegate_to]
+loop = "content_coherence_ravl"
+config_files = [
+    "config/content_coherence_config.yml",
+]

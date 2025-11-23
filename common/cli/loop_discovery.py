@@ -18,6 +18,7 @@ import os
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from ravl_runner import RAVLRunner
 from cli.ravl_cli_base import RAVLCLIBase
+from config.config_loader import load_config_file
 
 
 class LoopDiscovery:
@@ -177,7 +178,9 @@ class LoopDiscovery:
 
     def load_config(self, loop_dir: Path) -> Dict[str, Any]:
         """
-        Load ravl.yml configuration with smart defaults
+        Load ravl.toml or ravl.yml configuration with smart defaults
+
+        Tries TOML first (preferred), then YAML (backwards compatibility).
 
         Args:
             loop_dir: Path to loop directory
@@ -185,27 +188,35 @@ class LoopDiscovery:
         Returns:
             Configuration dictionary with defaults applied
         """
-        # Try config/ravl.yml first (new convention), then ravl.yml (backward compat)
-        config_file = loop_dir / 'config' / 'ravl.yml'
-        if not config_file.exists():
-            config_file = loop_dir / 'ravl.yml'
+        # Try config/ directory first (new convention)
+        config_dir = loop_dir / 'config'
+        if config_dir.exists():
+            config = load_config_file(config_dir, 'ravl')
+            if config:
+                # Loaded successfully
+                return self._apply_config_defaults(config, loop_dir)
 
-        # Load from file if exists
-        if config_file.exists():
-            try:
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    config = yaml.safe_load(f) or {}
-            except yaml.YAMLError as e:
-                error_msg = f"YAML syntax error in loop config: {config_file}\n  Loop: {loop_dir.name}\n"
-                if hasattr(e, 'problem_mark'):
-                    error_msg += f"  Error at line {e.problem_mark.line + 1}, column {e.problem_mark.column + 1}\n"
-                    if hasattr(e, 'problem'):
-                        error_msg += f"  Problem: {e.problem}\n"
-                error_msg += "  Check the file for YAML syntax errors (indentation, colons, etc.)"
-                raise ValueError(error_msg)
-            except Exception as e:
-                raise ValueError(f"Cannot read config file {config_file}: {str(e)}")
-        else:
+        # Fall back to root directory (old convention: loop_dir/ravl.yml)
+        config = load_config_file(loop_dir, 'ravl')
+        if config:
+            return self._apply_config_defaults(config, loop_dir)
+
+        # No config found, return defaults
+        return self._apply_config_defaults({}, loop_dir)
+
+    def _apply_config_defaults(self, config: Dict[str, Any], loop_dir: Path) -> Dict[str, Any]:
+        """
+        Apply default values to config.
+
+        Args:
+            config: Loaded config dict
+            loop_dir: Path to loop directory
+
+        Returns:
+            Config with defaults applied
+        """
+        # Validate basic structure
+        if not isinstance(config, dict):
             config = {}
 
         # Always use folder name as loop name (ignore any name field in config)

@@ -1,0 +1,16 @@
+description = "Parent orchestrator that coordinates 3 news sources and generates meta-insights"
+type = "example"
+loop_type = "markdown"
+execution_timeout = 180
+
+[allowed_dependencies.requests]
+min_version = "2.31.0"
+max_version = "3.0.0"
+
+[allowed_dependencies.feedparser]
+min_version = "6.0.0"
+max_version = "7.0.0"
+
+[allowed_dependencies.anthropic]
+min_version = "0.25.0"
+max_version = "1.0.0"

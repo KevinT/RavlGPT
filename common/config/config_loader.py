@@ -2,23 +2,77 @@
 """
 Configuration Loader for RAVL Framework
 
-Loads and caches framework configuration from .ravl/config/ravl.yml
+Loads and caches framework configuration from .ravl/config/ravl.toml (preferred)
+or .ravl/config/ravl.yml (backwards compatibility)
 """
 
-import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
 
 from utils.constants import DEFAULT_MAX_TOKENS
+from utils.file_utils import load_toml_file, load_yaml_file, save_toml_file, save_yaml_file
 
 
 # Cache to avoid reloading config on every call
 _config_cache: Optional[Dict[str, Any]] = None
 
 
+def load_config_file(config_dir: Path, base_name: str = 'ravl') -> Dict[str, Any]:
+    """
+    Load configuration from TOML or YAML file (auto-detect).
+
+    Tries TOML first (preferred), falls back to YAML (backwards compatibility).
+
+    Args:
+        config_dir: Directory containing config file
+        base_name: Base name of config file (default: 'ravl')
+
+    Returns:
+        Parsed config dict, or empty dict if no config found
+    """
+    # Try TOML first (preferred format)
+    toml_path = config_dir / f'{base_name}.toml'
+    if toml_path.exists():
+        try:
+            config = load_toml_file(toml_path)
+            return config or {}
+        except Exception as e:
+            print(f"Warning: Failed to load TOML config from {toml_path}: {e}")
+
+    # Fall back to YAML (backwards compatibility)
+    yaml_path = config_dir / f'{base_name}.yml'
+    if yaml_path.exists():
+        try:
+            config = load_yaml_file(yaml_path)
+            return config or {}
+        except Exception as e:
+            print(f"Warning: Failed to load YAML config from {yaml_path}: {e}")
+
+    # No config found
+    return {}
+
+
+def save_config_file(config_dir: Path, data: Dict[str, Any], base_name: str = 'ravl', use_toml: bool = True):
+    """
+    Save configuration to TOML or YAML file.
+
+    Args:
+        config_dir: Directory to save config file
+        data: Configuration data to save
+        base_name: Base name of config file (default: 'ravl')
+        use_toml: Whether to save as TOML (True) or YAML (False)
+    """
+    if use_toml:
+        file_path = config_dir / f'{base_name}.toml'
+        save_toml_file(file_path, data, create_dirs=True)
+    else:
+        file_path = config_dir / f'{base_name}.yml'
+        save_yaml_file(file_path, data, create_dirs=True)
+
+
 def load_framework_config() -> Dict[str, Any]:
     """
-    Load and cache framework configuration from .ravl/config/ravl.yml
+    Load and cache framework configuration from .ravl/config/ravl.toml or .ravl/config/ravl.yml
 
     Returns:
         Dict containing framework configuration
@@ -26,17 +80,8 @@ def load_framework_config() -> Dict[str, Any]:
     global _config_cache
 
     if _config_cache is None:
-        config_path = Path(__file__).parent.parent.parent / 'config' / 'ravl.yml'
-        if config_path.exists():
-            try:
-                with open(config_path, 'r', encoding='utf-8') as f:
-                    _config_cache = yaml.safe_load(f) or {}
-            except Exception as e:
-                # If config load fails, use empty dict
-                print(f"Warning: Failed to load config from {config_path}: {e}")
-                _config_cache = {}
-        else:
-            _config_cache = {}
+        config_dir = Path(__file__).parent.parent.parent / 'config'
+        _config_cache = load_config_file(config_dir, 'ravl')
 
     return _config_cache
 

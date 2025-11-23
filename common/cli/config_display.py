@@ -133,7 +133,7 @@ class ConfigDisplay:
         # Loop Metadata
         _log(f"\n  Loop Metadata:", indent=0)
         _log(f"    Name:                {loop_config.get('name', loop_dir.name)}", indent=0)
-        _log(f"    Description:         {loop_config.get('description', 'not set in ravl.yml')}", indent=0)
+        _log(f"    Description:         {loop_config.get('description', 'not set in config')}", indent=0)
         _log(f"    Type:                {loop_type}", indent=0)
 
         if not is_markdown:
@@ -222,24 +222,37 @@ class ConfigDisplay:
         _log(f"{'─'*80}", indent=0)
         _log("", indent=0)
 
-        config_files = [
-            (project_root / '.ravl' / 'config' / 'ravl.yml', 'Framework defaults'),
-            (project_root / 'ravl_loops' / 'config' / 'ravl.yml', 'Project config'),
-            (loop_dir / 'config' / 'ravl.yml', 'Loop config'),
+        # Helper to check for TOML or YAML config
+        def find_config(config_dir, description):
+            toml_path = config_dir / 'ravl.toml'
+            yml_path = config_dir / 'ravl.yml'
+            if toml_path.exists():
+                return (toml_path, description, True)
+            elif yml_path.exists():
+                return (yml_path, description, True)
+            else:
+                # Return TOML path (preferred) as "not found"
+                return (toml_path, description, False)
+
+        config_locations = [
+            (project_root / '.ravl' / 'config', 'Framework defaults'),
+            (project_root / 'ravl_loops' / 'config', 'Project config'),
         ]
 
         # Check for parent config
         parent_dir = loop_dir.parent
         if parent_dir.name != 'ravl_loops':
-            parent_config_file = parent_dir / 'config' / 'ravl.yml'
-            config_files.insert(2, (parent_config_file, 'Parent loop config'))
+            config_locations.append((parent_dir / 'config', 'Parent loop config'))
 
-        for config_path, description in config_files:
-            if config_path.exists():
-                _log(f"  [loaded] {description}", indent=0)
+        config_locations.append((loop_dir / 'config', 'Loop config'))
+
+        for config_dir, description in config_locations:
+            config_path, desc, exists = find_config(config_dir, description)
+            if exists:
+                _log(f"  [loaded] {desc}", indent=0)
                 _log(f"           {config_path}", indent=0)
             else:
-                _log(f"  [not found] {description}", indent=0)
+                _log(f"  [not found] {desc}", indent=0)
 
         _log("", indent=0)
 

@@ -1,0 +1,6 @@
+description = "Fast test loop using Anthropic Claude"
+emoji = "🟣"
+
+[llm_provider]
+provider = "anthropic"
+model = "claude-sonnet-4-5-20250929"

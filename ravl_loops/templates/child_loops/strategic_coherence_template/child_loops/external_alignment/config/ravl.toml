@@ -1,0 +1,4 @@
+description = "Detects drift between documents and external sources"
+emoji = "🔗"
+
+[template_variables]

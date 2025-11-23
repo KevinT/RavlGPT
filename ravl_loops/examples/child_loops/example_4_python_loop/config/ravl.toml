@@ -1,0 +1,4 @@
+description = "Simplest possible RAVL loop - demonstrates basic RAVL structure"
+type = "example"
+loop_type = "python"
+execution_timeout = 30

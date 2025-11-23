@@ -1,0 +1,25 @@
+name = "content_coherence_ravl"
+description = "Analyzes internal consistency and coherence within document collections"
+emoji = "➿"
+type = "framework"
+
+[default_config]
+scan_paths = []
+exclude_paths = [
+    "_site",
+    ".git",
+    "node_modules",
+    "__pycache__",
+]
+
+[default_config.strategy_selection]
+max_files_for_broad_survey = 100
+token_budget = 200000
+
+[default_config.gap_detection]
+min_confidence = 0.3
+max_gaps_per_run = 50
+
+[default_config.learning]
+weight_adjustment_rate = 0.2
+false_positive_threshold = 3

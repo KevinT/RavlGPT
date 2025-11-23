@@ -1,0 +1,5 @@
+name = "google_docs_fetching"
+description = "Fetch Google Docs/Slides/Sheets with lineage tracking and revision history"
+emoji = "📄"
+type = "framework"
+class = "GoogleDocsFetchingLoop"
