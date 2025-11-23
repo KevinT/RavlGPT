@@ -238,12 +238,13 @@ class RAVLUniversalRunner(RAVLCLIBase):
                 response = input(f"Clone to ravl_loops/{target_name}? (y/n): ").strip().lower()
 
                 if response in ['y', 'yes']:
-                    # Clone the example (ravl-clone will auto-strip the prefix)
+                    # Clone the example (ravl_clone.py will auto-strip the prefix)
                     import subprocess
                     clone_cmd = [
-                        str(self.find_framework_root() / 'bin' / 'ravl-clone'),
+                        sys.executable,
+                        str(self.find_framework_root() / 'bin' / 'ravl_clone.py'),
                         loop_name
-                        # No target name - let ravl-clone auto-strip the prefix
+                        # No target name - let ravl_clone.py auto-strip the prefix
                     ]
                     result = subprocess.run(clone_cmd, capture_output=False)
 

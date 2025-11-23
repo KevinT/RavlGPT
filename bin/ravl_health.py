@@ -76,7 +76,7 @@ if run_execution:
     print("EXECUTION HEALTH CHECK (Solution Space)", file=sys.stderr)
     print("=" * 60, file=sys.stderr)
 
-    cmd = [str(_framework_dir / "bin" / "ravl-execution-health"), loop_name]
+    cmd = [sys.executable, str(_framework_dir / "bin" / "ravl_execution_health.py"), loop_name]
     result = subprocess.run(cmd, cwd=str(project_root))
 
     if result.returncode != 0:
@@ -91,7 +91,7 @@ if run_loop:
     print("LOOP HEALTH CHECK (Problem Space)", file=sys.stderr)
     print("=" * 60, file=sys.stderr)
 
-    cmd = [str(_framework_dir / "bin" / "ravl-loop-health"), loop_name]
+    cmd = [sys.executable, str(_framework_dir / "bin" / "ravl_loop_health.py"), loop_name]
     result = subprocess.run(cmd, cwd=str(project_root))
 
     if result.returncode != 0:
