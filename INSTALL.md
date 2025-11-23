@@ -78,13 +78,13 @@ No setup needed - runs locally. (UNTESTED!)
 
 ```bash
 # Run the rugby tips example
-./ravl example_2_intelligence_loop
+./ravl example_3_analysis_loop
 
 # List all available loops
 ./ravl --list
 
 # Clone and customize an example
-./ravl --clone example_2_intelligence_loop my_tips
+./ravl --clone example_3_analysis_loop my_tips
 ./ravl my_tips
 ```
 

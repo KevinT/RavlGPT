@@ -27,7 +27,7 @@ emoji: ➿
 Default type. Requires `ravl_loop.py` implementation.
 
 ```yaml
-name: github_trending_tracker
+name: example_github_trending_tracker
 description: Track GitHub trending repositories
 emoji: ⭐
 ```
@@ -37,7 +37,7 @@ emoji: ⭐
 For LLM-interpreted markdown-based loops.
 
 ```yaml
-name: tech_news_curator
+name: example_tech_news_curator
 description: Curate and score tech news stories
 emoji: 📰
 type: markdown

@@ -4,7 +4,7 @@ An advanced RAVL example demonstrating parent/child delegation. The parent orche
 
 ## What It Does
 
-**Parent Loop** (`tech_news_dashboard`):
+**Parent Loop** (`example_tech_news_dashboard`):
 - Coordinates 3 child loops to fetch news from different sources
 - Aggregates results from all children
 - Generates meta-insights across sources
@@ -63,7 +63,7 @@ No other setup - all RSS feeds are public!
 
 ```bash
 # From framework root
-./ravl examples/tech_news_dashboard
+./ravl examples/example_tech_news_dashboard
 ```
 
 This executes:
@@ -79,13 +79,13 @@ This executes:
 
 ```bash
 # Run just Hacker News child
-./ravl examples/tech_news_dashboard/hacker_news
+./ravl examples/example_tech_news_dashboard/hacker_news
 
 # Run just Dev.to child
-./ravl examples/tech_news_dashboard/devto_news
+./ravl examples/example_tech_news_dashboard/devto_news
 
 # Run just Reddit child
-./ravl examples/tech_news_dashboard/reddit_programming
+./ravl examples/example_tech_news_dashboard/reddit_programming
 ```
 
 ## Expected Output
@@ -242,7 +242,7 @@ Fetching https://www.reddit.com/r/programming/.rss...
 ## File Structure
 
 ```
-tech_news_dashboard/
+example_tech_news_dashboard/
 ├── ravl_loop.md                          # Parent orchestrator spec
 ├── config/
 │   └── ravl.yml                         # Parent configuration
@@ -416,7 +416,7 @@ Generate charts from parent output:
 
 ## Comparison with Simpler Examples
 
-| Feature | hello_ravl | tech_news_curator | github_trending_tracker | tech_news_dashboard |
+| Feature | hello_ravl | example_tech_news_curator | example_github_trending_tracker | example_tech_news_dashboard |
 |---------|-----------|------------------|------------------------|---------------------|
 | Loops | 1 | 1 | 1 | 4 (1 parent + 3 children) |
 | Delegation | No | No | No | Yes |

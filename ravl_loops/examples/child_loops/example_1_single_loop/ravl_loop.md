@@ -1,0 +1,1 @@
+List all the countries that have flag emojis, with their flags, in csv format and save them to a file on my desktop.

@@ -29,7 +29,7 @@ Each run builds on previous learning. The loop becomes more sophisticated.
 
 ```bash
 # From framework root (will clone to project/ravl_loops/simple_learning_loop on first run)
-./ravl example_3_recursive_learning_loop
+./ravl example_4_learning_loop
 
 # Watch multiple runs to see learning
 ./ravl simple_learning_loop

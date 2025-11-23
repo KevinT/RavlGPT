@@ -36,7 +36,7 @@ export OPENAI_API_KEY="sk-svc-..."  # Get key from platform.openai.com
 
 **Run your first loop:**
 ```bash
-ravl example_2_intelligence_loop
+ravl example_3_analysis_loop
 ```
 
 ### Option 2: Traditional Install
@@ -55,7 +55,7 @@ This automatically:
 
 **Then run your first loop:**
 ```bash
-./ravl example_2_intelligence_loop
+./ravl example_3_analysis_loop
 ```
 
 📖 **[Full Installation Guide](INSTALL.md)** - Detailed instructions, troubleshooting, and manual installation.
@@ -133,8 +133,8 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 ## Quick Start
 
 **New to RAVL?** Start with the examples:
-- [Rugby Tips](examples/example_2_intelligence_loop/) - Simple Markdown RAVL loop
-- [Simple Learning Loop](examples/example_3_recursive_learning_loop/) - Demonstrates basic learning patterns
+- [Rugby Tips](examples/example_3_analysis_loop/) - Simple Markdown RAVL loop
+- [Simple Learning Loop](examples/example_4_learning_loop/) - Demonstrates basic learning patterns
 - [Examples Overview](examples/README.md) - Detailed guide to all examples
 
 **Using RAVL CLI:**
@@ -143,7 +143,7 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 ./ravl --list
 
 # Run a loop
-./ravl example_2_intelligence_loop --mode fast
+./ravl example_3_analysis_loop --mode fast
 
 # Clone a new loop from template
 ./ravl --clone empty_loop_template ravl_loops/my_analytics

@@ -6,18 +6,18 @@ Progressive examples demonstrating the RAVL framework from simple to advanced.
 
 These examples are designed to be studied in order, building from basic concepts to advanced patterns:
 
-1. **example_2_intelligence_loop** - Simplest markdown loop (5 min)
-2. **example_3_recursive_learning_loop** - Understanding learning (15 min)
-3. **tech_news_curator** - Data ingestion patterns (15 min)
-4. **github_trending_tracker** - API integration in Python (20 min)
-5. **communication_learner** - Multi-dimensional optimization (25 min)
-6. **tech_news_dashboard** - Advanced orchestration (30 min)
+1. **example_3_analysis_loop** - Simplest markdown loop (5 min)
+2. **example_4_learning_loop** - Understanding learning (15 min)
+3. **example_tech_news_curator** - Data ingestion patterns (15 min)
+4. **example_github_trending_tracker** - API integration in Python (20 min)
+5. **example_communication_learner** - Multi-dimensional optimization (25 min)
+6. **example_tech_news_dashboard** - Advanced orchestration (30 min)
 
 ---
 
 ## 1. Rugby Tips - Your First Loop
 
-**Path**: `example_2_intelligence_loop/`
+**Path**: `example_3_analysis_loop/`
 **Type**: Markdown
 **Level**: Beginner
 **Time**: 5 minutes
@@ -35,7 +35,7 @@ Tracks Springbok rugby game results, analyzes player performance, and generates 
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl example_2_intelligence_loop
+./ravl example_3_analysis_loop
 ```
 
 ### Key Concepts
@@ -48,7 +48,7 @@ export ANTHROPIC_API_KEY="your-key"
 
 ## 2. Simple Learning Loop - Environment Explorer
 
-**Path**: `example_3_recursive_learning_loop/`
+**Path**: `example_4_learning_loop/`
 **Type**: Markdown
 **Level**: Beginner
 **Time**: 15 minutes
@@ -66,9 +66,9 @@ Starts with zero knowledge and explores its environment. Each run decides what t
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl example_3_recursive_learning_loop
-./ravl example_3_recursive_learning_loop  # Run multiple times to see learning!
-./ravl example_3_recursive_learning_loop
+./ravl example_4_learning_loop
+./ravl example_4_learning_loop  # Run multiple times to see learning!
+./ravl example_4_learning_loop
 ```
 
 ### Key Concepts
@@ -83,7 +83,7 @@ export ANTHROPIC_API_KEY="your-key"
 
 ## 3. Tech News Curator - Data Ingestion
 
-**Path**: `tech_news_curator/`
+**Path**: `example_tech_news_curator/`
 **Type**: Markdown
 **Level**: Intermediate
 **Time**: 15 minutes
@@ -101,7 +101,7 @@ Fetches Hacker News RSS, uses LLM to score stories by technical depth, practical
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl tech_news_curator
+./ravl example_tech_news_curator
 ```
 
 ### Key Concepts
@@ -116,7 +116,7 @@ export ANTHROPIC_API_KEY="your-key"
 
 ## 4. GitHub Trending Tracker - API Integration
 
-**Path**: `github_trending_tracker/`
+**Path**: `example_github_trending_tracker/`
 **Type**: Python
 **Level**: Intermediate
 **Time**: 20 minutes
@@ -134,7 +134,7 @@ Tracks GitHub trending repositories (recently created, high stars). Analyzes tre
 
 ### Run It
 ```bash
-./ravl github_trending_tracker
+./ravl example_github_trending_tracker
 ```
 
 ### Key Concepts
@@ -149,7 +149,7 @@ Tracks GitHub trending repositories (recently created, high stars). Analyzes tre
 
 ## 5. Communication Learner - Multi-Dimensional Optimization
 
-**Path**: `communication_learner/`
+**Path**: `example_communication_learner/`
 **Type**: Markdown
 **Level**: Advanced
 **Time**: 25 minutes
@@ -168,8 +168,8 @@ Discovers effective communication strategies through experimentation. Optimizes 
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl communication_learner
-./ravl communication_learner  # Run 5-10 times to see evolution!
+./ravl example_communication_learner
+./ravl example_communication_learner  # Run 5-10 times to see evolution!
 ```
 
 ### Key Concepts
@@ -185,7 +185,7 @@ export ANTHROPIC_API_KEY="your-key"
 
 ## 6. Tech News Dashboard - Orchestration
 
-**Path**: `tech_news_dashboard/`
+**Path**: `example_tech_news_dashboard/`
 **Type**: Parent + 3 Children (Markdown)
 **Level**: Advanced
 **Time**: 30 minutes
@@ -210,7 +210,7 @@ Parent aggregates results, identifies cross-source topics, detects emerging tren
 ### Run It
 ```bash
 export ANTHROPIC_API_KEY="your-key"
-./ravl tech_news_dashboard
+./ravl example_tech_news_dashboard
 ```
 
 ### Key Concepts
@@ -230,10 +230,10 @@ export ANTHROPIC_API_KEY="your-key"
 |---------|------|-------|---------------|-------------------|------|
 | rugby_tips | Markdown | 1 | 0 | Basic | 5 min |
 | simple_learning_loop | Markdown | 1 | 0 | Strategic | 15 min |
-| tech_news_curator | Markdown | 1 | 1 (RSS) | Dual-space | 15 min |
-| github_trending_tracker | Python | 1 | 1 (GitHub) | EMA patterns | 20 min |
-| communication_learner | Markdown | 1 | 0 | Multi-dimensional | 25 min |
-| tech_news_dashboard | Markdown | 4 (1+3) | 3 (RSS feeds) | Hierarchical | 30 min |
+| example_tech_news_curator | Markdown | 1 | 1 (RSS) | Dual-space | 15 min |
+| example_github_trending_tracker | Python | 1 | 1 (GitHub) | EMA patterns | 20 min |
+| example_communication_learner | Markdown | 1 | 0 | Multi-dimensional | 25 min |
+| example_tech_news_dashboard | Markdown | 4 (1+3) | 3 (RSS feeds) | Hierarchical | 30 min |
 
 ---
 
@@ -246,7 +246,7 @@ export ANTHROPIC_API_KEY="your-key"
 - Building production systems
 - Want to use mixins for shared functionality
 
-**Example**: github_trending_tracker
+**Example**: example_github_trending_tracker
 
 ### Use Markdown When:
 - Primarily data ingestion or LLM analysis
@@ -255,7 +255,7 @@ export ANTHROPIC_API_KEY="your-key"
 - Self-healing is more important than control
 - Non-programmers building loops
 
-**Examples**: rugby_tips, simple_learning_loop, tech_news_curator, communication_learner, tech_news_dashboard
+**Examples**: rugby_tips, simple_learning_loop, example_tech_news_curator, example_communication_learner, example_tech_news_dashboard
 
 ---
 
@@ -329,22 +329,22 @@ else:
 
 ```bash
 # Simple markdown starter (requires ANTHROPIC_API_KEY)
-./ravl example_2_intelligence_loop
+./ravl example_3_analysis_loop
 
 # Learning evolution demo (requires ANTHROPIC_API_KEY, run multiple times!)
-./ravl example_3_recursive_learning_loop
+./ravl example_4_learning_loop
 
 # Markdown loop with RSS (requires ANTHROPIC_API_KEY)
-./ravl tech_news_curator
+./ravl example_tech_news_curator
 
 # API integration (Python)
-./ravl github_trending_tracker
+./ravl example_github_trending_tracker
 
 # Advanced learning (requires ANTHROPIC_API_KEY, run 5-10 times!)
-./ravl communication_learner
+./ravl example_communication_learner
 
 # Orchestration (requires ANTHROPIC_API_KEY)
-./ravl tech_news_dashboard
+./ravl example_tech_news_dashboard
 ```
 
 **Note**: Framework auto-strips `example_N_` prefix when running, so you can also use:
@@ -400,10 +400,10 @@ parent_loop/
 
 ```bash
 # Option 1: Clone an example (simplest)
-./ravl --clone example_2_intelligence_loop ravl_loops/my_markdown_loop
+./ravl --clone example_3_analysis_loop ravl_loops/my_markdown_loop
 
 # Option 2: Clone learning example
-./ravl --clone example_3_recursive_learning_loop ravl_loops/my_learner
+./ravl --clone example_4_learning_loop ravl_loops/my_learner
 
 # Option 3: Use framework templates
 ./ravl --clone empty_loop_template ravl_loops/my_loop
@@ -418,8 +418,8 @@ vim ravl_loops/my_loop/ravl_loop.md  # or .py
 ## Learning Resources
 
 - **Visual Learner?** Watch the real-time output as loops execute
-- **Code Learner?** Read `github_trending_tracker/ravl_loop.py` - Python implementation
-- **Markdown Learner?** Read `example_2_intelligence_loop/ravl_loop.md` - plain language specs
+- **Code Learner?** Read `example_github_trending_tracker/ravl_loop.py` - Python implementation
+- **Markdown Learner?** Read `example_3_analysis_loop/ravl_loop.md` - plain language specs
 - **Concept Learner?** Read example READMEs for detailed explanations
 - **Hands-On Learner?** Modify examples and see what breaks
 
@@ -432,7 +432,7 @@ vim ravl_loops/my_loop/ravl_loop.md  # or .py
 export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
-Required for: rugby_tips, simple_learning_loop, tech_news_curator, communication_learner, tech_news_dashboard
+Required for: rugby_tips, simple_learning_loop, example_tech_news_curator, example_communication_learner, example_tech_news_dashboard
 
 ### GitHub rate limit (403)
 GitHub allows 60 requests/hour without auth. Wait an hour or add token:
