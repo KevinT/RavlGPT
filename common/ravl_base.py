@@ -21,7 +21,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Callable
 
-from utils.file_utils import load_yaml_file, save_yaml_file, find_timestamped_files
+from utils.file_utils import load_toml_file, save_yaml_file, find_timestamped_files
 from utils.constants import VERSION_INCREMENT, MODEL_PATTERN
 from utils.logging_utils import log_execution
 from core.learning.learning_access_helper import LearningAccessHelper
@@ -49,7 +49,7 @@ class BaseRAVLLoop:
             model_path: Path to model.yml file (relative to learning_path)
             loop_name: Name of the loop (for logging)
             learning_path: Optional override for learning directory. If provided, model_path is resolved relative to this path
-            loop_dir: Optional path to loop directory (where config/ravl.yml lives). Required for cross-loop learning access
+            loop_dir: Optional path to loop directory (where config/ravl.toml lives). Required for cross-loop learning access
         """
         # If learning_path is provided, resolve model_path relative to it
         if learning_path is not None:
@@ -83,10 +83,10 @@ class BaseRAVLLoop:
             # Load the most recent timestamped model
             latest_model = model_files[0]
             log_execution(f"{self.loop_name}: Loading model from {latest_model.name}", status='info')
-            return load_yaml_file(latest_model)
+            return load_toml_file(latest_model)
 
         # Fall back to non-timestamped model.yml if it exists
-        model_data = load_yaml_file(self.model_path)
+        model_data = load_toml_file(self.model_path)
         if model_data is not None:
             log_execution(f"{self.loop_name}: Loading model from model.yml", status='info')
             return model_data
@@ -140,7 +140,7 @@ class BaseRAVLLoop:
             model: Model to save
         """
         # Load existing model if it exists
-        existing_model = load_yaml_file(self.model_path)
+        existing_model = load_toml_file(self.model_path)
 
         # Check if model has actually changed (excluding version/timestamps)
         model_changed = existing_model is None or self._models_differ(existing_model, model)
@@ -195,7 +195,7 @@ class BaseRAVLLoop:
 
                 # Load the model to get metrics
                 with open(model_file, 'r') as f:
-                    historical_model = yaml.safe_load(f)
+                    historical_model = toml.load(f)
 
                 history_entry = {
                     'timestamp': timestamp_str,
@@ -263,7 +263,7 @@ class BaseRAVLLoop:
             status='warning'
         )
         sibling_model_path = self.model_path.parent.parent / sibling_name / 'learnings' / 'model.yml'
-        return load_yaml_file(sibling_model_path)
+        return load_toml_file(sibling_model_path)
 
     def read_parent_model(self) -> Optional[Dict[str, Any]]:
         """
@@ -293,7 +293,7 @@ class BaseRAVLLoop:
             status='warning'
         )
         parent_model_path = self.model_path.parent.parent.parent / 'learnings' / 'model.yml'
-        return load_yaml_file(parent_model_path)
+        return load_toml_file(parent_model_path)
 
     # ==================== EXECUTION METADATA ====================
 

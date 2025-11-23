@@ -363,7 +363,7 @@ All examples follow this structure:
 example_name/
 ├── ravl_loop.{py|md}              # Loop implementation
 ├── config/
-│   └── ravl.yml                   # Loop metadata
+│   └── ravl.toml                   # Loop metadata
 ├── learnings/
 │   ├── execution_learning/        # How to execute (markdown loops)
 │   └── loop_learning/             # What was learned (all loops)

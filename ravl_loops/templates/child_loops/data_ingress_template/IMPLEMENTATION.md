@@ -219,7 +219,7 @@ After integration, structure looks like:
 
 ravl_loops/
 ├── hibob_api_ingestion/                    ← NEW: Example loop
-│   ├── config/ravl.yml
+│   ├── config/ravl.toml
 │   ├── ravl_loop.md
 │   ├── README.md
 │   └── learnings/

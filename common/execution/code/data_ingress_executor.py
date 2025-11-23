@@ -68,7 +68,7 @@ class DataIngressExecutor:
         """
         self.loop_path = Path(loop_path)
         self.ravl_loop_file = self.loop_path / 'ravl_loop.md'
-        self.config_file = self.loop_path / 'config' / 'ravl.yml'
+        self.config_file = self.loop_path / 'config' / 'ravl.toml'
         self.learnings_dir = self.loop_path / 'learnings'
         self.learnings_dir.mkdir(parents=True, exist_ok=True)
 
@@ -79,7 +79,7 @@ class DataIngressExecutor:
         self.config = self._load_config()
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load ravl.yml configuration"""
+        """Load ravl.toml configuration"""
         if not self.config_file.exists():
             return {
                 'api_endpoint': 'https://api.example.com',
@@ -90,9 +90,9 @@ class DataIngressExecutor:
                 'strategy_cache_file': 'learnings/current_strategy.json'
             }
 
-        import yaml
+        import toml
         with open(self.config_file, 'r') as f:
-            return yaml.safe_load(f) or {}
+            return toml.load(f) or {}
 
     def _load_prompt(self, prompt_name: str, **variables) -> str:
         """Load a prompt template and substitute variables"""

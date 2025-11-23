@@ -207,7 +207,7 @@ last_run_timestamp: "2025-11-08T14:45:22Z"
 github_trending_tracker/
 ├── ravl_loop.py                    # Loop implementation (read this!)
 ├── config/
-│   └── ravl.yml                   # Configuration
+│   └── ravl.toml                   # Configuration
 ├── learnings/
 │   └── loop_learning/             # Trending patterns learned
 │       ├── model.yml             # Current model

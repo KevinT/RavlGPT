@@ -16,13 +16,13 @@ Self-healing data ingress loops use LLMs and Context7 API documentation to autom
 
 This creates:
 - `ravl_loops/my_api_integration/` directory
-- `config/ravl.yml` configuration template
+- `config/ravl.toml` configuration template
 - `ravl_loop.md` loop definition template
 - Documentation files
 
 ### 2. Customize Config
 
-Edit `ravl_loops/my_api_integration/config/ravl.yml`:
+Edit `ravl_loops/my_api_integration/config/ravl.toml`:
 ```yaml
 name: my_api_integration
 api_endpoint: https://api.example.com/v1
@@ -207,7 +207,7 @@ System auto-adapts when APIs change, without manual intervention.
 ```
 ravl_loops/my_api_integration/
 ├── config/
-│   └── ravl.yml                           # Configuration (API endpoint, auth, Context7 path)
+│   └── ravl.toml                           # Configuration (API endpoint, auth, Context7 path)
 ├── ravl_loop.md                           # Loop definition (only ACT + VERIFY required)
 └── learnings/
     ├── model.yml                          # Framework model (learning, strategy tracking)
@@ -222,7 +222,7 @@ ravl_loops/my_api_integration/
 
 ## Configuration Options
 
-### config/ravl.yml
+### config/ravl.toml
 
 ```yaml
 # Required

@@ -245,21 +245,21 @@ Fetching https://www.reddit.com/r/programming/.rss...
 example_tech_news_dashboard/
 ├── ravl_loop.md                          # Parent orchestrator spec
 ├── config/
-│   └── ravl.yml                         # Parent configuration
+│   └── ravl.toml                         # Parent configuration
 ├── ravl_loops/                          # Children
 │   ├── hacker_news/
 │   │   ├── ravl_loop.md                # Child 1 spec
-│   │   ├── config/ravl.yml             # Child 1 config
+│   │   ├── config/ravl.toml             # Child 1 config
 │   │   ├── learnings/loop_learning/    # Child 1 learnings
 │   │   └── output/news_*.json          # Child 1 output
 │   ├── devto_news/
 │   │   ├── ravl_loop.md                # Child 2 spec
-│   │   ├── config/ravl.yml             # Child 2 config
+│   │   ├── config/ravl.toml             # Child 2 config
 │   │   ├── learnings/loop_learning/    # Child 2 learnings
 │   │   └── output/news_*.json          # Child 2 output
 │   └── reddit_programming/
 │       ├── ravl_loop.md                # Child 3 spec
-│       ├── config/ravl.yml             # Child 3 config
+│       ├── config/ravl.toml             # Child 3 config
 │       ├── learnings/loop_learning/    # Child 3 learnings
 │       └── output/news_*.json          # Child 3 output
 ├── learnings/

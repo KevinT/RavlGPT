@@ -14,13 +14,13 @@ The base class handles:
 
 Delegating loops only need to define:
 - Loop name/description
-- Which documents to fetch (in config/ravl.yml)
+- Which documents to fetch (in config/ravl.toml)
 """
 
 import os
 import sys
 import json
-import yaml
+import toml
 import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,7 +48,7 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
     **For Subclasses**: Override in __init__ to set loop name:
         super().__init__(model_path, loop_name="Your Loop Name")
 
-    **Configuration** (in config/ravl.yml):
+    **Configuration** (in config/ravl.toml):
         google_documents:
           - url: "https://docs.google.com/document/d/..."
             target_path: "./data/output"
@@ -73,7 +73,7 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
 
         Args:
             model_path: Path to learnings/ directory (or legacy learnings/model.yml)
-            config_path: Path to config/ravl.yml
+            config_path: Path to config/ravl.toml
             loop_name: Display name for this loop
         """
         super().__init__(Path(model_path), loop_name=loop_name)
@@ -114,13 +114,13 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
         }
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from ravl.yml"""
+        """Load configuration from ravl.toml"""
         config_file = Path(self.config_path)
         if not config_file.exists():
             return {'google_documents': [], 'target_base_path': './data/source'}
 
         with open(config_file, 'r') as f:
-            return yaml.safe_load(f) or {}
+            return toml.load(f) or {}
 
     def _resolve_target_path(self, doc_config: Dict[str, Any]) -> Path:
         """

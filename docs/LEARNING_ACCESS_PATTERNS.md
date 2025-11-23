@@ -346,15 +346,15 @@ reflection = {
 Learning paths follow a 6-level priority hierarchy:
 
 1. **CLI flag**: `ravl my_loop --learning-path /custom/path` (highest priority)
-2. **Loop config**: `learning_path` in `config/ravl.yml`
+2. **Loop config**: `learning_path` in `config/ravl.toml`
 3. **Parent configs**: Walk parent chain for `learning_path`
-4. **Project config**: `ravl_loops/config/ravl.yml` learning_path
+4. **Project config**: `ravl_loops/config/ravl.toml` learning_path
 5. **Environment file**: `RAVL_DEFAULT_LEARNING_DIRECTORY` in `.env`
 6. **Default**: `loop_dir/learnings` (lowest priority)
 
 ### Example Configurations
 
-**In loop's config/ravl.yml**:
+**In loop's config/ravl.toml**:
 ```yaml
 learning_path: /data/ravl-learning/my_loop
 ```
@@ -390,7 +390,7 @@ Children automatically inherit parent's learning path structure:
 
 **Diagnosis**:
 1. Check if both loops are at same level in hierarchy
-2. Verify sibling has `config/ravl.yml`
+2. Verify sibling has `config/ravl.toml`
 3. Check if you're a top-level parent (isolated from other top-level parents)
 4. Enable debug logging: `helper = LearningAccessHelper(..., debug=True)`
 
@@ -522,7 +522,7 @@ helper = LearningAccessHelper(loop_dir, learnings_dir, debug=False)
 In your loop's README or config, document which loops it reads from:
 
 ```yaml
-# config/ravl.yml
+# config/ravl.toml
 dependencies:
   parent: org_context
   siblings:
@@ -541,7 +541,7 @@ dependencies:
 Control how many attempts are kept:
 
 ```yaml
-# config/ravl.yml
+# config/ravl.toml
 execution_learning:
   retention_policy:
     recent_attempts_limit: 5  # Keep last 5 attempts

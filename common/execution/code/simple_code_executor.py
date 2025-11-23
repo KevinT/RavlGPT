@@ -18,7 +18,7 @@ import tempfile
 import subprocess
 import time
 import hashlib
-import yaml
+import toml
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -285,14 +285,14 @@ class SimpleCodeExecutor:
             }
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load loop configuration from config/ravl.yml if it exists"""
-        config_file = self.loop_dir / 'config' / 'ravl.yml'
+        """Load loop configuration from config/ravl.toml if it exists"""
+        config_file = self.loop_dir / 'config' / 'ravl.toml'
         if not config_file.exists():
             return {}
 
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
-                return yaml.safe_load(f) or {}
+                return toml.load(f) or {}
         except Exception:
             return {}
 

@@ -19,7 +19,7 @@ import tempfile
 import subprocess
 import time
 import hashlib
-import yaml
+import toml
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List, Tuple
@@ -55,7 +55,7 @@ from act_orchestrator import ActOrchestrator
 from ravl_cli_base import RAVLCLIBase
 
 # Import utilities
-from file_utils import load_json_file, save_json_file, append_to_jsonl, load_yaml_file
+from file_utils import load_json_file, save_json_file, append_to_jsonl, load_toml_file
 from logging_utils import (
     log_message, log_verification_error, log_phase_banner,
     truncate_output, EMOJI_SUCCESS, EMOJI_ERROR, EMOJI_CHECK, EMOJI_CROSS, EMOJI_BULLET,
@@ -276,14 +276,14 @@ class MarkdownRAVLExecutor:
         return self.loop_dir.parent
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load loop configuration from config/ravl.yml if it exists"""
-        config_file = self.loop_dir / 'config' / 'ravl.yml'
+        """Load loop configuration from config/ravl.toml if it exists"""
+        config_file = self.loop_dir / 'config' / 'ravl.toml'
         if not config_file.exists():
             return {}
 
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
-                return yaml.safe_load(f) or {}
+                return toml.load(f) or {}
         except Exception:
             return {}
 
@@ -524,7 +524,7 @@ class MarkdownRAVLExecutor:
                             # Try to read as YAML
                             if file_path.suffix in ['.yml', '.yaml']:
                                 with open(file_path, 'r', encoding='utf-8') as f:
-                                    subdir_data['files'][file_path.name] = yaml.safe_load(f)
+                                    subdir_data['files'][file_path.name] = toml.load(f)
                             # Try to read as JSON
                             elif file_path.suffix == '.json':
                                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -548,7 +548,7 @@ class MarkdownRAVLExecutor:
                     # Try to read as YAML
                     if item_path.suffix in ['.yml', '.yaml']:
                         with open(item_path, 'r', encoding='utf-8') as f:
-                            learnings['files'][item_path.name] = yaml.safe_load(f)
+                            learnings['files'][item_path.name] = toml.load(f)
                     # Try to read as JSON
                     elif item_path.suffix == '.json':
                         with open(item_path, 'r', encoding='utf-8') as f:
@@ -937,16 +937,16 @@ To fix this:
 1. Add API key to .env file at project root:
    {required_key}=your-api-key-here
 
-2. Or change provider in config/ravl.yml:
+2. Or change provider in config/ravl.toml:
    llm_provider:
      provider: anthropic  # or openai, google, ollama
 
 3. Or use auto-detection (remove llm_provider config entirely)
 
 Configuration hierarchy checked:
-  - Loop config: {self.loop_dir}/config/ravl.yml
+  - Loop config: {self.loop_dir}/config/ravl.toml
   - Parent configs: (checked full parent chain)
-  - Project config: ravl_loops/config/ravl.yml
+  - Project config: ravl_loops/config/ravl.toml
   - .env file: RAVL_DEFAULT_LLM_PROVIDER
 """
             return (False, error)

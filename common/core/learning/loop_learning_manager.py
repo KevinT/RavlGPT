@@ -29,7 +29,7 @@ Organization:
 """
 
 import json
-import yaml
+import toml
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
@@ -355,7 +355,7 @@ class LoopLearningManager:
             return None
 
         with open(model_file, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
+            return toml.load(f)
 
     def save_model(self, model: Dict[str, Any]) -> None:
         """
@@ -394,7 +394,7 @@ class LoopLearningManager:
         models = []
         for model_file in model_files:
             with open(model_file, 'r', encoding='utf-8') as f:
-                model = yaml.safe_load(f)
+                model = toml.load(f)
                 models.append({
                     'timestamp': model_file.stem.replace('model-', ''),
                     'model': model

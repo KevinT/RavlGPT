@@ -139,7 +139,7 @@ These insights help the loop improve over time and make better decisions on futu
 
 Here's what this looks like for the HiBob HR API:
 
-### Config (config/ravl.yml)
+### Config (config/ravl.toml)
 ```yaml
 name: hibob_integration
 description: Fetch employee data from HiBob
@@ -238,7 +238,7 @@ Pass if 95%+ of records have complete required fields.
 ```
 ravl_loops/my_api_ingestion/
 ├── config/
-│   └── ravl.yml                      # Config (endpoint, auth, Context7 path)
+│   └── ravl.toml                      # Config (endpoint, auth, Context7 path)
 ├── ravl_loop.md                      # This file (ACT, VERIFY, optional REFLECT/LEARN)
 └── learnings/
     ├── model.yml                     # Framework-managed learning model

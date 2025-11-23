@@ -9,14 +9,14 @@ Ensures compatible Python versions are used based on framework configuration.
 import shutil
 import subprocess
 import sys
-import yaml
+import toml
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
 
 
 def _load_framework_config() -> Dict[str, Any]:
     """
-    Load framework configuration from .ravl/config/ravl.yml
+    Load framework configuration from .ravl/config/ravl.toml
 
     Returns:
         Dict with framework configuration, including min/max Python versions
@@ -24,7 +24,7 @@ def _load_framework_config() -> Dict[str, Any]:
     # Find .ravl directory (should be parent of this file's grandparent)
     script_dir = Path(__file__).parent  # .ravl/common/utils
     ravl_dir = script_dir.parent.parent  # .ravl
-    config_file = ravl_dir / 'config' / 'ravl.yml'
+    config_file = ravl_dir / 'config' / 'ravl.toml'
 
     if not config_file.exists():
         # Fallback to hardcoded defaults if config not found
@@ -38,7 +38,7 @@ def _load_framework_config() -> Dict[str, Any]:
 
     try:
         with open(config_file, 'r', encoding='utf-8') as f:
-            config = yaml.safe_load(f) or {}
+            config = toml.load(f) or {}
             return config
     except Exception:
         # Fallback to defaults on error
@@ -132,7 +132,7 @@ def check_python_compatibility(python_path: str) -> Tuple[bool, str]:
     """
     Check if a Python version is compatible with RAVL's dependencies.
 
-    Reads min/max Python versions from framework config (.ravl/config/ravl.yml).
+    Reads min/max Python versions from framework config (.ravl/config/ravl.toml).
     This ensures configuration is the single source of truth for version requirements.
 
     Args:

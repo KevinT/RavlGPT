@@ -6,7 +6,7 @@ Utilities for finding, loading, and importing RAVL loops.
 """
 
 import sys
-import yaml
+import toml
 import inspect
 import importlib.util
 from pathlib import Path
@@ -178,7 +178,7 @@ class LoopDiscovery:
 
     def load_config(self, loop_dir: Path) -> Dict[str, Any]:
         """
-        Load ravl.toml or ravl.yml configuration with smart defaults
+        Load ravl.toml or ravl.toml configuration with smart defaults
 
         Tries TOML first (preferred), then YAML (backwards compatibility).
 
@@ -196,7 +196,7 @@ class LoopDiscovery:
                 # Loaded successfully
                 return self._apply_config_defaults(config, loop_dir)
 
-        # Fall back to root directory (old convention: loop_dir/ravl.yml)
+        # Fall back to root directory (old convention: loop_dir/ravl.toml)
         config = load_config_file(loop_dir, 'ravl')
         if config:
             return self._apply_config_defaults(config, loop_dir)
@@ -276,7 +276,7 @@ class LoopDiscovery:
             chain_str = ' → '.join([Path(p).name for p in visited] + [loop_dir.name])
             raise ValueError(
                 f"Circular delegation detected:\n  {chain_str}\n\n"
-                f"Fix: Remove circular reference in config/ravl.yml"
+                f"Fix: Remove circular reference in config/ravl.toml"
             )
 
         if len(visited) >= 3:
@@ -423,13 +423,13 @@ class LoopDiscovery:
             if not config_file.exists():
                 from logging_utils import log_message
                 log_message(f"Config file not found: {config_file}", status='error')
-                log_message(f"Specified in: {wrapper_dir.name}/config/ravl.yml", status='error')
+                log_message(f"Specified in: {wrapper_dir.name}/config/ravl.toml", status='error')
                 continue
 
             # Load and merge config file
             try:
                 with open(config_file, 'r', encoding='utf-8') as f:
-                    external_config = yaml.safe_load(f) or {}
+                    external_config = toml.load(f) or {}
             except yaml.YAMLError as e:
                 from logging_utils import log_message
                 log_message(f"YAML syntax error in config file: {config_file}", status='error')
@@ -441,7 +441,7 @@ class LoopDiscovery:
                 log_message(f"Fix: Check YAML syntax in the config file", status='error')
                 raise ValueError(
                     f"Invalid YAML syntax in config file: {config_file}\n"
-                    f"  Specified in delegation from: {wrapper_dir.name}/config/ravl.yml\n"
+                    f"  Specified in delegation from: {wrapper_dir.name}/config/ravl.toml\n"
                     f"  Check the file for YAML syntax errors (indentation, colons, etc.)"
                 )
             except Exception as e:
@@ -843,17 +843,17 @@ class LoopDiscovery:
     def _get_markdown_parameters(self, loop_dir: Path, config: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Extract parameters from Markdown loop config"""
         # Try multiple locations:
-        # 1. template_variables might be in ravl.yml (new: consolidated)
-        # 2. template_variables might be in config/config.yml (old: separate)
+        # 1. template_variables might be in ravl.toml (new: consolidated)
+        # 2. template_variables might be in config/config.toml (old: separate)
         template_vars = config.get('template_variables', {})
 
-        # If not in config (ravl.yml), check config.yml
+        # If not in config (ravl.toml), check config.toml
         if not template_vars:
-            markdown_config_file = loop_dir / 'config' / 'config.yml'
+            markdown_config_file = loop_dir / 'config' / 'config.toml'
             if markdown_config_file.exists():
                 try:
                     with open(markdown_config_file, 'r', encoding='utf-8') as f:
-                        markdown_config = yaml.safe_load(f) or {}
+                        markdown_config = toml.load(f) or {}
                         template_vars = markdown_config.get('template_variables', {})
                 except yaml.YAMLError as e:
                     # YAML syntax error in markdown config - log but continue with empty config

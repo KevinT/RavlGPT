@@ -181,7 +181,7 @@ class GoogleSheetsAnalyzer:
             except ImportError:
                 raise Exception(
                     "openpyxl is required to parse Excel files. "
-                    "Add it to allowed_dependencies in config/ravl.yml"
+                    "Add it to allowed_dependencies in config/ravl.toml"
                 )
 
             # Download Excel file as binary

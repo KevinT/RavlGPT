@@ -1,10 +1,10 @@
 # RAVL Loop Configuration Format
 
-This document describes the `config/ravl.yml` format for RAVL loops.
+This document describes the `config/ravl.toml` format for RAVL loops.
 
 ## Basic Configuration
 
-Every RAVL loop requires a `config/ravl.yml` file with at minimum:
+Every RAVL loop requires a `config/ravl.toml` file with at minimum:
 
 ```yaml
 name: my_loop
@@ -74,8 +74,8 @@ Custom venv location for generated code dependencies.
 **Configuration Priority (highest to lowest):**
 
 1. **CLI flag**: `./ravl my_loop --venv-path /tmp/venv`
-2. **Loop config**: `venv_path: /custom/venv` in `config/ravl.yml`
-3. **Project config**: `ravl_loops/config/ravl.yml`
+2. **Loop config**: `venv_path: /custom/venv` in `config/ravl.toml`
+3. **Project config**: `ravl_loops/config/ravl.toml`
 4. **Environment variable**: `RAVL_DEFAULT_VENV_DIRECTORY=/data/venvs`
 5. **Default**: `.ravl/venv`
 
@@ -112,7 +112,7 @@ max_google_file_revisions_to_track: 100
 
 ### Runtime Options
 
-Runtime options are configured via CLI flags only (not in `ravl.yml`):
+Runtime options are configured via CLI flags only (not in `ravl.toml`):
 
 **Quiet Mode** (suppress framework output):
 ```bash
@@ -204,10 +204,10 @@ apis:
 
 RAVL uses hierarchical configuration with this priority (highest to lowest):
 
-1. **Loop config**: `ravl_loops/my_loop/config/ravl.yml`
-2. **Parent config**: `ravl_loops/parent_loop/config/ravl.yml`
-3. **Project config**: `ravl_loops/config/ravl.yml`
-4. **Framework config**: `.ravl/config/ravl.yml`
+1. **Loop config**: `ravl_loops/my_loop/config/ravl.toml`
+2. **Parent config**: `ravl_loops/parent_loop/config/ravl.toml`
+3. **Project config**: `ravl_loops/config/ravl.toml`
+4. **Framework config**: `.ravl/config/ravl.toml`
 
 Child loops automatically inherit parent configurations unless overridden.
 

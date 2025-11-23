@@ -34,24 +34,24 @@ class TestMarkdownParserIsolation:
         # Create structure:
         # ravl_loops/
         #   ├── simple_loop_tree/        # Top-level (should be isolated)
-        #   │   ├── config/ravl.yml
+        #   │   ├── config/ravl.toml
         #   │   ├── ravl_loop.md         # Simple: "Run your child loops"
         #   │   └── learnings/
         #   ├── experimental/             # Top-level (should be isolated)
-        #   │   ├── config/ravl.yml
+        #   │   ├── config/ravl.toml
         #   │   ├── ravl_loop.md         # Complex report generation
         #   │   └── learnings/
         #   └── parent_with_children/     # Top-level parent with children
-        #       ├── config/ravl.yml
+        #       ├── config/ravl.toml
         #       ├── ravl_loop.md
         #       ├── learnings/
         #       └── child_loops/
         #           ├── child_1/
-        #           │   ├── config/ravl.yml
+        #           │   ├── config/ravl.toml
         #           │   ├── ravl_loop.md
         #           │   └── learnings/
         #           └── child_2/
-        #               ├── config/ravl.yml
+        #               ├── config/ravl.toml
         #               ├── ravl_loop.md
         #               └── learnings/
 
@@ -61,14 +61,14 @@ class TestMarkdownParserIsolation:
         # Simple loop tree (top-level, minimal)
         simple = base / 'simple_loop_tree'
         (simple / 'config').mkdir(parents=True)
-        (simple / 'config' / 'ravl.yml').write_text('name: simple_loop_tree\n')
+        (simple / 'config' / 'ravl.toml').write_text('name = "simple_loop_tree"\n')
         (simple / 'ravl_loop.md').write_text('Run your child loops')
         (simple / 'learnings').mkdir()
 
         # Experimental (top-level, elaborate)
         experimental = base / 'experimental'
         (experimental / 'config').mkdir(parents=True)
-        (experimental / 'config' / 'ravl.yml').write_text('name: experimental\n')
+        (experimental / 'config' / 'ravl.toml').write_text('name = "experimental"\n')
         elaborate_md = """You are the parent of an eclectic collection of experimental loops.
 
 Summarise your child loop structure and their most recent learning in a report at `output/experimental-loops-state-YYYY-MMM-DD-HH-MM-SS.md`.
@@ -85,19 +85,19 @@ Include:
         # Parent with children
         parent = base / 'parent_with_children'
         (parent / 'config').mkdir(parents=True)
-        (parent / 'config' / 'ravl.yml').write_text('name: parent_with_children\n')
+        (parent / 'config' / 'ravl.toml').write_text('name = "parent_with_children"\n')
         (parent / 'ravl_loop.md').write_text('Coordinate my children')
         (parent / 'learnings').mkdir()
 
         child_1 = parent / 'child_loops' / 'child_1'
         (child_1 / 'config').mkdir(parents=True)
-        (child_1 / 'config' / 'ravl.yml').write_text('name: child_1\n')
+        (child_1 / 'config' / 'ravl.toml').write_text('name = "child_1"\n')
         (child_1 / 'ravl_loop.md').write_text('Do task 1')
         (child_1 / 'learnings').mkdir()
 
         child_2 = parent / 'child_loops' / 'child_2'
         (child_2 / 'config').mkdir(parents=True)
-        (child_2 / 'config' / 'ravl.yml').write_text('name: child_2\n')
+        (child_2 / 'config' / 'ravl.toml').write_text('name = "child_2"\n')
         (child_2 / 'ravl_loop.md').write_text('Do task 2')
         (child_2 / 'learnings').mkdir()
 

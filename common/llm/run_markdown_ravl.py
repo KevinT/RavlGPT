@@ -8,7 +8,7 @@
 """
 Generic Markdown RAVL Loop Runner
 
-Runs markdown-based RAVL loops using configuration from config.yml
+Runs markdown-based RAVL loops using configuration from config.toml
 instead of requiring custom run.py files for each loop.
 
 Usage:
@@ -16,7 +16,7 @@ Usage:
     python3 run_markdown_ravl.py --loop-dir path/to/loop --role "CTO"
 
     # Specify config explicitly
-    python3 run_markdown_ravl.py --config path/to/config.yml --role "CTO"
+    python3 run_markdown_ravl.py --config path/to/config.toml --role "CTO"
 """
 
 import sys
@@ -49,14 +49,14 @@ from config_display import ConfigDisplay
 
 
 class ConfigBasedRAVLRunner:
-    """Runs markdown RAVL loops based on config.yml"""
+    """Runs markdown RAVL loops based on config.toml"""
 
     def __init__(self, config_path: Path):
         """
         Initialize runner from config file
 
         Args:
-            config_path: Path to config.yml file
+            config_path: Path to config.toml file
         """
         self.config_path = config_path
 
@@ -646,12 +646,12 @@ def main():
     initial_parser.add_argument(
         '--config',
         type=Path,
-        help='Path to config.yml file'
+        help='Path to config.toml file'
     )
     initial_parser.add_argument(
         '--loop-dir',
         type=Path,
-        help='Path to loop directory (will look for config.yml inside)'
+        help='Path to loop directory (will look for config.toml inside)'
     )
     initial_parser.add_argument(
         '--learning-path',

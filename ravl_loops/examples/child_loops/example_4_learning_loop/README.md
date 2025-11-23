@@ -111,7 +111,7 @@ environment:
 
   structure:
     important_dirs: [".ravl", "ravl_loops", "learnings", "output"]
-    config_files: ["ravl.yml", ".env"]
+    config_files: ["ravl.toml", ".env"]
     total_files_discovered: 47
 
 exploration_history:
@@ -163,7 +163,7 @@ learning_loop/
 ├── ravl_loop.md              # Loop definition (what you read)
 ├── README.md                 # This file
 ├── config/
-│   └── ravl.yml             # Configuration
+│   └── ravl.toml             # Configuration
 ├── learnings/
 │   ├── execution_learning/   # Framework's learning (how to run)
 │   └── loop_learning/        # Domain learning (what was discovered)

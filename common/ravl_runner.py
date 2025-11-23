@@ -249,9 +249,9 @@ class RAVLRunner:
             parent_config_file = parent_dir / 'config' / 'ravl.toml'
             if parent_config_file.exists():
                 try:
-                    import yaml
+                    import toml
                     with open(parent_config_file, 'r') as f:
-                        parent_config = yaml.safe_load(f) or {}
+                        parent_config = toml.load(f) or {}
                         if 'learning_path' in parent_config:
                             config_path_found = True
                             parent_learning_path = Path(parent_config['learning_path']).expanduser()
@@ -279,14 +279,14 @@ class RAVLRunner:
                 except Exception:
                     pass  # If parent config is malformed, try next parent
 
-        # Priority 4: Project config (ravl_loops/config/ravl.yml)
+        # Priority 4: Project config (ravl_loops/config/ravl.toml)
         if project_root:
             project_config_file = project_root / 'ravl_loops' / 'config' / 'ravl.toml'
             if project_config_file.exists():
                 try:
-                    import yaml
+                    import toml
                     with open(project_config_file, 'r') as f:
-                        project_config = yaml.safe_load(f) or {}
+                        project_config = toml.load(f) or {}
                         if 'learning_path' in project_config:
                             config_path_found = True
                             project_learning_path = Path(project_config['learning_path']).expanduser()
@@ -417,14 +417,14 @@ class RAVLRunner:
         if loop_config and 'venv_path' in loop_config:
             return Path(loop_config['venv_path']).expanduser().resolve()
 
-        # Priority 3: Project-level config (ravl_loops/config/ravl.yml)
+        # Priority 3: Project-level config (ravl_loops/config/ravl.toml)
         if project_root:
             project_loops_config = project_root / 'ravl_loops' / 'config' / 'ravl.toml'
             if project_loops_config.exists():
                 try:
-                    import yaml
+                    import toml
                     with open(project_loops_config, 'r') as f:
-                        project_config = yaml.safe_load(f) or {}
+                        project_config = toml.load(f) or {}
                         if 'venv_path' in project_config:
                             return Path(project_config['venv_path']).expanduser().resolve()
                 except Exception:
@@ -453,9 +453,9 @@ class RAVLRunner:
     ) -> Dict[str, Any]:
         """
         Resolve the LLM provider configuration with precedence:
-        1. Loop config (llm_provider in ravl.yml)
-        2. Parent config (parent's config/ravl.yml llm_provider)
-        3. Project config (ravl_loops/config/ravl.yml llm_provider)
+        1. Loop config (llm_provider in ravl.toml)
+        2. Parent config (parent's config/ravl.toml llm_provider)
+        3. Project config (ravl_loops/config/ravl.toml llm_provider)
         4. Project .env file (RAVL_DEFAULT_LLM_PROVIDER)
         5. Auto-detect from API keys (anthropic > openai > google > ollama)
 
@@ -482,22 +482,22 @@ class RAVLRunner:
             parent_config_file = parent_dir / 'config' / 'ravl.toml'
             if parent_config_file.exists():
                 try:
-                    import yaml
+                    import toml
                     with open(parent_config_file, 'r') as f:
-                        parent_config = yaml.safe_load(f) or {}
+                        parent_config = toml.load(f) or {}
                         if 'llm_provider' in parent_config:
                             return RAVLRunner._normalize_llm_config(parent_config['llm_provider'])
                 except Exception:
                     pass  # If parent config is malformed, try next parent
 
-        # Priority 3: Project config (ravl_loops/config/ravl.yml)
+        # Priority 3: Project config (ravl_loops/config/ravl.toml)
         if project_root:
             project_config_file = project_root / 'ravl_loops' / 'config' / 'ravl.toml'
             if project_config_file.exists():
                 try:
-                    import yaml
+                    import toml
                     with open(project_config_file, 'r') as f:
-                        project_config = yaml.safe_load(f) or {}
+                        project_config = toml.load(f) or {}
                         if 'llm_provider' in project_config:
                             return RAVLRunner._normalize_llm_config(project_config['llm_provider'])
                 except Exception:

@@ -32,7 +32,7 @@ Learning artifacts are stored in your local clone at:
 ravl_loops/simple_loop_tree/learnings/
 ```
 
-You can change this for all three loops from the parent's `ravl.yml`, or set it differently in each of the child loop's config files.
+You can change this for all three loops from the parent's `ravl.toml`, or set it differently in each of the child loop's config files.
 
 ## Requirements
 

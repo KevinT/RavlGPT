@@ -27,15 +27,15 @@ This directory contains the **RAVL framework** - reusable infrastructure for bui
 
 **Configuring RAVL?**
 
-- **[Configuration Guide](CONFIGURATION.md)** - Comprehensive guide to all configuration methods (CLI flags, ravl.yml, .env)
-- **[CONFIG_FORMAT.md](llm/CONFIG_FORMAT.md)** - Complete ravl.yml format reference
+- **[Configuration Guide](CONFIGURATION.md)** - Comprehensive guide to all configuration methods (CLI flags, ravl.toml, .env)
+- **[CONFIG_FORMAT.md](llm/CONFIG_FORMAT.md)** - Complete ravl.toml format reference
 - **[PROMPTS.md](llm/PROMPTS.md)** - Prompt template system
 
 **Using Templates?**
 
 See each template's own documentation for full details:
 - [Data Ingestion Guide](../templates/data_ingress_template/README.md) - API data ingestion loops
-- [Strategic Coherence Guide](../templates/strategic_coherence_template/config/ravl.yml) - Multi-agent coordination
+- [Strategic Coherence Guide](../templates/strategic_coherence_template/config/ravl.toml) - Multi-agent coordination
 
 ## Architecture Philosophy
 

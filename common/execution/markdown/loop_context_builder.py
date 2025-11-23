@@ -60,14 +60,14 @@ class LoopContextBuilder:
         # Find parent
         if is_child_loop:
             parent_dir = self.loop_dir.parent.parent
-            if (parent_dir / 'config' / 'ravl.yml').exists():
+            if (parent_dir / 'config' / 'ravl.toml').exists():
                 result['parent'] = parent_dir
 
         # Find children
         children_dir = self.loop_dir / 'child_loops'
         if children_dir.exists():
             for child in children_dir.iterdir():
-                if child.is_dir() and (child / 'config' / 'ravl.yml').exists():
+                if child.is_dir() and (child / 'config' / 'ravl.toml').exists():
                     result['children'].append(child)
 
         # Find siblings
@@ -76,7 +76,7 @@ class LoopContextBuilder:
             for sibling in siblings_dir.iterdir():
                 if (sibling.is_dir() and
                     sibling != self.loop_dir and
-                    (sibling / 'config' / 'ravl.yml').exists()):
+                    (sibling / 'config' / 'ravl.toml').exists()):
 
                     # Check if we should exclude top-level parent siblings
                     if exclude_top_level_parents and is_top_level_parent:
@@ -107,9 +107,9 @@ class LoopContextBuilder:
             # Read current model
             model_file = learnings_dir / 'model.yml'
             if model_file.exists():
-                import yaml
+                import toml
                 with open(model_file, 'r') as f:
-                    learnings['model'] = yaml.safe_load(f)
+                    learnings['model'] = toml.load(f)
 
             # Read metrics from history
             metrics_file = learnings_dir / 'learnings' / 'history' / 'metrics.jsonl'

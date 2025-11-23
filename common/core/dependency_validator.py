@@ -8,7 +8,7 @@ Enforces security by requiring explicit user approval for runtime pip installati
 
 import re
 import sys
-import yaml
+import toml
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 
@@ -177,7 +177,7 @@ class DependencyValidator:
         """
         try:
             with open(ravl_yml_file, 'r') as f:
-                config = yaml.safe_load(f) or {}
+                config = toml.load(f) or {}
             return config.get('allowed_dependencies')
         except Exception:
             return None

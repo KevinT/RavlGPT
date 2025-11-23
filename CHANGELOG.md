@@ -27,7 +27,7 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 
 ### Multi-API Configuration Format
 - **Problem**: Loops integrating with multiple APIs had verbose configuration syntax
-- **Solution**: Simplified configuration using `apis:` section in ravl.yml
+- **Solution**: Simplified configuration using `apis:` section in ravl.toml
 - **Value**: Cleaner, more maintainable loop configurations with standardized API declaration format
 
 ### Installation & Setup
@@ -121,7 +121,7 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 - **Automatic virtual environment creation and management** per loop
 - **Requirements extraction** from generated code imports (scans `import` statements)
 - **Dependency whitelist security model** with hierarchical approval
-  - Loop-level: `config/allowed_dependencies.yml`
+  - Loop-level: `config/allowed_dependencies.toml`
   - Parent-level: Inherit from parent loop
   - Project-level: Project-wide defaults
   - Framework-level: Framework defaults
@@ -140,7 +140,7 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 - **Full revision history tracking** with markdown export (captures complete edit lineage)
 - **OAuth2 and service account** credential support
 - Hash-based change detection for efficient updates
-- Configuration-driven design (all config via `ravl.yml`)
+- Configuration-driven design (all config via `ravl.toml`)
 
 ### Self-Healing & Learning System
 - **Smart learning file organization**: Structured storage with attempt tracking

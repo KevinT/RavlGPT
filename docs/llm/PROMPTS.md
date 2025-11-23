@@ -10,7 +10,7 @@ Prompts are organized hierarchically:
 ravl_loops/my_loop/
 ├── config/
 │   ├── prompt_*.md          # Loop-specific prompts
-│   └── ravl.yml
+│   └── ravl.toml
 ```
 
 Common locations:

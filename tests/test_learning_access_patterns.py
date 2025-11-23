@@ -32,17 +32,17 @@ class TestLearningAccessHelper:
         # Create structure:
         # ravl_loops/
         #   ├── top_level_a/
-        #   │   ├── config/ravl.yml
+        #   │   ├── config/ravl.toml
         #   │   ├── learnings/
         #   │   └── child_loops/
         #   │       ├── child_a1/
-        #   │       │   ├── config/ravl.yml
+        #   │       │   ├── config/ravl.toml
         #   │       │   └── learnings/
         #   │       └── child_a2/
-        #   │           ├── config/ravl.yml
+        #   │           ├── config/ravl.toml
         #   │           └── learnings/
         #   └── top_level_b/
-        #       ├── config/ravl.yml
+        #       ├── config/ravl.toml
         #       └── learnings/
 
         base = Path(temp_dir) / 'ravl_loops'
@@ -51,24 +51,24 @@ class TestLearningAccessHelper:
         # Top level A with children
         top_a = base / 'top_level_a'
         (top_a / 'config').mkdir(parents=True)
-        (top_a / 'config' / 'ravl.yml').write_text('name: top_level_a\n')
+        (top_a / 'config' / 'ravl.toml').write_text('name = "top_level_a"\n')
         (top_a / 'learnings').mkdir()
         (top_a / 'ravl_loops').mkdir()
 
         child_a1 = top_a / 'child_loops' / 'child_a1'
         (child_a1 / 'config').mkdir(parents=True)
-        (child_a1 / 'config' / 'ravl.yml').write_text('name: child_a1\n')
+        (child_a1 / 'config' / 'ravl.toml').write_text('name = "child_a1"\n')
         (child_a1 / 'learnings').mkdir()
 
         child_a2 = top_a / 'child_loops' / 'child_a2'
         (child_a2 / 'config').mkdir(parents=True)
-        (child_a2 / 'config' / 'ravl.yml').write_text('name: child_a2\n')
+        (child_a2 / 'config' / 'ravl.toml').write_text('name = "child_a2"\n')
         (child_a2 / 'learnings').mkdir()
 
         # Top level B (isolated from A)
         top_b = base / 'top_level_b'
         (top_b / 'config').mkdir(parents=True)
-        (top_b / 'config' / 'ravl.yml').write_text('name: top_level_b\n')
+        (top_b / 'config' / 'ravl.toml').write_text('name = "top_level_b"\n')
         (top_b / 'learnings').mkdir()
 
         yield base
@@ -262,24 +262,24 @@ class TestLoopContextBuilder:
         # Top level A with children
         top_a = base / 'top_level_a'
         (top_a / 'config').mkdir(parents=True)
-        (top_a / 'config' / 'ravl.yml').write_text('name: top_level_a\n')
+        (top_a / 'config' / 'ravl.toml').write_text('name = "top_level_a"\n')
         (top_a / 'learnings').mkdir()
         (top_a / 'ravl_loops').mkdir()
 
         child_a1 = top_a / 'child_loops' / 'child_a1'
         (child_a1 / 'config').mkdir(parents=True)
-        (child_a1 / 'config' / 'ravl.yml').write_text('name: child_a1\n')
+        (child_a1 / 'config' / 'ravl.toml').write_text('name = "child_a1"\n')
         (child_a1 / 'learnings').mkdir()
 
         child_a2 = top_a / 'child_loops' / 'child_a2'
         (child_a2 / 'config').mkdir(parents=True)
-        (child_a2 / 'config' / 'ravl.yml').write_text('name: child_a2\n')
+        (child_a2 / 'config' / 'ravl.toml').write_text('name = "child_a2"\n')
         (child_a2 / 'learnings').mkdir()
 
         # Top level B (isolated from A)
         top_b = base / 'top_level_b'
         (top_b / 'config').mkdir(parents=True)
-        (top_b / 'config' / 'ravl.yml').write_text('name: top_level_b\n')
+        (top_b / 'config' / 'ravl.toml').write_text('name = "top_level_b"\n')
         (top_b / 'learnings').mkdir()
 
         yield base
@@ -341,13 +341,13 @@ class TestBackwardCompatibility:
         # Simple parent/child structure
         parent = base / 'parent_loop'
         (parent / 'config').mkdir(parents=True)
-        (parent / 'config' / 'ravl.yml').write_text('name: parent_loop\n')
+        (parent / 'config' / 'ravl.toml').write_text('name = "parent_loop"\n')
         (parent / 'learnings').mkdir()
         (parent / 'ravl_loops').mkdir()
 
         child = parent / 'child_loops' / 'child_loop'
         (child / 'config').mkdir(parents=True)
-        (child / 'config' / 'ravl.yml').write_text('name: child_loop\n')
+        (child / 'config' / 'ravl.toml').write_text('name = "child_loop"\n')
         (child / 'learnings').mkdir()
 
         # Create model files

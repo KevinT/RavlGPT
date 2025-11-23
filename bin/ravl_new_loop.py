@@ -77,7 +77,7 @@ import sys
 import re
 import argparse
 import json
-import yaml
+import toml
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
 
@@ -257,7 +257,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
         # Warn about unsupported arguments
         if hasattr(args, 'config') and args.config:
             self.print_warning("--config is not supported when delegating to clone.\n"
-                             "  Edit config/ravl.yml after loop creation.")
+                             "  Edit config/ravl.toml after loop creation.")
 
         self.print_info(f"No --content provided, delegating to: ravl --clone {source_name} {args.loop_name}")
 
@@ -382,7 +382,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
 
         Validation:
             - Each parent must exist and be findable by LoopDiscovery
-            - Each parent must be a valid RAVL loop (has config/ravl.yml)
+            - Each parent must be a valid RAVL loop (has config/ravl.toml)
         """
         for i, parent in enumerate(parent_segments):
             # Build parent path up to this point (dot notation)
@@ -397,7 +397,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
                     return (False,
                            f"Parent directory exists but is not a valid RAVL loop: {parent}\n"
                            f"  Path: {parent_loop_dir}\n"
-                           f"  Expected: {parent_loop_dir}/config/ravl.yml\n"
+                           f"  Expected: {parent_loop_dir}/config/ravl.toml\n"
                            f"  \n"
                            f"  Fix: Ensure {parent} is a complete RAVL loop with config")
 
@@ -418,9 +418,9 @@ class RAVLNewLoopCommand(RAVLCLIBase):
         """
         Check if directory is a valid RAVL loop
 
-        Valid loops must have config/ravl.yml
+        Valid loops must have config/ravl.toml
         """
-        config_file = path / 'config' / 'ravl.yml'
+        config_file = path / 'config' / 'ravl.toml'
         return config_file.exists()
 
     def _parse_config(self, config_data: Optional[str]) -> Dict[str, Any]:
@@ -449,7 +449,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
 
         # Try YAML (more flexible)
         try:
-            result = yaml.safe_load(config_data)
+            result = toml.load(config_data)
             if not isinstance(result, dict):
                 self.print_error(f"Config must be a dictionary/object, got: {type(result).__name__}")
                 sys.exit(1)

@@ -79,7 +79,7 @@ EXPLANATION: [2-3 sentence paragraph explaining your assessment. Reference speci
 **Example 1 - Failing:**
 DIAGNOSIS: Generated code fails with import errors because dependency installation step is missing from code generation
 CONFIDENCE: 85
-RECOMMENDATIONS: 1. Review code generation prompts to ensure dependency installation pattern is included 2. Check if generated_requirements.txt is being created from imports 3. Verify dependency whitelist approvals in config/ravl.yml 4. Update code cache with corrected generation that includes installation
+RECOMMENDATIONS: 1. Review code generation prompts to ensure dependency installation pattern is included 2. Check if generated_requirements.txt is being created from imports 3. Verify dependency whitelist approvals in config/ravl.toml 4. Update code cache with corrected generation that includes installation
 EXPLANATION: Execution logs show consistent ImportError failures across 5 attempts. The generated code imports packages but doesn't install them first. This is a code generation pattern issue that can be fixed by updating the generation prompts to include the try/except import pattern with fallback pip install.
 
 **Example 2 - Moderate:**

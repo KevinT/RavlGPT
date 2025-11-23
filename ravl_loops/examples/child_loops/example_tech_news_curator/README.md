@@ -179,7 +179,7 @@ After running:
 tech_news_curator/
 ├── ravl_loop.md                    # Markdown specification (what you write)
 ├── config/
-│   ├── ravl.yml                   # Loop configuration
+│   ├── ravl.toml                   # Loop configuration
 │   └── prompt_curation.md         # LLM curation prompt
 ├── learnings/
 │   ├── execution_learning/        # How to fetch/parse RSS

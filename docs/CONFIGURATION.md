@@ -19,9 +19,9 @@ Complete reference for configuring RAVL loops at every level: CLI flags, configu
 
 **Configuration Priority (Highest to Lowest):**
 1. CLI flag
-2. Loop config file (`ravl_loops/my_loop/config/ravl.yml`)
+2. Loop config file (`ravl_loops/my_loop/config/ravl.toml`)
 3. Parent config file (for child loops)
-4. Project config file (`ravl_loops/config/ravl.yml`)
+4. Project config file (`ravl_loops/config/ravl.toml`)
 5. Environment variable (`.env` file)
 6. Framework defaults
 
@@ -57,7 +57,7 @@ Options:
   --no-deep-learning        Disable deep learning features
 ```
 
-### 2. Configuration Files (ravl.yml)
+### 2. Configuration Files (ravl.toml)
 
 YAML configuration files provide persistent, version-controlled settings:
 
@@ -95,18 +95,18 @@ template_variables:
 RAVL resolves configuration using inheritance:
 
 ```
-Framework config (.ravl/config/ravl.yml)
+Framework config (.ravl/config/ravl.toml)
     ↓ inherits
-Project config (ravl_loops/config/ravl.yml)
+Project config (ravl_loops/config/ravl.toml)
     ↓ inherits
-Parent loop config (ravl_loops/parent/config/ravl.yml)
+Parent loop config (ravl_loops/parent/config/ravl.toml)
     ↓ inherits
-Loop config (ravl_loops/parent/child/config/ravl.yml) ← HIGHEST PRIORITY
+Loop config (ravl_loops/parent/child/config/ravl.toml) ← HIGHEST PRIORITY
 ```
 
 Child loops automatically inherit parent settings unless they override them.
 
-**See [CONFIG_FORMAT.md](llm/CONFIG_FORMAT.md) for complete ravl.yml format reference.**
+**See [CONFIG_FORMAT.md](llm/CONFIG_FORMAT.md) for complete ravl.toml format reference.**
 
 ### 3. Environment Variables (.env)
 
@@ -152,9 +152,9 @@ If no configuration is provided, RAVL uses sensible defaults:
 **Priority (highest to lowest):**
 
 1. **CLI flag**: `ravl my_loop --learning-path /tmp/test`
-2. **Loop config**: `learning_path: /custom/path` in `config/ravl.yml`
+2. **Loop config**: `learning_path: /custom/path` in `config/ravl.toml`
 3. **Parent config**: Child loops inherit parent's `learning_path` (appends child name)
-4. **Project config**: `ravl_loops/config/ravl.yml`
+4. **Project config**: `ravl_loops/config/ravl.toml`
 5. **Environment variable**: `RAVL_DEFAULT_LEARNING_DIRECTORY=/data/learning`
 6. **Default**: `{loop_dir}/learnings`
 
@@ -171,8 +171,8 @@ If no configuration is provided, RAVL uses sensible defaults:
 **Priority (highest to lowest):**
 
 1. **CLI flag**: `ravl my_loop --venv-path /tmp/venv`
-2. **Loop config**: `venv_path: /custom/venv` in `config/ravl.yml`
-3. **Project config**: `ravl_loops/config/ravl.yml`
+2. **Loop config**: `venv_path: /custom/venv` in `config/ravl.toml`
+3. **Project config**: `ravl_loops/config/ravl.toml`
 4. **Environment variable**: `RAVL_DEFAULT_VENV_DIRECTORY=/data/venvs`
 5. **Default**: `.ravl/venv`
 
@@ -182,10 +182,10 @@ If no configuration is provided, RAVL uses sensible defaults:
 
 **Priority (highest to lowest):**
 
-1. **Loop config**: `allowed_dependencies:` in loop's `config/ravl.yml`
+1. **Loop config**: `allowed_dependencies:` in loop's `config/ravl.toml`
 2. **Parent config**: Inherited from parent loop
-3. **Project config**: `ravl_loops/config/ravl.yml`
-4. **Framework defaults**: `.ravl/config/ravl.yml`
+3. **Project config**: `ravl_loops/config/ravl.toml`
+4. **Framework defaults**: `.ravl/config/ravl.toml`
 
 Whitelists are **additive**: child loops inherit parent approvals and can add more.
 
@@ -205,7 +205,7 @@ The first available API key determines the provider. If multiple keys exist, Ant
 
 ### Loop Metadata
 
-Required in every `config/ravl.yml`:
+Required in every `config/ravl.toml`:
 
 ```yaml
 name: my_loop
@@ -230,7 +230,7 @@ ravl_loops/my_loop/learnings/
 **Custom configuration:**
 
 ```yaml
-# In config/ravl.yml
+# In config/ravl.toml
 learning_path: /mnt/shared/ravl_learning/my_loop
 ```
 
@@ -266,7 +266,7 @@ All loops use `/data/venvs/shared`, reducing disk usage and install time.
 **Per-loop venv:**
 
 ```yaml
-# In config/ravl.yml
+# In config/ravl.toml
 venv_path: /data/venvs/my_loop_venv
 ```
 
@@ -285,7 +285,7 @@ Ephemeral venv for each build.
 Generated code can install packages, but only with approval:
 
 ```yaml
-# In config/ravl.yml
+# In config/ravl.toml
 allowed_dependencies:
   pandas:
     min_version: '2.0.0'    # Prevents too-old versions
@@ -305,7 +305,7 @@ allowed_dependencies:
 1. Loop generates code needing `pandas v2.5.0`
 2. Framework checks whitelist
 3. If not approved → Error with instructions
-4. User adds `pandas:` to `config/ravl.yml`
+4. User adds `pandas:` to `config/ravl.toml`
 5. Re-run → Package installed
 
 **Hierarchical approval:**
@@ -359,7 +359,7 @@ openai:
 For markdown-based loops that need dynamic input:
 
 ```yaml
-# In config/ravl.yml
+# In config/ravl.toml
 type: markdown
 
 template_variables:
@@ -457,7 +457,7 @@ Generated code automatically reads `GOOGLE_CREDENTIALS` from environment and cre
 ravl my_loop --learning-path /tmp/test_learning --quiet
 ```
 
-### Use Configuration Files (ravl.yml) When:
+### Use Configuration Files (ravl.toml) When:
 
 - Settings should persist across runs
 - Configuration should be version-controlled
@@ -465,7 +465,7 @@ ravl my_loop --learning-path /tmp/test_learning --quiet
 - Defining loop-specific dependencies
 
 ```yaml
-# config/ravl.yml - committed to git
+# config/ravl.toml - committed to git
 learning_path: /data/project_learning/my_loop
 allowed_dependencies:
   custom-package:
@@ -494,8 +494,8 @@ Need to configure?
 ├─ Secret/credential? → Use .env
 ├─ One-time test? → Use CLI flag
 ├─ Project-wide default? → Use .env
-├─ Loop-specific persistent setting? → Use config/ravl.yml
-└─ Team-shared loop config? → Use config/ravl.yml (committed)
+├─ Loop-specific persistent setting? → Use config/ravl.toml
+└─ Team-shared loop config? → Use config/ravl.toml (committed)
 ```
 
 ---
@@ -591,7 +591,7 @@ ANTHROPIC_API_KEY=sk-ant-projectC...
 
 **Scenario:** Parent loop with 3 child loops, one child needs special package.
 
-**Parent config (ravl_loops/parent/config/ravl.yml):**
+**Parent config (ravl_loops/parent/config/ravl.toml):**
 
 ```yaml
 name: parent_loop
@@ -607,7 +607,7 @@ allowed_dependencies:
     max_version: '3.0.0'
 ```
 
-**Child loop config (ravl_loops/parent/special_child/config/ravl.yml):**
+**Child loop config (ravl_loops/parent/special_child/config/ravl.toml):**
 
 ```yaml
 name: special_child
@@ -670,7 +670,7 @@ ravl my_loop --learning-path /tmp/test  # CLI overrides .env
 
 **A:**
 
-- **Commit to git**: `config/ravl.yml` files (loop configuration)
+- **Commit to git**: `config/ravl.toml` files (loop configuration)
 - **Share externally**: `.env` file if it contains secrets (use shared password manager or secrets service)
 - **Use .env.example**: Commit template, team members copy to `.env` and fill in secrets
 
@@ -732,7 +732,7 @@ venv_path: /data/venvs/loop_b_venv
 
 ## See Also
 
-- **[CONFIG_FORMAT.md](llm/CONFIG_FORMAT.md)** - Complete ravl.yml format reference
+- **[CONFIG_FORMAT.md](llm/CONFIG_FORMAT.md)** - Complete ravl.toml format reference
 - **[.env.example](../../.env.example)** - Environment variable template with detailed comments
 - **[RAVL_PROTOCOL.md](RAVL_PROTOCOL.md)** - Four-phase loop specification
 - **[RAVL_VISION.md](RAVL_VISION.md)** - Design principles and philosophy

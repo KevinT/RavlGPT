@@ -13,7 +13,7 @@ DO NOT read from execution_learning/. Use execution_data_discovery.py for that.
 """
 
 import json
-import yaml
+import toml
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
@@ -107,14 +107,14 @@ class DomainDataDiscovery:
         if current_model_file.exists():
             try:
                 with open(current_model_file, 'r') as f:
-                    current_model = yaml.safe_load(f)
+                    current_model = toml.load(f)
             except Exception:
                 pass
 
         for model_file in model_files:
             try:
                 with open(model_file, 'r') as f:
-                    data = yaml.safe_load(f)
+                    data = toml.load(f)
                     models.append({
                         "file": model_file.name,
                         "timestamp": model_file.stem.split('-', 1)[1] if '-' in model_file.stem else "unknown",
@@ -142,7 +142,7 @@ class DomainDataDiscovery:
         for verification_file in verification_files[:10]:  # Get 10 most recent
             try:
                 with open(verification_file, 'r') as f:
-                    data = yaml.safe_load(f)
+                    data = toml.load(f)
                     results.append({
                         "file": verification_file.name,
                         "passed": data.get("overall_passed", False),

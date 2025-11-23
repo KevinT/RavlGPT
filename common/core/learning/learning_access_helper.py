@@ -36,7 +36,7 @@ class LearningAccessHelper:
         Initialize learning access helper
 
         Args:
-            loop_dir: Path to the loop directory (where ravl.yml lives)
+            loop_dir: Path to the loop directory (where ravl.toml lives)
             learnings_dir: Path to this loop's learnings directory (resolved via RAVLRunner)
             debug: Enable verbose logging for path resolution
         """
@@ -62,7 +62,7 @@ class LearningAccessHelper:
         if parent_dir.name == 'ravl_loops':
             # Check if there's a parent loop above this
             grandparent_dir = parent_dir.parent
-            has_parent_loop = (grandparent_dir / 'config' / 'ravl.yml').exists()
+            has_parent_loop = (grandparent_dir / 'config' / 'ravl.toml').exists()
             return not has_parent_loop
         return False
 
@@ -85,8 +85,8 @@ class LearningAccessHelper:
         # Parent is the directory above ravl_loops/child_loops/
         parent_dir = self.loop_dir.parent.parent
 
-        # Verify parent has ravl.yml
-        if not (parent_dir / 'config' / 'ravl.yml').exists():
+        # Verify parent has ravl.toml
+        if not (parent_dir / 'config' / 'ravl.toml').exists():
             if self.debug:
                 logger.debug(f"No parent loop found at {parent_dir}")
             return None
@@ -174,8 +174,8 @@ class LearningAccessHelper:
         # Sibling directory
         sibling_dir = self.loop_dir.parent / sibling_name
 
-        # Verify sibling exists and has ravl.yml
-        if not (sibling_dir / 'config' / 'ravl.yml').exists():
+        # Verify sibling exists and has ravl.toml
+        if not (sibling_dir / 'config' / 'ravl.toml').exists():
             if self.debug:
                 logger.debug(f"No sibling loop found at {sibling_dir}")
             return None
@@ -226,8 +226,8 @@ class LearningAccessHelper:
 
         child_dir = self.loop_dir / 'child_loops' / child_name
 
-        # Verify child exists and has ravl.yml
-        if not (child_dir / 'config' / 'ravl.yml').exists():
+        # Verify child exists and has ravl.toml
+        if not (child_dir / 'config' / 'ravl.toml').exists():
             if self.debug:
                 logger.debug(f"No child loop found at {child_dir}")
             return None
@@ -282,8 +282,8 @@ class LearningAccessHelper:
             if not sibling_dir.is_dir() or sibling_dir == self.loop_dir:
                 continue
 
-            # Verify sibling has ravl.yml
-            if not (sibling_dir / 'config' / 'ravl.yml').exists():
+            # Verify sibling has ravl.toml
+            if not (sibling_dir / 'config' / 'ravl.toml').exists():
                 continue
 
             # Check if sibling is a top-level parent
@@ -317,8 +317,8 @@ class LearningAccessHelper:
             if not child_dir.is_dir():
                 continue
 
-            # Verify child has ravl.yml
-            if (child_dir / 'config' / 'ravl.yml').exists():
+            # Verify child has ravl.toml
+            if (child_dir / 'config' / 'ravl.toml').exists():
                 children.append(child_dir.name)
 
         return children
@@ -340,9 +340,9 @@ class LearningAccessHelper:
             return None
 
         try:
-            import yaml
+            import toml
             with open(model_file, 'r') as f:
-                return yaml.safe_load(f)
+                return toml.load(f)
         except Exception as e:
             logger.error(f"Failed to load model from {model_file}: {e}")
             return None

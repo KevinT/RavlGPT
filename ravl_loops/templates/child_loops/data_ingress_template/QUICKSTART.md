@@ -10,7 +10,7 @@
 
 This creates `ravl_loops/my_api/` with config and loop definition ready to edit.
 
-### 2. Edit config (`ravl_loops/my_api/config/ravl.yml`)
+### 2. Edit config (`ravl_loops/my_api/config/ravl.toml`)
 
 ```yaml
 name: my_api_integration

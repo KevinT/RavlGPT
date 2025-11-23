@@ -225,7 +225,7 @@ class ConfigDisplay:
         # Helper to check for TOML or YAML config
         def find_config(config_dir, description):
             toml_path = config_dir / 'ravl.toml'
-            yml_path = config_dir / 'ravl.yml'
+            yml_path = config_dir / 'ravl.toml'
             if toml_path.exists():
                 return (toml_path, description, True)
             elif yml_path.exists():

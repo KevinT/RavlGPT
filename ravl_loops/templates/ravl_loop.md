@@ -6,7 +6,7 @@ This parent loop lists all available RAVL templates for cloning.
 
 Templates provide starting points for new loops:
 - **data_ingress_template**: Self-healing data ingestion from Your API
-- **empty_loop_template**: Simple loop - change me in ravl.yml
+- **empty_loop_template**: Simple loop - change me in ravl.toml
 - **strategic_coherence_template**: Generic parent loop for content coherence
 
 ## How to Use Templates

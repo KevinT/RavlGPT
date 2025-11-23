@@ -39,9 +39,9 @@ class LLMMixin:
         Resolve LLM provider using hierarchical configuration
 
         Checks in priority order:
-        1. Loop config (llm_provider in ravl.yml)
-        2. Parent configs (parent's config/ravl.yml)
-        3. Project config (ravl_loops/config/ravl.yml)
+        1. Loop config (llm_provider in ravl.toml)
+        2. Parent configs (parent's config/ravl.toml)
+        3. Project config (ravl_loops/config/ravl.toml)
         4. .env file (RAVL_DEFAULT_LLM_PROVIDER)
         5. Auto-detect from API keys (ANTHROPIC > OPENAI > GOOGLE > OLLAMA)
 

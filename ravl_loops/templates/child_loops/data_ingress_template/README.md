@@ -15,7 +15,7 @@ Self-healing data ingestion loop template for automatically generating, testing,
 ```
 
 This creates a new loop directory with:
-- `config/ravl.yml` - Configuration template (edit this!)
+- `config/ravl.toml` - Configuration template (edit this!)
 - `ravl_loop.md` - Loop definition (edit this!)
 - `ravl_loop-full.md` - Complete example with optional REFLECT/LEARN
 - `QUICKSTART.md`, `GUIDE.md`, `IMPLEMENTATION.md` - Documentation
@@ -23,7 +23,7 @@ This creates a new loop directory with:
 
 ### Setup your loop:
 
-1. **Edit config** (`config/ravl.yml`):
+1. **Edit config** (`config/ravl.toml`):
    ```yaml
    name: my_api_integration
    api_endpoint: https://api.example.com/v1
@@ -101,7 +101,7 @@ This creates a new loop directory with:
 
 - **`ravl_loop.md`** - Minimal template with just ACT + VERIFY sections
 - **`ravl_loop-full.md`** - Complete example showing optional REFLECT and LEARN sections
-- **`config/ravl.yml`** - Configuration template with all available options
+- **`config/ravl.toml`** - Configuration template with all available options
 
 ## Understanding the Sections
 

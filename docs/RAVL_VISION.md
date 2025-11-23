@@ -41,7 +41,7 @@ RAVL is built for a world where:
 
 **What Users Own**:
 - Loop source code (`ravl_loop.md` or `ravl_loop.py`)
-- Configuration choices (`config/ravl.yml`)
+- Configuration choices (`config/ravl.toml`)
 - Nothing else
 
 **What System Owns**:
@@ -139,7 +139,7 @@ RAVL is built for a world where:
 - Generated code uses try/except patterns to install missing dependencies dynamically
 - Before caching, framework validates all pip install calls against a whitelist
 - If a package isn't approved, code is rejected with clear guidance
-- User approves packages by adding them to the `allowed_dependencies` section in `config/ravl.yml`
+- User approves packages by adding them to the `allowed_dependencies` section in `config/ravl.toml`
 - Approval is explicit (git history shows what was added and when)
 - Hierarchical: Loops inherit project defaults, can override locally
 
