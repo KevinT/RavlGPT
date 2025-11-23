@@ -84,7 +84,7 @@ class VenvManager:
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=30  # UV is fast, 30s is plenty
+                timeout=120  # Allow time for first-time Python download/cache
             )
 
             if result.returncode != 0:

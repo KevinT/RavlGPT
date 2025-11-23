@@ -51,12 +51,12 @@ def _load_framework_config() -> Dict[str, Any]:
         }
 
 
-def find_required_python(required_version: str = "3.12") -> Tuple[Optional[str], Optional[str]]:
+def find_required_python(required_version: str = "3.14") -> Tuple[Optional[str], Optional[str]]:
     """
     Find the required Python version executable.
 
     Args:
-        required_version: Python version to find (e.g., "3.12", "3.11")
+        required_version: Python version to find (e.g., "3.14", "3.13")
 
     Returns:
         Tuple of (python_path, error_message)
@@ -86,7 +86,7 @@ def find_required_python(required_version: str = "3.12") -> Tuple[Optional[str],
     error_msg = (
         f"Python {required_version} not found.\n"
         f"  Install: {install_cmd}\n"
-        f"  Or update .ravl/config/ravl.yml to specify an available Python version."
+        f"  Or update .ravl/config/ravl.toml to specify an available Python version."
     )
 
     return (None, error_msg)
