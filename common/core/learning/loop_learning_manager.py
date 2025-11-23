@@ -29,6 +29,7 @@ Organization:
 """
 
 import json
+import yaml
 try:
     import tomllib
 except ImportError:

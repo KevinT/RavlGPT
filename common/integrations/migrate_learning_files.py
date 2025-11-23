@@ -9,6 +9,7 @@ Converts flat timestamped files into organized structure:
 """
 
 import json
+import yaml
 try:
     import tomllib
 except ImportError:
