@@ -15,7 +15,7 @@ Instead of writing Python code, RAVL loops can be defined in markdown with Act a
 ### 1. Config-Based (Recommended for New Loops)
 
 **No Python code needed!** Just create:
-- `config.yml` - Loop configuration
+- `config.toml` - Loop configuration
 - `ravl_loop.md` - Markdown instructions
 
 ```bash
@@ -49,8 +49,8 @@ Create a custom `run.py` that uses `MarkdownRAVLExecutor`.
 # 1. Create directory
 mkdir -p .ravl/agents/my_group/agents/my_loop
 
-# 2. Create config.yml
-cat > .ravl/agents/my_group/agents/my_loop/config.yml <<EOF
+# 2. Create config.toml
+cat > .ravl/agents/my_group/agents/my_loop/config.toml <<EOF
 name: my_loop
 description: My loop description
 
@@ -202,7 +202,7 @@ pip install anthropic openai google-generativeai
 Check variable name in markdown exactly matches config (including spaces/case).
 
 ### "Config file not found"
-Ensure `config.yml` exists in loop directory or provide `--config path`.
+Ensure `config.toml` exists in loop directory or provide `--config path`.
 
 ### Verification always fails
 This is expected during initial runs. The system learns and improves. Check:

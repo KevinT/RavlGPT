@@ -139,7 +139,7 @@ except ImportError:
     from google.oauth2 import service_account
 ```
 
-**IMPORTANT**: Only install packages that are on the approved whitelist in `config/ravl.yml` (allowed_dependencies section). If a package is not approved, the framework will reject the code. The loop owner can approve packages by editing the `allowed_dependencies` section in their `config/ravl.yml`.
+**IMPORTANT**: Only install packages that are on the approved whitelist in `config/ravl.toml` (allowed_dependencies section). If a package is not approved, the framework will reject the code. The loop owner can approve packages by editing the `allowed_dependencies` section in their `config/ravl.toml`.
 
 ## File Output Guidelines
 

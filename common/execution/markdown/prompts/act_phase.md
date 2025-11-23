@@ -51,7 +51,7 @@ loop_dir = Path(os.environ.get('RAVL_LOOP_DIR'))
 # Use these paths for reading/writing loop data
 current_state_file = learnings_dir / 'current_state' / 'last_exploration.json'
 model_file = learnings_dir / 'model.yml'
-config_file = loop_dir / 'config' / 'ravl.yml'
+config_file = loop_dir / 'config' / 'ravl.toml'
 ```
 
 **WRONG methods (DO NOT USE):**
