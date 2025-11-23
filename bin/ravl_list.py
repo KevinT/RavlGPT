@@ -377,8 +377,12 @@ class RAVLListCommand(RAVLCLIBase):
         try:
             rel_path = loop_path.relative_to(self.project_root)
         except ValueError:
-            # If not relative to project root, try framework root
-            rel_path = loop_path.relative_to(self.project_root / '.ravl')
+            # If not relative to project root, try framework root (submodule installation)
+            try:
+                rel_path = loop_path.relative_to(self.project_root / '.ravl')
+            except ValueError:
+                # If not in submodule, try framework loops dir (UV installation)
+                rel_path = loop_path.relative_to(self.discovery.framework_loops_dir)
 
         # Filter out 'ravl_loops' and 'child_loops' structural directories and build namespace
         parts = [p for p in rel_path.parts if p not in ('ravl_loops', 'child_loops')]
