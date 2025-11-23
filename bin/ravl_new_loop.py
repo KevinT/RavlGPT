@@ -121,12 +121,10 @@ class RAVLNewLoopCommand(RAVLCLIBase):
         config_data = args.config if hasattr(args, 'config') and args.config else None
         target_dir = args.target if hasattr(args, 'target') and args.target else None
 
-        # Validate that content is provided
+        # If no content provided, delegate to ravl --clone empty_loop_template
         if not content:
-            self.print_error("--content is required\n"
-                           "  Provide markdown content for the RAVL loop\n"
-                           "  Example: --content \"# Reflect\\n\\n# Act\\n\\n# Verify\\n\\n# Learn\"")
-            sys.exit(1)
+            self._delegate_to_clone(args)
+            return  # _delegate_to_clone exits, but return for clarity
 
         # Validate content wasn't mangled by shell
         is_valid, error_msg = self._validate_content(content)
@@ -229,6 +227,43 @@ class RAVLNewLoopCommand(RAVLCLIBase):
                 import shutil
                 shutil.rmtree(target_path)
             sys.exit(1)
+
+    def _delegate_to_clone(self, args: argparse.Namespace):
+        """
+        Delegate to ravl --clone empty_loop_template when --content is omitted
+
+        This provides a simpler workflow for users who just want to create a loop
+        with placeholder content rather than writing custom content upfront.
+
+        Args:
+            args: Parsed command-line arguments from ravl --new
+        """
+        import subprocess
+
+        # The template is nested: templates/child_loops/empty_loop_template
+        # But ravl-clone can find it by searching recursively in template directories
+        source_name = 'empty_loop_template'
+
+        # Build clone command
+        framework_root = self.find_framework_root()
+        clone_script = framework_root / 'bin' / 'ravl_clone.py'
+
+        clone_cmd = [sys.executable, str(clone_script), source_name, args.loop_name]
+
+        # Pass through compatible arguments
+        if hasattr(args, 'target') and args.target:
+            clone_cmd.extend(['--target', args.target])
+
+        # Warn about unsupported arguments
+        if hasattr(args, 'config') and args.config:
+            self.print_warning("--config is not supported when delegating to clone.\n"
+                             "  Edit config/ravl.yml after loop creation.")
+
+        self.print_info(f"No --content provided, delegating to: ravl --clone {source_name} {args.loop_name}")
+
+        # Execute clone command
+        result = subprocess.run(clone_cmd)
+        sys.exit(result.returncode)
 
     def _parse_path_spec(self, path_spec: str) -> list[str]:
         """
@@ -431,7 +466,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument('loop_name', help='Name or path for the new loop (use dot notation: parent.child.my_loop)')
-    parser.add_argument('--content', required=True, help='Markdown content for ravl_loop.md (required)')
+    parser.add_argument('--content', required=False, help='Markdown content for ravl_loop.md (optional - delegates to empty_loop_template if omitted)')
     parser.add_argument('--config', help='Configuration as YAML or JSON string')
     parser.add_argument('--target', help='Target directory (default: project_root/ravl_loops/)')
     parser.add_argument(
