@@ -20,7 +20,10 @@ Delegating loops only need to define:
 import os
 import sys
 import json
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
@@ -119,8 +122,8 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
         if not config_file.exists():
             return {'google_documents': [], 'target_base_path': './data/source'}
 
-        with open(config_file, 'r') as f:
-            return toml.load(f) or {}
+        with open(config_file, 'rb') as f:
+            return tomllib.load(f) or {}
 
     def _resolve_target_path(self, doc_config: Dict[str, Any]) -> Path:
         """

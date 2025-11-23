@@ -19,7 +19,10 @@ import tempfile
 import subprocess
 import time
 import hashlib
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List, Tuple
@@ -282,8 +285,8 @@ class MarkdownRAVLExecutor:
             return {}
 
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                return toml.load(f) or {}
+            with open(config_file, 'rb') as f:
+                return tomllib.load(f) or {}
         except Exception:
             return {}
 
@@ -523,8 +526,8 @@ class MarkdownRAVLExecutor:
                         try:
                             # Try to read as YAML
                             if file_path.suffix in ['.yml', '.yaml']:
-                                with open(file_path, 'r', encoding='utf-8') as f:
-                                    subdir_data['files'][file_path.name] = toml.load(f)
+                                with open(file_path, 'rb') as f:
+                                    subdir_data['files'][file_path.name] = tomllib.load(f)
                             # Try to read as JSON
                             elif file_path.suffix == '.json':
                                 with open(file_path, 'r', encoding='utf-8') as f:
@@ -547,8 +550,8 @@ class MarkdownRAVLExecutor:
                 try:
                     # Try to read as YAML
                     if item_path.suffix in ['.yml', '.yaml']:
-                        with open(item_path, 'r', encoding='utf-8') as f:
-                            learnings['files'][item_path.name] = toml.load(f)
+                        with open(item_path, 'rb') as f:
+                            learnings['files'][item_path.name] = tomllib.load(f)
                     # Try to read as JSON
                     elif item_path.suffix == '.json':
                         with open(item_path, 'r', encoding='utf-8') as f:

@@ -250,8 +250,8 @@ class RAVLRunner:
             if parent_config_file.exists():
                 try:
                     import toml
-                    with open(parent_config_file, 'r') as f:
-                        parent_config = toml.load(f) or {}
+                    with open(parent_config_file, 'rb') as f:
+                        parent_config = tomllib.load(f) or {}
                         if 'learning_path' in parent_config:
                             config_path_found = True
                             parent_learning_path = Path(parent_config['learning_path']).expanduser()
@@ -285,8 +285,8 @@ class RAVLRunner:
             if project_config_file.exists():
                 try:
                     import toml
-                    with open(project_config_file, 'r') as f:
-                        project_config = toml.load(f) or {}
+                    with open(project_config_file, 'rb') as f:
+                        project_config = tomllib.load(f) or {}
                         if 'learning_path' in project_config:
                             config_path_found = True
                             project_learning_path = Path(project_config['learning_path']).expanduser()
@@ -423,8 +423,8 @@ class RAVLRunner:
             if project_loops_config.exists():
                 try:
                     import toml
-                    with open(project_loops_config, 'r') as f:
-                        project_config = toml.load(f) or {}
+                    with open(project_loops_config, 'rb') as f:
+                        project_config = tomllib.load(f) or {}
                         if 'venv_path' in project_config:
                             return Path(project_config['venv_path']).expanduser().resolve()
                 except Exception:
@@ -483,8 +483,8 @@ class RAVLRunner:
             if parent_config_file.exists():
                 try:
                     import toml
-                    with open(parent_config_file, 'r') as f:
-                        parent_config = toml.load(f) or {}
+                    with open(parent_config_file, 'rb') as f:
+                        parent_config = tomllib.load(f) or {}
                         if 'llm_provider' in parent_config:
                             return RAVLRunner._normalize_llm_config(parent_config['llm_provider'])
                 except Exception:
@@ -496,8 +496,8 @@ class RAVLRunner:
             if project_config_file.exists():
                 try:
                     import toml
-                    with open(project_config_file, 'r') as f:
-                        project_config = toml.load(f) or {}
+                    with open(project_config_file, 'rb') as f:
+                        project_config = tomllib.load(f) or {}
                         if 'llm_provider' in project_config:
                             return RAVLRunner._normalize_llm_config(project_config['llm_provider'])
                 except Exception:

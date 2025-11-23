@@ -9,7 +9,10 @@ Ensures compatible Python versions are used based on framework configuration.
 import shutil
 import subprocess
 import sys
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
 
@@ -37,8 +40,8 @@ def _load_framework_config() -> Dict[str, Any]:
         }
 
     try:
-        with open(config_file, 'r', encoding='utf-8') as f:
-            config = toml.load(f) or {}
+        with open(config_file, 'rb') as f:
+            config = tomllib.load(f) or {}
             return config
     except Exception:
         # Fallback to defaults on error

@@ -6,7 +6,10 @@ Utilities for finding, loading, and importing RAVL loops.
 """
 
 import sys
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 import inspect
 import importlib.util
 from pathlib import Path
@@ -428,9 +431,9 @@ class LoopDiscovery:
 
             # Load and merge config file
             try:
-                with open(config_file, 'r', encoding='utf-8') as f:
-                    external_config = toml.load(f) or {}
-            except yaml.YAMLError as e:
+                with open(config_file, 'rb') as f:
+                    external_config = tomllib.load(f) or {}
+            except tomllib.TOMLDecodeError as e:
                 from logging_utils import log_message
                 log_message(f"YAML syntax error in config file: {config_file}", status='error')
                 if hasattr(e, 'problem_mark'):
@@ -852,10 +855,10 @@ class LoopDiscovery:
             markdown_config_file = loop_dir / 'config' / 'config.toml'
             if markdown_config_file.exists():
                 try:
-                    with open(markdown_config_file, 'r', encoding='utf-8') as f:
-                        markdown_config = toml.load(f) or {}
+                    with open(markdown_config_file, 'rb') as f:
+                        markdown_config = tomllib.load(f) or {}
                         template_vars = markdown_config.get('template_variables', {})
-                except yaml.YAMLError as e:
+                except tomllib.TOMLDecodeError as e:
                     # YAML syntax error in markdown config - log but continue with empty config
                     _utils_dir = self.ravl_dir / 'common' / 'utils'
                     if _utils_dir not in sys.path:

@@ -128,8 +128,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
             if parent_config_file.exists():
                 try:
                     import toml
-                    with open(parent_config_file, 'r') as f:
-                        parent_config = toml.load(f) or {}
+                    with open(parent_config_file, 'rb') as f:
+                        parent_config = tomllib.load(f) or {}
                         if 'learning_path' in parent_config:
                             return f"Parent config ({parent_dir.name}/config/ravl.toml)"
                 except Exception:
@@ -140,8 +140,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
         if project_config_file.exists():
             try:
                 import toml
-                with open(project_config_file, 'r') as f:
-                    project_config = toml.load(f) or {}
+                with open(project_config_file, 'rb') as f:
+                    project_config = tomllib.load(f) or {}
                     if 'learning_path' in project_config:
                         return "Project config (ravl_loops/config/ravl.toml)"
             except Exception:
@@ -171,8 +171,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
         if project_config_file.exists():
             try:
                 import toml
-                with open(project_config_file, 'r') as f:
-                    project_config = toml.load(f) or {}
+                with open(project_config_file, 'rb') as f:
+                    project_config = tomllib.load(f) or {}
                     if 'venv_path' in project_config:
                         return "Project config (ravl_loops/config/ravl.toml)"
             except Exception:

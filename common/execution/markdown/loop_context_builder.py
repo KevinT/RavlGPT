@@ -109,7 +109,7 @@ class LoopContextBuilder:
             if model_file.exists():
                 import toml
                 with open(model_file, 'r') as f:
-                    learnings['model'] = toml.load(f)
+                    learnings['model'] = tomllib.load(f)
 
             # Read metrics from history
             metrics_file = learnings_dir / 'learnings' / 'history' / 'metrics.jsonl'

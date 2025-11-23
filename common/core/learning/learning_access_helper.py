@@ -341,8 +341,8 @@ class LearningAccessHelper:
 
         try:
             import toml
-            with open(model_file, 'r') as f:
-                return toml.load(f)
+            with open(model_file, 'rb') as f:
+                return tomllib.load(f)
         except Exception as e:
             logger.error(f"Failed to load model from {model_file}: {e}")
             return None

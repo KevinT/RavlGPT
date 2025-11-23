@@ -9,7 +9,10 @@ This eliminates duplication of config loading logic across the codebase.
 """
 
 import os
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from functools import lru_cache
@@ -230,8 +233,8 @@ class ConfigService:
             return None
 
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                return toml.load(f) or {}
+            with open(config_path, 'rb') as f:
+                return tomllib.load(f) or {}
         except Exception:
             return None
 

@@ -397,8 +397,8 @@ class RAVLCloneCommand(RAVLCLIBase):
         # Check if it's a delegation-only loop
         try:
             import toml
-            with open(config_file, 'r') as f:
-                config = toml.load(f)
+            with open(config_file, 'rb') as f:
+                config = tomllib.load(f)
                 # Valid if it has a delegate_to directive
                 if config and 'delegate_to' in config:
                     return True

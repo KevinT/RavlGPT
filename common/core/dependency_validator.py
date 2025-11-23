@@ -8,7 +8,10 @@ Enforces security by requiring explicit user approval for runtime pip installati
 
 import re
 import sys
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from typing import Dict, Optional, Tuple, List
 
@@ -176,8 +179,8 @@ class DependencyValidator:
             Whitelist dict (allowed_dependencies section) or None if not present or error
         """
         try:
-            with open(ravl_yml_file, 'r') as f:
-                config = toml.load(f) or {}
+            with open(ravl_yml_file, 'rb') as f:
+                config = tomllib.load(f) or {}
             return config.get('allowed_dependencies')
         except Exception:
             return None

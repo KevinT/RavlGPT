@@ -9,7 +9,10 @@ Converts flat timestamped files into organized structure:
 """
 
 import json
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any
@@ -117,8 +120,8 @@ def _load_json(file_path: Path) -> Any:
 
 def _load_yaml(file_path: Path) -> Any:
     """Load YAML file"""
-    with open(file_path, 'r', encoding='utf-8') as f:
-        return toml.load(f)
+    with open(file_path, 'rb') as f:
+        return tomllib.load(f)
 
 
 def _find_matching_metrics(action_file: Path, metrics_files: List[Path]) -> Any:

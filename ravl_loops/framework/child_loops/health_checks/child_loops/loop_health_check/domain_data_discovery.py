@@ -13,7 +13,10 @@ DO NOT read from execution_learning/. Use execution_data_discovery.py for that.
 """
 
 import json
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
@@ -106,15 +109,15 @@ class DomainDataDiscovery:
 
         if current_model_file.exists():
             try:
-                with open(current_model_file, 'r') as f:
-                    current_model = toml.load(f)
+                with open(current_model_file, 'rb') as f:
+                    current_model = tomllib.load(f)
             except Exception:
                 pass
 
         for model_file in model_files:
             try:
-                with open(model_file, 'r') as f:
-                    data = toml.load(f)
+                with open(model_file, 'rb') as f:
+                    data = tomllib.load(f)
                     models.append({
                         "file": model_file.name,
                         "timestamp": model_file.stem.split('-', 1)[1] if '-' in model_file.stem else "unknown",
@@ -141,8 +144,8 @@ class DomainDataDiscovery:
         results = []
         for verification_file in verification_files[:10]:  # Get 10 most recent
             try:
-                with open(verification_file, 'r') as f:
-                    data = toml.load(f)
+                with open(verification_file, 'rb') as f:
+                    data = tomllib.load(f)
                     results.append({
                         "file": verification_file.name,
                         "passed": data.get("overall_passed", False),

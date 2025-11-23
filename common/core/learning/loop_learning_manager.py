@@ -29,7 +29,10 @@ Organization:
 """
 
 import json
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
@@ -354,8 +357,8 @@ class LoopLearningManager:
         if not model_file.exists():
             return None
 
-        with open(model_file, 'r', encoding='utf-8') as f:
-            return toml.load(f)
+        with open(model_file, 'rb') as f:
+            return tomllib.load(f)
 
     def save_model(self, model: Dict[str, Any]) -> None:
         """
@@ -393,8 +396,8 @@ class LoopLearningManager:
 
         models = []
         for model_file in model_files:
-            with open(model_file, 'r', encoding='utf-8') as f:
-                model = toml.load(f)
+            with open(model_file, 'rb') as f:
+                model = tomllib.load(f)
                 models.append({
                     'timestamp': model_file.stem.replace('model-', ''),
                     'model': model

@@ -18,7 +18,10 @@ import tempfile
 import subprocess
 import time
 import hashlib
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -291,8 +294,8 @@ class SimpleCodeExecutor:
             return {}
 
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
-                return toml.load(f) or {}
+            with open(config_file, 'rb') as f:
+                return tomllib.load(f) or {}
         except Exception:
             return {}
 

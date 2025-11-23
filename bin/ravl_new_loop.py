@@ -77,7 +77,10 @@ import sys
 import re
 import argparse
 import json
-import toml
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
 from pathlib import Path
 from typing import Optional, Tuple, Dict, Any
 
@@ -449,12 +452,12 @@ class RAVLNewLoopCommand(RAVLCLIBase):
 
         # Try YAML (more flexible)
         try:
-            result = toml.load(config_data)
+            result = tomllib.load(config_data)
             if not isinstance(result, dict):
                 self.print_error(f"Config must be a dictionary/object, got: {type(result).__name__}")
                 sys.exit(1)
             return result
-        except yaml.YAMLError as e:
+        except tomllib.TOMLDecodeError as e:
             self.print_error(f"Invalid YAML config: {e}")
             sys.exit(1)
 

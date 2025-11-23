@@ -91,8 +91,8 @@ class DataIngressExecutor:
             }
 
         import toml
-        with open(self.config_file, 'r') as f:
-            return toml.load(f) or {}
+        with open(self.config_file, 'rb') as f:
+            return tomllib.load(f) or {}
 
     def _load_prompt(self, prompt_name: str, **variables) -> str:
         """Load a prompt template and substitute variables"""
