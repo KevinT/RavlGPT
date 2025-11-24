@@ -364,7 +364,10 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
                     'output_file_size': file_size,
                     'fetch_status': 'success',
                     'fetch_notes': f'Document sourced with {len(edit_history)} edits tracked',
-                    'edit_history': edit_history
+                    'edit_history': edit_history,
+                    'valid_from_date': doc_config.get('valid_from_date'),
+                    'valid_to_date': doc_config.get('valid_to_date'),
+                    'valid_on_date': doc_config.get('valid_on_date')
                 }
 
                 # Add revisions_exported if revisions were tracked
