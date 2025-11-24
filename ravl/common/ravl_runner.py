@@ -21,6 +21,7 @@ import json
 import sys
 import time
 import os
+import tomllib
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, TextIO, Callable, List
@@ -200,158 +201,90 @@ class RAVLRunner:
         """
         Resolve the learning path with precedence:
         1. CLI flag (--learning-path) - highest priority
-        2. Loop config (learning_path in ravl.toml)
-        3. Parent config (parent's config/ravl.toml learning_path)
-        4. Project config (ravl_loops/config/ravl.toml learning_path)
-        5. Project .env file (RAVL_DEFAULT_LEARNING_DIRECTORY)
-        6. Default (loop_dir/learnings) - lowest priority
+        2. Loop config (learning_path in config/ravl.toml)
+        3. Default (loop_dir/learnings) - lowest priority
 
         Relative paths are resolved relative to the directory containing the config:
         - Loop config: relative to loop_dir
-        - Parent config: relative to parent_dir
-        - Project config: relative to project_root
 
-        .env RAVL_DEFAULT_LEARNING_DIRECTORY only applies if NO config specifies learning_path.
-
-        Child loops automatically inherit parent path structure:
-        - If running child loop directly: /data/ravl-learning/parent/child/learnings
-        - If running parent loop: /data/ravl-learning/parent/learnings
+        Child loops automatically inherit parent's learning_path from parent config:
+        - Parent has learning_path="/data/ravl" → child gets "/data/ravl/child_learnings/child_name/learnings"
+        - Parent has no learning_path → child uses default "child_dir/learnings"
 
         Args:
             loop_dir: Path to the loop directory
             loop_config: Parsed loop configuration (from ravl.toml)
             cli_learning_path: CLI-provided learning path
-            project_root: Project root for loading .env
+            project_root: Project root (unused but kept for compatibility)
 
         Returns:
             Resolved learning path
         """
-        # Track if we found a path in config (priorities 2-4)
-        # This ensures .env only applies when NO config specifies learning_path
-        config_path_found = False
-
         # Priority 1: CLI flag (highest)
         if cli_learning_path:
             return Path(cli_learning_path).expanduser().resolve()
 
         # Priority 2: Loop config
-        # FIXED: Relative paths now resolved relative to loop directory
+        # Relative paths resolved relative to loop directory
         if loop_config and 'learning_path' in loop_config:
-            config_path_found = True
             return RAVLRunner._resolve_path_relative_to(
                 loop_config['learning_path'],
                 loop_dir
             )
 
-        # Priority 3: Parent configs (walk full parent chain from immediate to root)
+        # Child loops check parent configs for inheritance
         all_parents = RAVLRunner._find_all_parent_loops(loop_dir)
         for parent_dir in all_parents:
             parent_config_file = parent_dir / 'config' / 'ravl.toml'
             if parent_config_file.exists():
                 try:
-                    import toml
                     with open(parent_config_file, 'rb') as f:
                         parent_config = tomllib.load(f) or {}
                         if 'learning_path' in parent_config:
-                            config_path_found = True
                             parent_learning_path = Path(parent_config['learning_path']).expanduser()
                             # If relative, resolve relative to parent directory
                             if not parent_learning_path.is_absolute():
                                 parent_learning_path = (parent_dir / parent_learning_path).resolve()
 
                             # Build child path: collect all intermediate loop names between parent and child
-                            # Example: parent=frontier_delivery, child=context_ingestion
-                            # Intermediate: context_management
-                            # Result: parent_path/context_management/context_ingestion/learnings
                             child_segments = []
                             current = loop_dir
                             while current != parent_dir and current != current.parent:
-                                # Skip 'ravl_loops' directories - they're structural, not semantic
                                 if current.name != 'ravl_loops':
                                     child_segments.insert(0, current.name)
                                 current = current.parent
 
-                            # Build final path with child_learnings separator
-                            final_path = parent_learning_path / 'child_learnings'
+                            # Build final path with child_learnings separator between each level
+                            final_path = parent_learning_path
                             for segment in child_segments:
-                                final_path = final_path / segment
+                                if segment not in ['child_loops', 'ravl_loops']:
+                                    final_path = final_path / 'child_learnings' / segment
                             return (final_path / 'learnings').resolve()
                 except Exception:
                     pass  # If parent config is malformed, try next parent
 
-        # Priority 4: Project config (ravl_loops/config/ravl.toml)
-        if project_root:
-            project_config_file = project_root / 'ravl_loops' / 'config' / 'ravl.toml'
-            if project_config_file.exists():
-                try:
-                    import toml
-                    with open(project_config_file, 'rb') as f:
-                        project_config = tomllib.load(f) or {}
-                        if 'learning_path' in project_config:
-                            config_path_found = True
-                            project_learning_path = Path(project_config['learning_path']).expanduser()
-                            # If relative, resolve relative to project root
-                            if not project_learning_path.is_absolute():
-                                project_learning_path = (project_root / project_learning_path).resolve()
-                            # Build path structure for this loop
-                            child_path = RAVLRunner._detect_child_loop_path(loop_dir)
-                            if child_path:
-                                # Add child_learnings separator for child loops
-                                parts = child_path.split('/')
-                                if len(parts) > 1:
-                                    parent_name = parts[0]
-                                    child_segments = '/'.join(parts[1:])
-                                    return (project_learning_path / parent_name / 'child_learnings' / child_segments / 'learnings').resolve()
-                                else:
-                                    return (project_learning_path / child_path / 'learnings').resolve()
-                            else:
-                                return (project_learning_path / loop_dir.name / 'learnings').resolve()
-                except Exception:
-                    pass  # If project config is malformed, fall through to next priority
-
-        # Priority 5: Project .env file (ONLY if no config specified learning_path)
-        if not config_path_found and project_root:
-            env_vars = RAVLRunner.load_env_file(project_root)
-            if 'RAVL_DEFAULT_LEARNING_DIRECTORY' in env_vars:
-                base_path = Path(env_vars['RAVL_DEFAULT_LEARNING_DIRECTORY']).expanduser()
-
-                # Check if this is a child loop and build appropriate path structure
-                child_path = RAVLRunner._detect_child_loop_path(loop_dir)
-                if child_path:
-                    # Add child_learnings separator for child loops
-                    parts = child_path.split('/')
-                    if len(parts) > 1:
-                        parent_name = parts[0]
-                        child_segments = '/'.join(parts[1:])
-                        return (base_path / parent_name / 'child_learnings' / child_segments / 'learnings').resolve()
-                    else:
-                        return (base_path / child_path / 'learnings').resolve()
-                else:
-                    # Parent loop: {base}/{loop_name}/learnings
-                    return (base_path / loop_dir.name / 'learnings').resolve()
-
-        # Priority 6: Default (lowest)
+        # Priority 3 (Default): loop_dir/learnings
         return (loop_dir / 'learnings').resolve()
 
     @staticmethod
     def _find_parent_loop(loop_dir: Path) -> Optional[Path]:
         """
         Find parent loop if this is a nested loop.
-        Uses the same algorithm as DependencyValidator for consistency.
+        Uses child_loops directories to detect nesting.
 
         Returns:
             Path to parent loop or None if top-level
         """
-        # Count 'ravl_loops' in path
-        ravl_loops_indices = [
+        # Count 'child_loops' in path
+        child_loops_indices = [
             i for i, part in enumerate(loop_dir.parts)
-            if part == 'ravl_loops'
+            if part == 'child_loops'
         ]
 
-        if len(ravl_loops_indices) >= 2:
-            # Nested loop: parent is everything before the last 'ravl_loops'
-            last_ravl_loops_idx = ravl_loops_indices[-1]
-            parent_path = Path(*loop_dir.parts[:last_ravl_loops_idx])
+        if len(child_loops_indices) >= 1:
+            # Nested loop: parent is everything before the last 'child_loops'
+            last_child_loops_idx = child_loops_indices[-1]
+            parent_path = Path(*loop_dir.parts[:last_child_loops_idx])
             return parent_path
 
         return None
@@ -365,19 +298,19 @@ class RAVLRunner:
             List of parent paths, ordered from nearest (immediate parent) to farthest (root)
 
         Example:
-            loop: ravl_loops/grandparent/ravl_loops/parent/ravl_loops/child
+            loop: ravl_loops/grandparent/child_loops/parent/child_loops/child
             returns: [parent, grandparent]
         """
         parents = []
-        ravl_loops_indices = [
+        child_loops_indices = [
             i for i, part in enumerate(loop_dir.parts)
-            if part == 'ravl_loops'
+            if part == 'child_loops'
         ]
 
         # Walk from innermost to outermost parent
-        # Start from second-to-last ravl_loops (immediate parent) and work backwards
-        for i in range(len(ravl_loops_indices) - 1, 0, -1):
-            parent_idx = ravl_loops_indices[i]
+        # Start from last child_loops (immediate parent) and work backwards
+        for i in range(len(child_loops_indices) - 1, -1, -1):
+            parent_idx = child_loops_indices[i]
             parent_path = Path(*loop_dir.parts[:parent_idx])
             parents.append(parent_path)
 
@@ -694,8 +627,8 @@ class RAVLRunner:
             ArgumentParser with common options
         """
         parser = argparse.ArgumentParser(description=description)
-        parser.add_argument('--mode', choices=['fast', 'full'], default='full',
-                           help='Analysis mode (fast=quick check, full=deep analysis)')
+        parser.add_argument('--mode', choices=['full', 'fast', 'execute'], default='full',
+                           help='Execution mode: full=complete RAVL cycle (REFLECT-ACT-VERIFY-LEARN), fast=use cached code with verification (REFLECT-ACT-VERIFY), execute=run cached code only (ACT)')
         parser.add_argument('--no-deep-learning', action='store_true',
                            help='Skip verify and learn phases')
         parser.add_argument('--timeout', type=int, default=300,

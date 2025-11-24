@@ -38,7 +38,7 @@ from ravl.common.ravl_runner import RAVLRunner
 from ravl.common.execution.markdown.markdown_ravl_executor import MarkdownRAVLExecutor
 from ravl.common.utils.constants import DEFAULT_EXECUTION_TIMEOUT
 from ravl.common.utils.file_utils import load_toml_file
-from ravl.common.utils.logging_utils import log_message
+from ravl.common.utils.logging_utils import log_message, log_execution
 from ravl.common.cli.config_display import ConfigDisplay
 
 
@@ -377,29 +377,45 @@ class ConfigBasedRAVLRunner:
                 tee_logger.close()
                 sys.exit(1)
 
+            # Determine which phases to run based on mode
+            mode = args.mode
+            run_reflect = mode in ['full', 'fast']  # Execute mode skips REFLECT
+            run_verify = mode in ['full', 'fast']    # Execute mode skips VERIFY
+            run_learn = mode == 'full'               # Only full mode runs LEARN
+
             # ===== Step 1: REFLECT =====
-            RAVLRunner.print_banner("Step 1 of 4: [R]EFLECT", "")
-            try:
-                reflection = executor.reflect()
-                # Calculate duration
-                duration = time.time() - start_time
-                log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
-            except Exception as reflect_error:
-                # REFLECT failed, but record the failure so loop can learn from it
-                log_message(f"REFLECT phase failed: {reflect_error}", status='error', indent=3)
+            if run_reflect:
+                RAVLRunner.print_banner("Step 1 of 4: [R]EFLECT", "")
+                try:
+                    reflection = executor.reflect()
+                    # Calculate duration
+                    duration = time.time() - start_time
+                    log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
+                except Exception as reflect_error:
+                    # REFLECT failed, but record the failure so loop can learn from it
+                    log_message(f"REFLECT phase failed: {reflect_error}", status='error', indent=3)
+                    reflection = {
+                        'timestamp': datetime.now(timezone.utc).isoformat(),
+                        'error': str(reflect_error),
+                        'error_type': type(reflect_error).__name__,
+                        'phase': 'reflect',
+                        'success': False
+                    }
+                    # Continue to ACT phase with error information
+            else:
+                # Execute mode: skip REFLECT, use minimal reflection context
+                log_execution("Execute mode: skipping REFLECT phase", status='info')
                 reflection = {
                     'timestamp': datetime.now(timezone.utc).isoformat(),
-                    'error': str(reflect_error),
-                    'error_type': type(reflect_error).__name__,
-                    'phase': 'reflect',
-                    'success': False
+                    'context_vars': context_vars,
+                    'learnings': {},
+                    'skip_cache': False
                 }
-                # Continue to ACT phase with error information
 
             # ===== Step 2: ACT =====
             RAVLRunner.print_banner("Step 2 of 4: [A]CT", "")
             try:
-                action_result = executor.act(reflection)
+                action_result = executor.act(reflection, mode=mode)
                 # Calculate duration
                 duration = time.time() - start_time
                 log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
@@ -415,10 +431,10 @@ class ConfigBasedRAVLRunner:
                     'code_executed': False,
                     'success': False
                 }
-                # Continue to VERIFY and LEARN phases to record the failure
+                # Continue to VERIFY and LEARN phases to record the failure (if running)
 
             # ===== Step 3: VERIFY =====
-            if not args.no_deep_learning:
+            if run_verify and not args.no_deep_learning:
 
                 RAVLRunner.print_banner("Phase 3 of 4: [V]ERIFY", "")
 
@@ -439,33 +455,39 @@ class ConfigBasedRAVLRunner:
                         'success': False,
                         'verification_passed': False
                     }
-                    # Continue to LEARN phase to record the failure
+                    # Continue to LEARN phase to record the failure (if running)
 
-                RAVLRunner.print_banner("Step 4 of 4: [L]EARN", "")
-                try:
-                    executor.learn(verification, action_result)
+                # ===== Step 4: LEARN =====
+                if run_learn:
+                    RAVLRunner.print_banner("Step 4 of 4: [L]EARN", "")
+                    try:
+                        executor.learn(verification, action_result)
 
-                    # Calculate duration
-                    duration = time.time() - start_time
-                    log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
-                except Exception as learn_error:
-                    duration = time.time() - start_time
-                    log_message(f"Error during LEARN phase: {learn_error}", status='error', indent=3)
-                    log_message(f"Completed at {duration:.1f}s (with LEARN error)", status='warning', indent=3)
+                        # Calculate duration
+                        duration = time.time() - start_time
+                        log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
+                    except Exception as learn_error:
+                        duration = time.time() - start_time
+                        log_message(f"Error during LEARN phase: {learn_error}", status='error', indent=3)
+                        log_message(f"Completed at {duration:.1f}s (with LEARN error)", status='warning', indent=3)
 
-                    # Save error artifacts for debugging
-                    error_file = learnings_dir / 'current_state' / 'learn_phase_error.json'
-                    error_file.parent.mkdir(parents=True, exist_ok=True)
-                    with open(error_file, 'w', encoding='utf-8') as f:
-                        json.dump({
-                            'error': str(learn_error),
-                            'error_type': type(learn_error).__name__,
-                            'timestamp': datetime.now().isoformat(),
+                        # Save error artifacts for debugging
+                        error_file = learnings_dir / 'current_state' / 'learn_phase_error.json'
+                        error_file.parent.mkdir(parents=True, exist_ok=True)
+                        with open(error_file, 'w', encoding='utf-8') as f:
+                            json.dump({
+                                'error': str(learn_error),
+                                'error_type': type(learn_error).__name__,
+                                'timestamp': datetime.now().isoformat(),
                             'phase': 'learn',
                             'verification': verification,
                             'action_result': action_result
                         }, f, indent=2)
-                    log_message(f"Error details saved to: {error_file.relative_to(Path.cwd())}", status='info', indent=3)
+                        log_message(f"Error details saved to: {error_file.relative_to(Path.cwd())}", status='info', indent=3)
+            else:
+                # Execute mode: skip VERIFY and LEARN
+                log_execution("Execute mode: skipping VERIFY and LEARN phases", status='info')
+                verification = None
 
             # Show interpretation summary if LLM interpreted the loop
             if executor.used_interpretation:
@@ -522,7 +544,8 @@ class ConfigBasedRAVLRunner:
             # Success/completion summary
             completion_status = "completed successfully" if verification_passed else "completed with errors"
             RAVLRunner.print_banner(f"{loop_name} {completion_status}", "🏁")
-            log_message(f"   Duration: {duration:.1f}s", status='info', indent=0)
+            final_duration = time.time() - start_time
+            log_message(f"   Duration: {final_duration:.1f}s", status='info', indent=0)
             for var_name, var_value in context_vars.items():
                 log_message(f"   {var_name}: {var_value}", status='info', indent=0)
             log_message(f"   Output: {action_result.get('output_file', 'N/A')}", status='info', indent=0)

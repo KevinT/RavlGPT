@@ -598,11 +598,15 @@ class MarkdownRAVLExecutor:
 
         return reflection
 
-    def act(self, reflection: Dict[str, Any]) -> Dict[str, Any]:
+    def act(self, reflection: Dict[str, Any], mode: str = 'full') -> Dict[str, Any]:
         """
         ACT phase: Execute instructions from markdown
 
         Delegates to ActOrchestrator for implementation.
+
+        Args:
+            reflection: Output from REFLECT phase
+            mode: Execution mode ('full', 'fast', or 'execute')
         """
         # Store reflection for LEARN phase synthesis
         self._last_reflection = reflection
@@ -610,7 +614,8 @@ class MarkdownRAVLExecutor:
         # Delegate to ActOrchestrator
         action_result = self.act_orchestrator.act(
             reflection=reflection,
-            build_context_fn=self._build_context_summary
+            build_context_fn=self._build_context_summary,
+            mode=mode
         )
 
         # Track generated code for learning

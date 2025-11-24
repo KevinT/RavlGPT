@@ -6,7 +6,7 @@ Complete reference for configuring RAVL loops at every level: CLI flags, configu
 
 | Configuration Aspect | CLI Flag | Config File | Environment Variable | Default |
 |---------------------|----------|-------------|---------------------|---------|
-| Learning path | `--learning-path PATH` | `learning_path:` | `RAVL_DEFAULT_LEARNING_DIRECTORY` | `{loop_dir}/learnings` |
+| Learning path | `--learning-path PATH` | `learning_path:` | N/A | `{loop_dir}/learnings` |
 | Virtual environment | `--venv-path PATH` | `venv_path:` | `RAVL_DEFAULT_VENV_DIRECTORY` | `.ravl/venv` |
 | Loop directory | `--loop-dir PATH` | N/A | `RAVL_DEFAULT_LOOP_DIRECTORY` | `ravl_loops/` |
 | Execution mode | `--mode {fast,full}` | N/A | N/A | `full` |
@@ -20,10 +20,9 @@ Complete reference for configuring RAVL loops at every level: CLI flags, configu
 **Configuration Priority (Highest to Lowest):**
 1. CLI flag
 2. Loop config file (`ravl_loops/my_loop/config/ravl.toml`)
-3. Parent config file (for child loops)
-4. Project config file (`ravl_loops/config/ravl.toml`)
-5. Environment variable (`.env` file)
-6. Framework defaults
+3. Framework default
+
+**Note:** Child loops automatically inherit parent's `learning_path` from parent config.s
 
 ---
 
@@ -114,7 +113,6 @@ Environment variables provide project-wide defaults:
 
 ```bash
 # .env file at project root
-RAVL_DEFAULT_LEARNING_DIRECTORY=/data/ravl_learning
 RAVL_DEFAULT_VENV_DIRECTORY=/data/venvs/shared
 RAVL_DEFAULT_LOOP_DIRECTORY=ravl_loops
 
@@ -127,9 +125,8 @@ GOOGLE_CREDENTIALS='{"type":"authorized_user","client_id":"...","client_secret":
 ```
 
 Use environment variables for:
-- Project-wide paths shared by all loops
 - API keys and credentials (never commit these!)
-- Team collaboration with shared resources
+- Project-wide venv/loop directory paths
 
 **Important:** Add `.env` to `.gitignore` to prevent committing secrets.
 
@@ -153,17 +150,16 @@ If no configuration is provided, RAVL uses sensible defaults:
 
 1. **CLI flag**: `ravl my_loop --learning-path /tmp/test`
 2. **Loop config**: `learning_path: /custom/path` in `config/ravl.toml`
-3. **Parent config**: Child loops inherit parent's `learning_path` (appends child name)
-4. **Project config**: `ravl_loops/config/ravl.toml`
-5. **Environment variable**: `RAVL_DEFAULT_LEARNING_DIRECTORY=/data/learning`
-6. **Default**: `{loop_dir}/learnings`
+3. **Default**: `{loop_dir}/learnings`
 
 **Child Loop Inheritance:**
+
+Child loops automatically inherit parent's `learning_path`:
 
 ```python
 # Parent learning path: /data/ravl/parent_loop
 # Child loop name: child_loop
-# Result: /data/ravl/parent_loop/child_loop/learnings
+# Result: /data/ravl/parent_loop/child_learnings/child_loop/learnings
 ```
 
 ### Virtual Environment Path Resolution
@@ -234,20 +230,11 @@ ravl_loops/my_loop/learnings/
 learning_path: /mnt/shared/ravl_learning/my_loop
 ```
 
-**Team sharing:**
-
-```bash
-# In .env
-RAVL_DEFAULT_LEARNING_DIRECTORY=/mnt/team_share/ravl_learning
-```
-
-All loops will store learning artifacts in `/mnt/team_share/ravl_learning/{loop_name}/learnings`.
-
 **Child loop example:**
 
 ```
 Parent: /data/learning/parent_loop
-Child:  /data/learning/parent_loop/child_loop/learnings  # Automatic
+Child:  /data/learning/parent_loop/child_learnings/child_loop/learnings  # Automatic
 ```
 
 ### Virtual Environment Configuration
@@ -483,7 +470,6 @@ allowed_dependencies:
 ```bash
 # .env - NOT committed to git
 ANTHROPIC_API_KEY=sk-ant-...
-RAVL_DEFAULT_LEARNING_DIRECTORY=/mnt/shared/learning
 ```
 
 ### Decision Flowchart
@@ -515,22 +501,27 @@ ravl my_loop
 
 Learning artifacts go to `ravl_loops/my_loop/learnings/`, venv at `.ravl/venv`.
 
-### Example 2: Team with Shared Learning & Venv
+### Example 2: Team with Shared Venv
 
-**Scenario:** Team of 3 developers, want to share learning artifacts and venv on network drive.
+**Scenario:** Team of 3 developers want to share venv on network drive, but each loop defines its own learning path.
 
 **.env (all developers):**
 
 ```bash
-RAVL_DEFAULT_LEARNING_DIRECTORY=/mnt/team_share/ravl_learning
 RAVL_DEFAULT_VENV_DIRECTORY=/mnt/team_share/venvs/project_venv
 
 ANTHROPIC_API_KEY=sk-ant-...  # Shared key
 ```
 
+**Loop config (config/ravl.toml):**
+
+```toml
+learning_path = "/mnt/team_share/learning/my_loop"
+```
+
 **Result:**
 
-- All loops store learning in `/mnt/team_share/ravl_learning/{loop_name}/learnings`
+- Loop stores learning in `/mnt/team_share/learning/my_loop/learnings`
 - All loops use shared venv at `/mnt/team_share/venvs/project_venv`
 - Model improvements benefit entire team
 - No duplicate package installations
@@ -545,15 +536,14 @@ ANTHROPIC_API_KEY=sk-ant-...  # Shared key
 - name: Run RAVL loop
   env:
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-    RAVL_DEFAULT_LEARNING_DIRECTORY: /tmp/ci_learning_${{ github.run_id }}
     RAVL_DEFAULT_VENV_DIRECTORY: /tmp/ci_venv_${{ github.run_id }}
   run: |
-    ravl my_loop --mode fast --timeout 300 --quiet
+    ravl my_loop --learning-path /tmp/ci_learning_${{ github.run_id }} --mode fast --timeout 300 --quiet
 ```
 
 **Result:**
 
-- Ephemeral learning path per build (isolated)
+- Ephemeral learning path per build via CLI flag (isolated)
 - Ephemeral venv per build (clean environment)
 - Fast mode for quick validation
 - Quiet output for cleaner logs
@@ -565,17 +555,27 @@ ANTHROPIC_API_KEY=sk-ant-...  # Shared key
 **Project A (.env):**
 
 ```bash
-RAVL_DEFAULT_LEARNING_DIRECTORY=/data/projectA/learning
 RAVL_DEFAULT_VENV_DIRECTORY=/data/projectA/venv
 ANTHROPIC_API_KEY=sk-ant-projectA...
+```
+
+**Project A loop config (config/ravl.toml):**
+
+```toml
+learning_path = "/data/projectA/learning"
 ```
 
 **Project B (.env):**
 
 ```bash
-RAVL_DEFAULT_LEARNING_DIRECTORY=/data/projectB/learning
 RAVL_DEFAULT_VENV_DIRECTORY=/data/shared_venv  # Shared across projects
 ANTHROPIC_API_KEY=sk-ant-projectB...
+```
+
+**Project B loop config (config/ravl.toml):**
+
+```toml
+learning_path = "/data/projectB/learning"
 ```
 
 **Project C (.env):**
@@ -585,7 +585,7 @@ ANTHROPIC_API_KEY=sk-ant-projectB...
 ANTHROPIC_API_KEY=sk-ant-projectC...
 ```
 
-**Result:** Each project has isolated learning, flexible venv strategy, separate API keys.
+**Result:** Each project has isolated learning via loop config, flexible venv strategy, separate API keys.
 
 ### Example 5: Loop-Specific Dependency Whitelist
 
@@ -652,18 +652,18 @@ Or check health output:
 
 ### Q: Why isn't my environment variable working?
 
-**A:** Check loading order:
+**A:** Check configuration priority:
 
-1. Is `.env` file at project root? (not in subdirectory)
-2. Is variable name correct? (case-sensitive)
-3. Does CLI flag or config file override it?
+1. Does loop have `learning_path` in config/ravl.toml?
+2. Does CLI flag override it?
+3. Is it inheriting from parent config?
 
 ```bash
-# Debug: Check if .env is loaded
-cat .env | grep RAVL_DEFAULT_LEARNING_DIRECTORY
+# Check configuration with --show-config
+ravl my_loop --show-config
 
-# Verify priority
-ravl my_loop --learning-path /tmp/test  # CLI overrides .env
+# Test with CLI override
+ravl my_loop --learning-path /tmp/test  # CLI overrides config
 ```
 
 ### Q: How do I share configuration across a team?
@@ -712,14 +712,18 @@ venv_path: /data/venvs/loop_b_venv
 3. **Update configuration**:
    ```bash
    # In .env
-   RAVL_DEFAULT_LEARNING_DIRECTORY=/data/ravl_learning
    RAVL_DEFAULT_VENV_DIRECTORY=/data/venvs/shared
+   ```
+
+   ```toml
+   # In ravl_loops/my_loop/config/ravl.toml
+   learning_path = "/data/ravl_learning/my_loop"
    ```
 
 4. **Verify**:
    ```bash
-   ravl my_loop
-   # Check logs confirm new paths
+   ravl my_loop --show-config
+   # Check paths are correct
    ```
 
 5. **Clean old artifacts** (optional):

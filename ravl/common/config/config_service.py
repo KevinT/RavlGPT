@@ -71,23 +71,20 @@ class ConfigService:
 
     def resolve_learning_path(
         self,
-        cli_override: Optional[Path] = None,
-        env_var: str = 'RAVL_DEFAULT_LEARNING_DIRECTORY'
+        cli_override: Optional[Path] = None
     ) -> Path:
         """
-        Resolve learning path with full hierarchy
+        Resolve learning path with hierarchy
 
         Priority:
-        1. CLI override
+        1. CLI override (--learning-path)
         2. Loop config/ravl.toml (learning_path)
-        3. Parent config/ravl.toml (walk hierarchy)
-        4. Project ravl_loops/config/ravl.toml
-        5. Environment variable
-        6. Default (loop_dir/learnings)
+        3. Default (loop_dir/learnings)
+
+        Child loops inherit parent's learning_path automatically.
 
         Args:
             cli_override: CLI-specified path
-            env_var: Environment variable name
 
         Returns:
             Resolved learning path
@@ -101,23 +98,13 @@ class ConfigService:
         if loop_learning_path:
             return self._resolve_path(loop_learning_path, self.loop_dir)
 
-        # Priority 3: Parent configs
+        # Check parent configs for inheritance
         for parent_dir in self._find_all_parent_loops():
             parent_config = self._load_config(parent_dir / 'config' / 'ravl.toml')
             if parent_config and 'learning_path' in parent_config:
                 return self._resolve_path(parent_config['learning_path'], parent_dir)
 
-        # Priority 4: Project config
-        project_learning_path = self.get('learning_path', scope='project')
-        if project_learning_path:
-            return self._resolve_path(project_learning_path, self.project_root)
-
-        # Priority 5: Environment variable
-        env_value = os.environ.get(env_var)
-        if env_value:
-            return Path(env_value)
-
-        # Priority 6: Default
+        # Priority 3: Default
         return self.loop_dir / 'learnings'
 
     def resolve_venv_path(

@@ -343,25 +343,19 @@ reflection = {
 
 ## Configurable Learning Paths
 
-Learning paths follow a 6-level priority hierarchy:
+Learning paths follow a 3-level priority hierarchy:
 
 1. **CLI flag**: `ravl my_loop --learning-path /custom/path` (highest priority)
 2. **Loop config**: `learning_path` in `config/ravl.toml`
-3. **Parent configs**: Walk parent chain for `learning_path`
-4. **Project config**: `ravl_loops/config/ravl.toml` learning_path
-5. **Environment file**: `RAVL_DEFAULT_LEARNING_DIRECTORY` in `.env`
-6. **Default**: `loop_dir/learnings` (lowest priority)
+3. **Default**: `loop_dir/learnings` (lowest priority)
+
+Child loops automatically inherit parent's `learning_path` from parent config.
 
 ### Example Configurations
 
 **In loop's config/ravl.toml**:
 ```yaml
 learning_path: /data/ravl-learning/my_loop
-```
-
-**In project .env**:
-```bash
-RAVL_DEFAULT_LEARNING_DIRECTORY=/data/ravl-learning
 ```
 
 **CLI override**:
@@ -408,7 +402,6 @@ sibling_path = helper.get_sibling_learning_path('expected_sibling')
 
 **Symptoms**:
 - Works with default learning paths
-- Fails when using `RAVL_DEFAULT_LEARNING_DIRECTORY`
 - Error: "Using legacy sibling path resolution (loop_dir not provided)"
 
 **Cause**:
@@ -557,9 +550,9 @@ loop_learning:
 
 Use network-accessible learning paths for team coordination:
 
-```bash
-# .env
-RAVL_DEFAULT_LEARNING_DIRECTORY=/mnt/shared-learning
+```toml
+# In each loop's config/ravl.toml
+learning_path = "/mnt/shared-learning/my_loop"
 ```
 
 All team members see same learning artifacts in real-time.

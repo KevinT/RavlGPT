@@ -219,8 +219,8 @@ description: Ingest data from external API with self-healing
 emoji: 🔄
 type: markdown
 
-# Custom paths (can also use RAVL_DEFAULT_LEARNING_DIRECTORY and RAVL_DEFAULT_VENV_DIRECTORY in .env)
-learning_path: /data/ravl_learning/api_ingestion  # CLI: --learning-path, env: RAVL_DEFAULT_LEARNING_DIRECTORY
+# Custom paths (can also use RAVL_DEFAULT_VENV_DIRECTORY in .env)
+learning_path: /data/ravl_learning/api_ingestion  # CLI: --learning-path
 venv_path: /data/venvs/api_ingestion             # CLI: --venv-path, env: RAVL_DEFAULT_VENV_DIRECTORY
 
 # Template variables for markdown

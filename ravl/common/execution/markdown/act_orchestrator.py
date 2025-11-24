@@ -112,7 +112,8 @@ class ActOrchestrator:
     def act(
         self,
         reflection: Dict[str, Any],
-        build_context_fn: Callable[[Dict[str, Any]], str]
+        build_context_fn: Callable[[Dict[str, Any]], str],
+        mode: str = 'full'
     ) -> Dict[str, Any]:
         """
         ACT phase: Execute instructions from markdown
@@ -122,17 +123,40 @@ class ActOrchestrator:
         Args:
             reflection: Output from REFLECT phase
             build_context_fn: Function to build context summary
+            mode: Execution mode ('full', 'fast', or 'execute')
 
         Returns:
             Dict with action results including generated/executed code
         """
         log_message("Acting...", status='info')
 
-        # Check cache FIRST, before any phase access (which triggers enhancement LLM call)
+        # Check cache based on execution mode
         skip_cache = reflection.get('skip_cache', False)
 
         if not skip_cache:
-            cache_result = self.cache_manager.check_cache()
+            cache_result = None
+
+            if mode == 'execute':
+                # Execute mode: strict cache check (error if no cache)
+                try:
+                    cache_result = self.cache_manager.check_cache_strict()
+                    log_execution("Execute mode: using cached code (strict)", status='info')
+                except RuntimeError as e:
+                    log_execution(f"Execute mode error: {e}", status='error')
+                    raise
+            elif mode == 'fast':
+                # Fast mode: strict validation (regenerate if cache invalid)
+                cache_result = self.cache_manager.check_cache_for_fast_mode()
+                if cache_result:
+                    log_execution("Fast mode: using validated cached code", status='info')
+                else:
+                    log_execution("Fast mode: cache invalid, will regenerate code", status='info')
+            else:  # mode == 'full'
+                # Full mode: use cache if available (current behavior)
+                cache_result = self.cache_manager.check_cache()
+                if cache_result:
+                    log_execution("Full mode: using cached code", status='info')
+
             if cache_result:
                 # Cache hit - return immediately without accessing phases
                 cached_code, cached_dsl = cache_result

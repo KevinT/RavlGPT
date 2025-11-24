@@ -264,3 +264,124 @@ class CodeCacheManager:
             log_execution("Cache invalidated: repeated error patterns detected", status='info')
         except Exception as e:
             log_execution(f"Failed to clear cache: {str(e)[:100]}", status='info')
+
+    def check_cache_for_fast_mode(self) -> Optional[Tuple[str, Dict[str, Any]]]:
+        """
+        Check if verified code exists and is valid for fast mode
+
+        Fast mode requires stricter validation:
+        - Cache must exist
+        - ravl_loop.md must be unchanged
+        - No repeated error patterns (3+ same error)
+        - Last run must have passed all verifications
+        - No recent regeneration recommendations
+
+        Returns:
+            Tuple of (code, dsl) if cache valid for fast mode, else None
+        """
+        if not (self.verified_code_file.exists() and self.verified_dsl_file.exists()):
+            return None
+
+        # Check all invalidation conditions
+        if self._should_invalidate_cache():
+            self._clear_cache()
+            return None
+
+        # Additional check: last run must have passed verification
+        if not self._last_run_passed_verification():
+            log_execution("Cache not valid for fast mode: last run failed verification", status='info')
+            return None
+
+        try:
+            with open(self.verified_code_file, 'r') as f:
+                code = f.read()
+
+            with open(self.verified_dsl_file, 'r') as f:
+                dsl = json.load(f)
+
+            # Check if ravl_loop.md was modified since code was cached
+            if self._is_markdown_loop_modified(dsl):
+                self._clear_cache()
+                log_execution("Cache invalidated: ravl_loop.md was modified", status='info')
+                return None
+
+            return (code, dsl)
+
+        except (IOError, json.JSONDecodeError):
+            return None
+
+    def check_cache_strict(self) -> Tuple[str, Dict[str, Any]]:
+        """
+        Strict cache checking for execute mode
+
+        Execute mode requires cached code to exist. Does not check validity -
+        just returns the cached code or raises an error.
+
+        Returns:
+            Tuple of (code, dsl) from cache
+
+        Raises:
+            RuntimeError: If no cached code exists
+        """
+        if not (self.verified_code_file.exists() and self.verified_dsl_file.exists()):
+            raise RuntimeError(
+                "Execute mode requires cached code, but no verified_code.py found.\n"
+                "Run with --mode full first to generate and cache verified code."
+            )
+
+        try:
+            with open(self.verified_code_file, 'r') as f:
+                code = f.read()
+
+            with open(self.verified_dsl_file, 'r') as f:
+                dsl = json.load(f)
+
+            return (code, dsl)
+
+        except (IOError, json.JSONDecodeError) as e:
+            raise RuntimeError(
+                f"Failed to read cached code: {e}\n"
+                "Run with --mode full to regenerate verified code."
+            )
+
+    def _last_run_passed_verification(self) -> bool:
+        """
+        Check if the most recent run passed all domain verifications
+
+        Returns:
+            True if last run's overall_passed was True, False otherwise
+        """
+        # Look for most recent domain verification in loop_learning/recent_attempts/
+        loop_learning_dir = self.learnings_dir.parent / 'loop_learning'
+        if not loop_learning_dir.exists():
+            return False  # No loop learning yet
+
+        recent_attempts_dir = loop_learning_dir / 'recent_attempts'
+        if not recent_attempts_dir.exists():
+            return False
+
+        try:
+            # Find all attempt_N directories and sort by N
+            attempt_dirs = sorted(
+                [d for d in recent_attempts_dir.iterdir() if d.is_dir() and d.name.startswith('attempt_')],
+                key=lambda d: int(d.name.split('_')[1]),
+                reverse=True  # Most recent first
+            )
+
+            if not attempt_dirs:
+                return False
+
+            # Check most recent attempt
+            most_recent = attempt_dirs[0]
+            verification_file = most_recent / 'domain_verification.json'
+
+            if not verification_file.exists():
+                return False
+
+            with open(verification_file, 'r') as f:
+                verification = json.load(f)
+
+            return verification.get('overall_passed', False)
+
+        except (IOError, json.JSONDecodeError, KeyError, ValueError):
+            return False

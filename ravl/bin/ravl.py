@@ -128,30 +128,13 @@ class RAVLUniversalRunner(RAVLCLIBase):
             parent_config_file = parent_dir / 'config' / 'ravl.toml'
             if parent_config_file.exists():
                 try:
-                    import toml
+                    import tomllib
                     with open(parent_config_file, 'rb') as f:
                         parent_config = tomllib.load(f) or {}
                         if 'learning_path' in parent_config:
                             return f"Parent config ({parent_dir.name}/config/ravl.toml)"
                 except Exception:
                     pass
-
-        # Check project config
-        project_config_file = self.project_root / 'ravl_loops' / 'config' / 'ravl.toml'
-        if project_config_file.exists():
-            try:
-                import toml
-                with open(project_config_file, 'rb') as f:
-                    project_config = tomllib.load(f) or {}
-                    if 'learning_path' in project_config:
-                        return "Project config (ravl_loops/config/ravl.toml)"
-            except Exception:
-                pass
-
-        # Check .env
-        env_vars = RAVLRunner.load_env_file(self.project_root)
-        if 'RAVL_DEFAULT_LEARNING_DIRECTORY' in env_vars:
-            return "Environment (.env RAVL_DEFAULT_LEARNING_DIRECTORY)"
 
         return "Default (loop_dir/learnings)"
 
@@ -1101,9 +1084,9 @@ def main():
     )
     parser.add_argument(
         '--mode',
-        choices=['fast', 'full'],
+        choices=['full', 'fast', 'execute'],
         default='full',
-        help='Analysis mode (fast=quick check, full=deep analysis)'
+        help='Execution mode: full=complete RAVL cycle (REFLECT-ACT-VERIFY-LEARN), fast=use cached code with verification (REFLECT-ACT-VERIFY), execute=run cached code only (ACT)'
     )
     parser.add_argument(
         '--no-deep-learning',
