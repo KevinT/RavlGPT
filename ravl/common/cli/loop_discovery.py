@@ -307,8 +307,8 @@ class LoopDiscovery:
                 f"    loop: sourcing/google_docs_sourcing"
             )
 
-        # Find target loop with search order
-        target_dir = self.find_loop_with_search_order(target_loop_name, loop_dir)
+        # Find target loop (supports hierarchical paths like parent.child)
+        target_dir = self.find_loop(target_loop_name)
 
         # Load target config
         target_config = self.load_config(target_dir)
