@@ -41,9 +41,8 @@ Thumbs.db
 
 # Logs
 *.log
-logs/llm/**/*.log
-logs/llm/**/*.jsonl
-logs/llm/**/*.md
+logs/llm/
+ravl/logs/llm/
 
 # Learning state (project-specific, not framework)
 learnings/state/
