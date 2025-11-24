@@ -14,8 +14,16 @@ USAGE:
 """
 
 import logging
+import sys
 from pathlib import Path
 from typing import Optional, Dict, Any, List
+
+# Add config to path for ConfigService
+_config_dir = Path(__file__).parent.parent.parent / 'config'
+if str(_config_dir) not in sys.path:
+    sys.path.insert(0, str(_config_dir))
+
+from config_service import ConfigService
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +39,7 @@ class LearningAccessHelper:
     - Path debugging and logging
     """
 
-    def __init__(self, loop_dir: Path, learnings_dir: Path, debug: bool = False):
+    def __init__(self, loop_dir: Path, learnings_dir: Path, debug: bool = False, project_root: Optional[Path] = None):
         """
         Initialize learning access helper
 
@@ -39,13 +47,30 @@ class LearningAccessHelper:
             loop_dir: Path to the loop directory (where ravl.toml lives)
             learnings_dir: Path to this loop's learnings directory (resolved via RAVLRunner)
             debug: Enable verbose logging for path resolution
+            project_root: Path to project root (for ConfigService, optional)
         """
         self.loop_dir = Path(loop_dir).resolve()
         self.learnings_dir = Path(learnings_dir).resolve()
         self.debug = debug
 
+        # Initialize ConfigService if project_root provided
+        if project_root:
+            self.config_service = ConfigService(self.loop_dir, Path(project_root))
+        else:
+            # Try to find project root automatically
+            self.config_service = ConfigService(self.loop_dir, self._find_project_root())
+
         if self.debug:
             logger.setLevel(logging.DEBUG)
+
+    def _find_project_root(self) -> Path:
+        """Find project root by looking for ravl_loops directory"""
+        current = self.loop_dir
+        while current.parent != current:
+            if (current / 'ravl_loops').exists():
+                return current
+            current = current.parent
+        return self.loop_dir
 
     def is_top_level_parent(self) -> bool:
         """
@@ -355,8 +380,15 @@ class LearningAccessHelper:
             sibling_name: Name of sibling loop
 
         Returns:
-            Sibling's model or None if not found
+            Sibling's model or None if not found or disabled
         """
+        # Check if sibling learning is disabled
+        disable_siblings = self.config_service.get_learning_config('disable_sibling_learning', [])
+        if disable_siblings is True or (isinstance(disable_siblings, list) and sibling_name in disable_siblings):
+            if self.debug:
+                logger.debug(f"Sibling learning disabled for {sibling_name}")
+            return None
+
         sibling_path = self.get_sibling_learning_path(sibling_name)
         if not sibling_path:
             if self.debug:
@@ -370,8 +402,14 @@ class LearningAccessHelper:
         Read parent loop's model (convenience method)
 
         Returns:
-            Parent's model or None if not found
+            Parent's model or None if not found or disabled
         """
+        # Check if parent learning is disabled
+        if self.config_service.get_learning_config('disable_parent_learning', False):
+            if self.debug:
+                logger.debug("Parent learning disabled by config")
+            return None
+
         parent_path = self.get_parent_learning_path()
         if not parent_path:
             if self.debug:
@@ -388,8 +426,15 @@ class LearningAccessHelper:
             child_name: Name of child loop
 
         Returns:
-            Child's model or None if not found
+            Child's model or None if not found or disabled
         """
+        # Check if child learning is disabled
+        disable_children = self.config_service.get_learning_config('disable_child_learning', [])
+        if disable_children is True or (isinstance(disable_children, list) and child_name in disable_children):
+            if self.debug:
+                logger.debug(f"Child learning disabled for {child_name}")
+            return None
+
         child_path = self.get_child_learning_path(child_name)
         if not child_path:
             if self.debug:

@@ -41,6 +41,7 @@ sys.path.insert(0, str(_common_dir / 'integrations'))
 sys.path.insert(0, str(_common_dir / 'cli'))
 
 from ravl.common.config.config_loader import get_max_tokens
+from ravl.common.config.config_service import ConfigService
 from llm_providers import LLMProviderFactory, LLMProvider
 from credential_validator import CredentialValidator
 from dsl_inference_engine import DSLInferenceEngine
@@ -206,6 +207,9 @@ class MarkdownRAVLExecutor:
         # Initialize SimpleCodeExecutor for general-purpose code execution
         self.simple_code_executor = SimpleCodeExecutor(self.loop_dir, self.project_root)
 
+        # Initialize ConfigService for configuration resolution
+        self.config_service = ConfigService(self.loop_dir, self.project_root)
+
         # Initialize orchestrators for RAVL phases
         self.reflection_orchestrator = ReflectionOrchestrator(
             loop_dir=self.loop_dir,
@@ -215,7 +219,8 @@ class MarkdownRAVLExecutor:
             llm_helper=self.llm_helper,
             context_builder=self.context_builder,
             should_skip_cache_fn=self._should_skip_cache,
-            check_has_domain_learnings_fn=self._check_has_domain_learnings
+            check_has_domain_learnings_fn=self._check_has_domain_learnings,
+            config_service=self.config_service
         )
 
         self.act_orchestrator = ActOrchestrator(

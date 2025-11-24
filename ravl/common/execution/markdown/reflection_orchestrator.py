@@ -30,6 +30,7 @@ if str(_config_dir) not in sys.path:
     sys.path.insert(0, str(_config_dir))
 
 from config_loader import get_max_tokens
+from config_service import ConfigService
 
 
 class ReflectionOrchestrator:
@@ -52,7 +53,8 @@ class ReflectionOrchestrator:
         llm_helper,
         context_builder,
         should_skip_cache_fn: Callable[[], tuple],
-        check_has_domain_learnings_fn: Callable[[], bool]
+        check_has_domain_learnings_fn: Callable[[], bool],
+        config_service: ConfigService = None
     ):
         """
         Initialize reflection orchestrator
@@ -66,9 +68,11 @@ class ReflectionOrchestrator:
             context_builder: LoopContextBuilder for loop discovery
             should_skip_cache_fn: Function to check if cache should be skipped
             check_has_domain_learnings_fn: Function to check for domain learnings
+            config_service: ConfigService for accessing configuration (optional)
         """
         self.loop_dir = loop_dir
         self.learnings_dir = learnings_dir
+        self.config_service = config_service
         self.context_vars = context_vars
         self.llm = llm_provider
         self.llm_helper = llm_helper
@@ -140,33 +144,69 @@ class ReflectionOrchestrator:
         log_execution("Discovering related loops...", status='debug', indent=4)
         related_loops = self.context_builder.discover_related_loops()
 
+        # Check if parent learning is disabled
+        disable_parent = self.config_service.get_learning_config('disable_parent_learning', False) if self.config_service else False
+
         if related_loops['parent']:
-            parent_learnings_dir = related_loops['parent'] / 'learnings'
-            reflection['learnings']['parent_loop'] = read_learnings_fn(parent_learnings_dir)
-            log_execution(f"Found parent loop learnings: {related_loops['parent'].name}", status='info', indent=4)
-            log_execution(f"  Parent learning path: {parent_learnings_dir}", status='debug', indent=6)
+            if disable_parent:
+                log_execution("Parent learning disabled by config", status='info', indent=4)
+            else:
+                parent_learnings_dir = related_loops['parent'] / 'learnings'
+                reflection['learnings']['parent_loop'] = read_learnings_fn(parent_learnings_dir)
+                log_execution(f"Found parent loop learnings: {related_loops['parent'].name}", status='info', indent=4)
+                log_execution(f"  Parent learning path: {parent_learnings_dir}", status='debug', indent=6)
+
+        # Check if child learning is disabled
+        disable_children = self.config_service.get_learning_config('disable_child_learning', []) if self.config_service else []
+        disable_all_children = disable_children is True
 
         if related_loops['children']:
-            reflection['learnings']['child_loops'] = {}
-            child_names = []
-            for child_dir in related_loops['children']:
-                child_name = child_dir.name
-                child_names.append(child_name)
-                child_learnings_dir = child_dir / 'learnings'
-                reflection['learnings']['child_loops'][child_name] = read_learnings_fn(child_learnings_dir)
-                log_execution(f"  Child: {child_name} at {child_learnings_dir}", status='debug', indent=6)
-            log_execution(f"Found {len(related_loops['children'])} child loop(s): {', '.join(child_names)}", status='info', indent=4)
+            if disable_all_children:
+                log_execution("All child learning disabled by config", status='info', indent=4)
+            else:
+                reflection['learnings']['child_loops'] = {}
+                child_names = []
+                for child_dir in related_loops['children']:
+                    child_name = child_dir.name
+
+                    # Check if this specific child is disabled
+                    if isinstance(disable_children, list) and child_name in disable_children:
+                        log_execution(f"Child learning disabled for {child_name}", status='info', indent=4)
+                        continue
+
+                    child_names.append(child_name)
+                    child_learnings_dir = child_dir / 'learnings'
+                    reflection['learnings']['child_loops'][child_name] = read_learnings_fn(child_learnings_dir)
+                    log_execution(f"  Child: {child_name} at {child_learnings_dir}", status='debug', indent=6)
+
+                if child_names:
+                    log_execution(f"Found {len(child_names)} child loop(s): {', '.join(child_names)}", status='info', indent=4)
+
+        # Check if sibling learning is disabled
+        disable_siblings = self.config_service.get_learning_config('disable_sibling_learning', []) if self.config_service else []
+        disable_all_siblings = disable_siblings is True
 
         if related_loops['siblings']:
-            reflection['learnings']['sibling_loops'] = {}
-            sibling_names = []
-            for sibling_dir in related_loops['siblings']:
-                sibling_name = sibling_dir.name
-                sibling_names.append(sibling_name)
-                sibling_learnings_dir = sibling_dir / 'learnings'
-                reflection['learnings']['sibling_loops'][sibling_name] = read_learnings_fn(sibling_learnings_dir)
-                log_execution(f"  Sibling: {sibling_name} at {sibling_learnings_dir}", status='debug', indent=6)
-            log_execution(f"Found {len(related_loops['siblings'])} sibling loop(s): {', '.join(sibling_names)}", status='info', indent=4)
+            if disable_all_siblings:
+                log_execution("All sibling learning disabled by config", status='info', indent=4)
+            else:
+                reflection['learnings']['sibling_loops'] = {}
+                sibling_names = []
+                for sibling_dir in related_loops['siblings']:
+                    sibling_name = sibling_dir.name
+
+                    # Check if this specific sibling is disabled
+                    if isinstance(disable_siblings, list) and sibling_name in disable_siblings:
+                        log_execution(f"Sibling learning disabled for {sibling_name}", status='info', indent=4)
+                        continue
+
+                    sibling_names.append(sibling_name)
+                    sibling_learnings_dir = sibling_dir / 'learnings'
+                    reflection['learnings']['sibling_loops'][sibling_name] = read_learnings_fn(sibling_learnings_dir)
+                    log_execution(f"  Sibling: {sibling_name} at {sibling_learnings_dir}", status='debug', indent=6)
+
+                if sibling_names:
+                    log_execution(f"Found {len(sibling_names)} sibling loop(s): {', '.join(sibling_names)}", status='info', indent=4)
         else:
             # Check if this is a top-level parent (would explain no siblings)
             from core.learning.learning_access_helper import LearningAccessHelper

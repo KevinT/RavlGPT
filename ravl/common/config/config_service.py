@@ -170,6 +170,29 @@ class ConfigService:
         """
         return self.get('allowed_dependencies', default=None, scope='all')
 
+    def get_learning_config(self, key: str, default: Any = None) -> Any:
+        """
+        Get learning configuration value with hierarchy resolution
+
+        Args:
+            key: Config key within learning section (e.g., 'disable_parent_learning')
+            default: Default value if not found
+
+        Returns:
+            Config value from learning.{key} with hierarchy resolution
+
+        Priority:
+        1. Loop config (learning.{key})
+        2. Parent config
+        3. Project config
+        4. Framework config
+        5. Default value
+        """
+        learning_config = self.get('learning', {}, scope='all')
+        if isinstance(learning_config, dict):
+            return learning_config.get(key, default)
+        return default
+
     def find_parent_loop(self) -> Optional[Path]:
         """
         Find parent loop directory
