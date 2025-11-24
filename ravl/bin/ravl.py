@@ -473,8 +473,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         if is_markdown_loop:
             # Delegate to markdown runner with merged config
-            # Save merged config temporarily
-            temp_config_file = wrapper_loop_dir / 'config' / '_merged_config.toml'
+            # Save merged config temporarily to learning directory
+            temp_config_file = learning_path / '_merged_config.toml'
             temp_config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(temp_config_file, 'w') as f:
                 yaml.dump(merged_config, f)
@@ -522,7 +522,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
                 raise
 
             # Write merged config to temporary file for loops that read from config_path
-            temp_config_file = wrapper_loop_dir / 'config' / '_merged_config.toml'
+            temp_config_file = learning_path / '_merged_config.toml'
             temp_config_file.parent.mkdir(parents=True, exist_ok=True)
             with open(temp_config_file, 'w') as f:
                 yaml.dump(merged_config, f)
