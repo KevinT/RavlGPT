@@ -234,14 +234,14 @@ class ConfigService:
         """
         parents = []
 
-        # Count occurrences of 'ravl_loops' in path
-        ravl_loops_indices = [
+        # Count occurrences of 'child_loops' in path
+        child_loops_indices = [
             i for i, part in enumerate(self.loop_dir.parts)
-            if part == 'ravl_loops'
+            if part == 'child_loops'
         ]
 
         # For each nesting level, extract parent path
-        for idx in reversed(ravl_loops_indices[:-1] if len(ravl_loops_indices) > 1 else []):
+        for idx in reversed(child_loops_indices[:-1] if len(child_loops_indices) > 1 else []):
             parent_path = Path(*self.loop_dir.parts[:idx])
             if parent_path.exists():
                 parents.append(parent_path)

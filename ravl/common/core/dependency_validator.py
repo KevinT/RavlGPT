@@ -154,16 +154,16 @@ class DependencyValidator:
         Returns:
             Path to parent loop or None if top-level
         """
-        # Count 'ravl_loops' in path
-        ravl_loops_indices = [
+        # Count 'child_loops' in path
+        child_loops_indices = [
             i for i, part in enumerate(self.loop_dir.parts)
-            if part == 'ravl_loops'
+            if part == 'child_loops'
         ]
 
-        if len(ravl_loops_indices) >= 2:
-            # Nested loop: parent is everything before the last 'ravl_loops'
-            last_ravl_loops_idx = ravl_loops_indices[-1]
-            parent_path = Path(*self.loop_dir.parts[:last_ravl_loops_idx])
+        if len(child_loops_indices) >= 1:
+            # Nested loop: parent is everything before the last 'child_loops'
+            last_child_loops_idx = child_loops_indices[-1]
+            parent_path = Path(*self.loop_dir.parts[:last_child_loops_idx])
             return parent_path
 
         return None

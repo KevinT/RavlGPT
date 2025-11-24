@@ -238,10 +238,15 @@ class ConfigDisplay:
             (project_root / 'ravl_loops' / 'config', 'Project config'),
         ]
 
-        # Check for parent config
-        parent_dir = loop_dir.parent
-        if parent_dir.name != 'ravl_loops':
-            config_locations.append((parent_dir / 'config', 'Parent loop config'))
+        # Check for parent configs (walk up through child_loops hierarchy)
+        current = loop_dir.parent
+        while current and current.name not in ('ravl_loops', ''):
+            if (current / 'config').exists():
+                config_locations.append((current / 'config', 'Parent loop config'))
+                break
+            if current.parent == current:  # Reached filesystem root
+                break
+            current = current.parent
 
         config_locations.append((loop_dir / 'config', 'Loop config'))
 
