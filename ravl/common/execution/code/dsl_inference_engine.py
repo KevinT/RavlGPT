@@ -533,13 +533,14 @@ class DSLInferenceEngine:
         if output['destination'] == 'stdout':
             guidance_lines.append(f"- Output results as {output['format'].upper()} to stdout")
         elif output['destination'] == 'file':
-            location = output.get('file_location', 'data/')
-            guidance_lines.append(f"- Save results to file in: {location} (use relative path, not absolute)")
+            location = output.get('file_location', 'learnings/data/')
+            guidance_lines.append(f"- Save results to file in: {location} (use relative path from project root, or use absolute paths for desktop/explicit locations)")
             if output['format']:
                 guidance_lines.append(f"- File format: {output['format'].upper()}")
 
         if output['include_metadata']:
             guidance_lines.append("- Include metadata: timestamp, record count, if data changed")
+            guidance_lines.append("- Save metadata to: learnings/state/metadata.json (relative to project root)")
 
         # Data structure guidance
         structure = dsl['data_structure']
@@ -559,11 +560,11 @@ class DSLInferenceEngine:
                 guidance_lines.append("- Implement change detection (hash-based comparison)")
                 guidance_lines.append("- Only save if data has changed from previous run")
                 guidance_lines.append("")
-                guidance_lines.append("**IMPORTANT - State File Placement:**")
-                guidance_lines.append("- Deliverable output files: Write to specified path (e.g., output/, data/)")
-                guidance_lines.append("- State/tracking files (status.json, hashes, etc.): Write to learning directory")
-                guidance_lines.append("- Use: Path(os.environ['RAVL_LEARNINGS_DIR']) / 'state' / 'status.json'")
-                guidance_lines.append("- Keep deliverables and state files separate")
+                guidance_lines.append("**IMPORTANT - File Placement:**")
+                guidance_lines.append("- Default output location: learnings/data/ (for task outputs)")
+                guidance_lines.append("- Metadata/state files: learnings/state/ (for tracking files)")
+                guidance_lines.append("- Explicit paths: Honor user requests (e.g., 'save to desktop' → ~/Desktop/)")
+                guidance_lines.append("- Keep outputs organized within learnings directory")
 
         # API guidance
         act_req = dsl['act_requirements']
