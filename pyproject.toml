@@ -61,7 +61,7 @@ all = [
 
 # CLI entry point - single command with subcommand routing
 [project.scripts]
-ravl = "bin.ravl:main"
+ravl = "ravl.bin.ravl:main"
 
 [project.urls]
 Homepage = "https://github.com/KevinT/RavlGPT"
@@ -74,15 +74,15 @@ Issues = "https://github.com/KevinT/RavlGPT/issues"
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-# Find all packages at the root level
+# Find packages under ravl namespace
 [tool.setuptools.packages.find]
 where = ["."]
-# Include everything by default (no include line needed)
+include = ["ravl", "ravl.*"]
 exclude = ["tests*", "build*", "dist*", ".*"]
 
-# Include all data files
+# Include all data files under ravl namespace
 [tool.setuptools.package-data]
-"*" = ["*.yml", "*.yaml", "*.md", "*.txt", "*.sh", "ravl_loops/**/*"]
+"ravl" = ["*.yml", "*.yaml", "*.toml", "*.md", "*.txt", "*.sh", "**/*.yml", "**/*.yaml", "**/*.toml", "**/*.md", "**/*.txt", "**/*.sh"]
 
 # UV-specific configuration
 [tool.uv]

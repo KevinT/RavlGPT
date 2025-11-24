@@ -18,7 +18,7 @@ import sys
 from unittest.mock import Mock, MagicMock
 
 # Add common to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'common'))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'ravl' / 'common'))
 
 from execution.markdown.markdown_parser import MarkdownParser
 

@@ -15,7 +15,7 @@ import yaml
 import sys
 
 # Add common to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'common'))
+sys.path.insert(0, str(Path(__file__).parent.parent / 'ravl' / 'common'))
 
 from core.learning.learning_access_helper import LearningAccessHelper
 from execution.markdown.loop_context_builder import LoopContextBuilder
