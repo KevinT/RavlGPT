@@ -126,6 +126,13 @@ class LoopLearningManager:
         with open(metrics_file, 'w', encoding='utf-8') as f:
             yaml.dump(metrics, f, default_flow_style=False)
 
+        # Extract and save known_loop_unknowns if present in verification
+        if 'known_loop_unknowns' in verification and verification['known_loop_unknowns']:
+            self._write_known_unknowns_markdown(
+                verification['known_loop_unknowns'],
+                current_dir / 'known_loop_unknowns.md'
+            )
+
     def _manage_recent_attempts(self) -> None:
         """
         Manage recent attempts numbering.
@@ -206,6 +213,13 @@ class LoopLearningManager:
         metrics_file = attempt_folder / 'domain_metrics.yml'
         with open(metrics_file, 'w', encoding='utf-8') as f:
             yaml.dump(metrics, f, default_flow_style=False)
+
+        # Also save markdown version of known_loop_unknowns to attempt folder
+        if 'known_loop_unknowns' in verification and verification['known_loop_unknowns']:
+            self._write_known_unknowns_markdown(
+                verification['known_loop_unknowns'],
+                attempt_folder / 'known_loop_unknowns.md'
+            )
 
     def save_run_insights(self, insights: Dict[str, Any], attempt_number: Optional[int] = None) -> None:
         """
@@ -405,3 +419,35 @@ class LoopLearningManager:
                 })
 
         return models
+
+    def _write_known_unknowns_markdown(
+        self,
+        questions: list,
+        filepath: Path
+    ) -> None:
+        """
+        Write known unknowns as markdown for user editing.
+
+        Args:
+            questions: List of question strings from verification
+            filepath: Where to save the markdown file
+        """
+        md_content = f"""# Known Loop Unknowns - Generated {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
+
+These are domain questions the loop identified during verification.
+Answer any/all questions below, then run the loop again.
+
+"""
+
+        for i, question in enumerate(questions, 1):
+            md_content += f"""## Question {i}
+{question}
+
+**Answer**: _[Fill in your answer here, or delete this question if not applicable]_
+
+---
+
+"""
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(md_content)

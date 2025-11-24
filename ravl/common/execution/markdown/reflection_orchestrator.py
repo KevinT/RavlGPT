@@ -106,6 +106,25 @@ class ReflectionOrchestrator:
         # Read this loop's learnings (both execution and domain)
         reflection['learnings']['this_loop'] = read_learnings_fn(self.learnings_dir)
 
+        # Parse answered unknowns from markdown files
+        answered_loop_unknowns = self._parse_answered_unknowns(
+            self.learnings_dir / 'loop_learning' / 'current_state' / 'known_loop_unknowns.md'
+        )
+        answered_execution_unknowns = self._parse_answered_unknowns(
+            self.learnings_dir / 'execution_learning' / 'current_state' / 'known_execution_unknowns.md'
+        )
+
+        # Add answered unknowns to reflection if present
+        if answered_loop_unknowns or answered_execution_unknowns:
+            reflection['answered_unknowns'] = {
+                'domain': answered_loop_unknowns,
+                'infrastructure': answered_execution_unknowns
+            }
+            if answered_loop_unknowns:
+                log_execution(f"Found {len(answered_loop_unknowns)} answered domain questions", status='info', indent=4)
+            if answered_execution_unknowns:
+                log_execution(f"Found {len(answered_execution_unknowns)} answered infrastructure questions", status='info', indent=4)
+
         # Report domain learning status to user
         if has_domain_learnings:
             log_execution("Found domain learnings from previous runs", status='info', indent=4)
@@ -266,3 +285,41 @@ class ReflectionOrchestrator:
 
         log_execution("Domain context synthesized", status='success')
         return domain_guidance
+
+    def _parse_answered_unknowns(self, md_file: Path) -> Dict[str, str]:
+        """
+        Parse markdown file to extract answered questions using LLM.
+
+        Args:
+            md_file: Path to known_unknowns.md file
+
+        Returns:
+            Dict mapping questions to answers
+        """
+        if not md_file.exists():
+            return {}
+
+        try:
+            content = md_file.read_text(encoding='utf-8')
+        except Exception as e:
+            log_message(f"Failed to read {md_file.name}: {e}", status='warning')
+            return {}
+
+        # Use LLM to parse markdown (as user specified)
+        prompt = f"""Extract answered questions from this markdown file.
+
+{content}
+
+Return JSON with question -> answer mapping.
+Only include questions that have actual answers (not "_[Fill in...]" or empty).
+
+{{"answers": {{"question text": "answer text"}}}}
+"""
+
+        try:
+            llm_response = self.llm.complete(prompt, max_tokens=1024)
+            parsed = self.llm_helper.parse_json_response(llm_response)
+            return parsed.get('answers', {})
+        except Exception as e:
+            log_message(f"Failed to parse {md_file.name}: {e}", status='warning')
+            return {}

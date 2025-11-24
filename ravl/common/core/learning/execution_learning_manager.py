@@ -133,6 +133,13 @@ class ExecutionLearningManager:
             with open(dsl_file, 'w', encoding='utf-8') as f:
                 json.dump(dsl, f, indent=2)
 
+        # Extract and save known_execution_unknowns if present in execution_result
+        if 'known_execution_unknowns' in execution_result and execution_result['known_execution_unknowns']:
+            self._write_known_unknowns_markdown(
+                execution_result['known_execution_unknowns'],
+                current_dir / 'known_execution_unknowns.md'
+            )
+
     def _manage_recent_attempts(self) -> None:
         """
         Manage recent attempts numbering.
@@ -227,6 +234,13 @@ class ExecutionLearningManager:
             hash_file = attempt_folder / 'spec_hash.txt'
             with open(hash_file, 'w', encoding='utf-8') as f:
                 f.write(spec_hash)
+
+        # Also save markdown version of known_execution_unknowns to attempt folder
+        if 'known_execution_unknowns' in execution_result and execution_result['known_execution_unknowns']:
+            self._write_known_unknowns_markdown(
+                execution_result['known_execution_unknowns'],
+                attempt_folder / 'known_execution_unknowns.md'
+            )
 
         return next_num
 
@@ -422,3 +436,35 @@ class ExecutionLearningManager:
                     })
 
         return attempts
+
+    def _write_known_unknowns_markdown(
+        self,
+        questions: list,
+        filepath: Path
+    ) -> None:
+        """
+        Write known unknowns as markdown for user editing.
+
+        Args:
+            questions: List of question strings from verification
+            filepath: Where to save the markdown file
+        """
+        md_content = f"""# Known Execution Unknowns - Generated {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
+
+These are infrastructure questions the loop identified during verification.
+Answer any/all questions below, then run the loop again.
+
+"""
+
+        for i, question in enumerate(questions, 1):
+            md_content += f"""## Question {i}
+{question}
+
+**Answer**: _[Fill in your answer here, or delete this question if not applicable]_
+
+---
+
+"""
+
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(md_content)

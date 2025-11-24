@@ -90,6 +90,11 @@ class VerificationManager:
         # EXECUTION VERIFICATION: Did code run successfully?
         execution_verification = self._verify_execution(action_result)
 
+        # Extract execution unknowns (infrastructure questions)
+        execution_unknowns = self._extract_execution_unknowns(action_result, execution_verification)
+        if execution_unknowns:
+            execution_verification['known_execution_unknowns'] = execution_unknowns
+
         # DOMAIN VERIFICATION: Did it solve the problem?
         domain_verification = self._verify_domain(action_result, current_reflection)
 
@@ -206,6 +211,75 @@ class VerificationManager:
             })
 
         return warnings
+
+    def _extract_execution_unknowns(
+        self,
+        action_result: Optional[Dict[str, Any]],
+        execution_verification: Dict[str, Any]
+    ) -> list:
+        """
+        Generate infrastructure/execution questions that would help the loop.
+
+        Only generates questions when there are execution issues or warnings.
+
+        Args:
+            action_result: Output from ACT phase
+            execution_verification: Results from execution verification
+
+        Returns:
+            List of question strings
+        """
+        # Only generate questions if there were issues or warnings
+        if not action_result or execution_verification.get('passed', False) and not execution_verification.get('has_warnings', False):
+            return []
+
+        execution_result = action_result.get('execution_result', {}) if action_result else {}
+        error_msg = execution_result.get('error', '') or execution_verification.get('error_message', '')
+        stderr = execution_result.get('stderr', '')
+        warnings = execution_verification.get('warnings', [])
+
+        # Build compact context for LLM
+        context_parts = []
+        if error_msg:
+            # Take last 500 chars of error for context
+            error_preview = error_msg[-500:] if len(error_msg) > 500 else error_msg
+            context_parts.append(f"Error: {error_preview}")
+        if warnings:
+            context_parts.append(f"Warnings: {len(warnings)} found")
+        if stderr and not error_msg:
+            # Only include stderr preview if no error already captured
+            stderr_preview = stderr[-300:] if len(stderr) > 300 else stderr
+            context_parts.append(f"Stderr: {stderr_preview}")
+
+        if not context_parts:
+            return []
+
+        context = "\n".join(context_parts)
+
+        # Generate questions via LLM (fast, short response)
+        prompt = f"""Based on this code execution result:
+
+{context}
+
+Identify 2-3 infrastructure questions that would help:
+- Missing dependencies or environment configuration
+- Unclear API limits, rate limits, or constraints
+- Authentication or credential requirements
+- Performance, timeout, or resource considerations
+
+Return ONLY a JSON array of question strings. Be specific and actionable.
+
+{{"known_execution_unknowns": ["question 1?", "question 2?"]}}
+"""
+
+        try:
+            llm_response = self.llm.complete(prompt, max_tokens=512)
+            parsed = self.llm_helper.parse_json_response(llm_response)
+            questions = parsed.get('known_execution_unknowns', [])
+            return questions[:5]  # Cap at 5 questions
+        except Exception as e:
+            log_message(f"Failed to extract execution unknowns: {e}", status='warning')
+            return []
 
     def _verify_domain(
         self,

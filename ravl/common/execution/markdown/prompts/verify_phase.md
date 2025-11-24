@@ -61,6 +61,21 @@ Additionally, analyze whether regenerating the code would likely improve outcome
 4. **One-off failures** with variable errors = May be transient → DON'T REGENERATE (yet)
 5. **First or second failure** = Give code benefit of doubt → DON'T REGENERATE (yet)
 
+## Known Unknowns (Domain Questions)
+
+While verifying, identify 3-5 **domain questions** that would help this loop improve:
+- **Business context** you lack (e.g., "What defines healthcare delivery for this team?")
+- **Missing information** affecting quality assessment (e.g., "What is the expected frequency of facts?")
+- **Unclear requirements** that could lead to false positives/negatives
+- **Domain concepts** needing clarification (e.g., "What qualifies as 'recent activity'?")
+
+**DO NOT include**:
+- Code execution issues (imports, syntax, runtime errors)
+- Framework or RAVL implementation questions
+- Implementation approach details (that's for ACT phase)
+
+These questions will be saved for human review to improve loop definitions over time.
+
 ## SPECIAL CASE: Exploratory/Discovery Loops
 
 **CRITICAL**: Some loops are designed for **progressive discovery** - each run should explore something NEW, not repeat the same exploration.
@@ -93,6 +108,11 @@ Respond in JSON format:
   "overall_passed": true/false,
   "suggestions": ["improvement 1", "improvement 2", ...],
   "recommend_code_regeneration": true/false,
-  "regeneration_rationale": "Brief explanation of why regeneration would/wouldn't help"
+  "regeneration_rationale": "Brief explanation of why regeneration would/wouldn't help",
+  "known_loop_unknowns": [
+    "Specific domain question 1?",
+    "Specific domain question 2?",
+    "Specific domain question 3?"
+  ]
 }}
 ```
