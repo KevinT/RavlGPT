@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# RAVL Framework Wrapper
+# This script ensures the ravl.py entry point is called with the correct Python interpreter
+
+# Resolve the actual location of this script (following symlinks)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$( readlink "$SOURCE" )"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+# Call ravl.py with python3
+exec python3 "${SCRIPT_DIR}/ravl.py" "$@"

@@ -28,24 +28,18 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
-# Add common directory and .ravl root to path
-_script_dir = Path(__file__).parent
-_common_dir = _script_dir.parent
-_ravl_root = _common_dir.parent
-sys.path.insert(0, str(_ravl_root))  # Add .ravl root so 'common' module is importable
-sys.path.insert(0, str(_common_dir))
-sys.path.insert(0, str(_common_dir / 'utils'))
-sys.path.insert(0, str(_common_dir / 'config'))
+# Bootstrap: Add framework to path
+# __file__ is .ravl/ravl/common/llm/run_markdown_ravl.py
+# parent.parent.parent.parent gives .ravl/
+_ravl_root = Path(__file__).resolve().parent.parent.parent.parent
+sys.path.insert(0, str(_ravl_root))
 
-from ravl_runner import RAVLRunner
-from execution.markdown.markdown_ravl_executor import MarkdownRAVLExecutor
-from constants import DEFAULT_EXECUTION_TIMEOUT
-from file_utils import load_toml_file
-from logging_utils import log_message
-
-# Add CLI directory to path for ConfigDisplay
-sys.path.insert(0, str(_script_dir.parent / 'cli'))
-from config_display import ConfigDisplay
+from ravl.common.ravl_runner import RAVLRunner
+from ravl.common.execution.markdown.markdown_ravl_executor import MarkdownRAVLExecutor
+from ravl.common.utils.constants import DEFAULT_EXECUTION_TIMEOUT
+from ravl.common.utils.file_utils import load_toml_file
+from ravl.common.utils.logging_utils import log_message
+from ravl.common.cli.config_display import ConfigDisplay
 
 
 class ConfigBasedRAVLRunner:
