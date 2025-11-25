@@ -241,9 +241,9 @@ class VenvManager:
     def _is_framework_installed(self) -> bool:
         """Check if RAVL framework is installed in this venv"""
         try:
-            # Check if anthropic (key framework dependency) is importable
+            # Check if ravl package is importable (verifies framework is installed)
             result = subprocess.run(
-                [str(self.python_executable), "-c", "import anthropic"],
+                [str(self.python_executable), "-c", "import ravl.common.llm.llm_providers"],
                 capture_output=True,
                 timeout=5
             )
