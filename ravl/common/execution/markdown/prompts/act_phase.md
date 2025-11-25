@@ -73,9 +73,25 @@ Your output will be verified against these criteria:
 
 ## CRITICAL: Google Workspace API Authentication
 
-**IF YOUR TASK INVOLVES GOOGLE WORKSPACE APIs (Docs, Sheets, Drive, etc.):**
+**WHEN YOU NEED THIS:**
+- Your code makes API calls to Google services using libraries like:
+  - `googleapiclient.discovery.build('docs', 'v1', ...)` (Google Docs API)
+  - `googleapiclient.discovery.build('sheets', 'v4', ...)` (Google Sheets API)
+  - `googleapiclient.discovery.build('drive', 'v3', ...)` (Google Drive API)
+- You're fetching documents FROM Google Workspace via API (not local files)
+- You're reading/writing Google Sheets via API (not exported CSV files)
 
-You MUST authenticate using the `GOOGLE_CREDENTIALS` environment variable. This is NON-NEGOTIABLE.
+**WHEN YOU DON'T NEED THIS:**
+- ❌ Reading local files that happen to be in `~/Library/CloudStorage/GoogleDrive-...` paths
+  - These are LOCAL files (Google Drive for Desktop mount point)
+  - Use normal Python file I/O: `open()`, `Path().read_text()`, etc.
+  - NO Google credentials needed for local file access
+- ❌ Fetching content from HTTP/HTTPS URLs (use `requests` library)
+- ❌ Reading/writing local CSV, JSON, YAML, or JSONL files
+
+**IF YOUR TASK REQUIRES GOOGLE WORKSPACE API CALLS:**
+
+You MUST authenticate using the `GOOGLE_CREDENTIALS` environment variable.
 
 **WRONG methods (DO NOT USE):**
 - `InstalledAppFlow.from_client_secrets_file()` ❌
