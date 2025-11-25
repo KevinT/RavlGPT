@@ -372,8 +372,8 @@ class LoopLearningManager:
         if not model_file.exists():
             return None
 
-        with open(model_file, 'rb') as f:
-            return tomllib.load(f)
+        with open(model_file, 'r', encoding='utf-8') as f:
+            return yaml.safe_load(f)
 
     def save_model(self, model: Dict[str, Any]) -> None:
         """
@@ -411,8 +411,8 @@ class LoopLearningManager:
 
         models = []
         for model_file in model_files:
-            with open(model_file, 'rb') as f:
-                model = tomllib.load(f)
+            with open(model_file, 'r', encoding='utf-8') as f:
+                model = yaml.safe_load(f)
                 models.append({
                     'timestamp': model_file.stem.replace('model-', ''),
                     'model': model
