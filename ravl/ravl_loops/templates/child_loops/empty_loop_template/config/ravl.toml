@@ -3,6 +3,22 @@ type = "markdown"
 
 [template_variables]
 
+# Learning discovery control (optional)
+# Uncomment to disable specific learning sources for performance, isolation, or debugging
+# [learning]
+#   # Disable parent learning (loop won't see parent's model)
+#   disable_parent_learning = true
+#
+#   # Disable specific children by name
+#   disable_child_learning = ["slow_child", "experimental_child"]
+#   # Or disable all children
+#   # disable_child_learning = true
+#
+#   # Disable specific siblings by name
+#   disable_sibling_learning = ["heavy_sibling"]
+#   # Or disable all siblings
+#   # disable_sibling_learning = true
+
 [allowed_dependencies.anthropic]
 min_version = "0.25.0"
 max_version = "1.0.0"

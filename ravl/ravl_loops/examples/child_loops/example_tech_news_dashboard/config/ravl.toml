@@ -3,6 +3,13 @@ type = "example"
 loop_type = "markdown"
 execution_timeout = 180
 
+# Learning discovery control (optional)
+# Example: Disable slow children during development
+# [learning]
+#   disable_child_learning = ["slow_child"]  # List specific children
+#   # Or disable all children: disable_child_learning = true
+#   # Or disable siblings: disable_sibling_learning = true
+
 [allowed_dependencies.requests]
 min_version = "2.31.0"
 max_version = "3.0.0"

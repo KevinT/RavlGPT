@@ -13,6 +13,7 @@ Complete reference for configuring RAVL loops at every level: CLI flags, configu
 | Quiet output | `--quiet` | N/A | N/A | `false` |
 | Timeout | `--timeout SECONDS` | N/A | N/A | `300` |
 | Deep learning | `--no-deep-learning` | N/A | N/A | `true` |
+| Learning discovery | N/A | `[learning]` section | N/A | All enabled |
 | Dependencies | N/A | `allowed_dependencies:` | N/A | Framework defaults |
 | LLM provider | N/A | N/A | `ANTHROPIC_API_KEY`, etc. | N/A |
 | Google credentials | N/A | N/A | `GOOGLE_CREDENTIALS` | N/A |
@@ -371,6 +372,62 @@ ravl my_loop --data-source https://api.example.com --start-date 2024-06-01
 ```
 
 Variables are substituted into the markdown loop definition.
+
+### Learning Discovery Control
+
+Loops automatically discover and load learning from parent, child, and sibling loops. You can disable specific learning sources for performance, isolation, or debugging:
+
+```toml
+# In config/ravl.toml
+[learning]
+  # Disable parent learning (loop won't see parent's model)
+  disable_parent_learning = true
+
+  # Disable specific children (list of child loop names)
+  disable_child_learning = ["slow_child", "experimental_child"]
+
+  # Or disable all children
+  disable_child_learning = true
+
+  # Disable specific siblings (list of sibling loop names)
+  disable_sibling_learning = ["heavy_sibling", "deprecated_sibling"]
+
+  # Or disable all siblings
+  disable_sibling_learning = true
+```
+
+**Use cases:**
+
+- **Performance**: Skip expensive learning loads for large parent/sibling models
+- **Isolation**: Test loops without parent/sibling influence
+- **Debugging**: Disable specific learning sources to isolate issues
+- **Circular dependencies**: Break learning cycles by disabling specific sources
+
+**Examples:**
+
+```toml
+# Example 1: Child loop that doesn't need parent's learning
+[learning]
+  disable_parent_learning = true
+
+# Example 2: Parent loop that ignores specific slow children
+[learning]
+  disable_child_learning = ["ml_heavy_child", "slow_analytics_child"]
+
+# Example 3: Loop that runs in isolation (testing)
+[learning]
+  disable_parent_learning = true
+  disable_child_learning = true
+  disable_sibling_learning = true
+
+# Example 4: Disable one problematic sibling
+[learning]
+  disable_sibling_learning = ["experimental_sibling"]
+```
+
+**Config inheritance:**
+
+Learning disable settings follow the standard config hierarchy (loop → parent → project → framework), so parent loops can set defaults that children inherit.
 
 ### Runtime Options
 
