@@ -1015,9 +1015,13 @@ def main():
     """Main entry point with command routing"""
 
     # Capture execution context for child loops to inherit
-    # Child loops will use the same command/interpreter/context as parent
-    os.environ['RAVL_COMMAND'] = sys.argv[0]  # How ravl was invoked (e.g., './ravl', 'ravl', etc.)
-    os.environ['RAVL_PYTHON'] = sys.executable  # Python interpreter being used
+    # Child loops will use the same Python interpreter and ravl script as parent
+    # This ensures they run in the same venv/context
+    framework_root = Path(__file__).resolve().parent.parent.parent  # .ravl directory
+    ravl_py_path = framework_root / 'ravl' / 'bin' / 'ravl.py'
+
+    os.environ['RAVL_COMMAND'] = sys.executable  # Python interpreter (respects venv)
+    os.environ['RAVL_SCRIPT'] = str(ravl_py_path)  # Path to ravl.py script
     os.environ['RAVL_CWD'] = os.getcwd()  # Working directory
 
     # Route subcommands before argument parsing

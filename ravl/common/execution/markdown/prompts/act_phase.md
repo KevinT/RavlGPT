@@ -220,20 +220,19 @@ def run_child_loop(qualified_loop_name):
     """Execute a child loop using inherited environment"""
 
     # Get execution context from environment (set by parent ravl process)
-    # RAVL_COMMAND contains the exact command used to invoke the parent (e.g., './ravl', 'ravl', '/path/to/ravl')
-    ravl_command = os.environ.get('RAVL_COMMAND', './ravl')  # Fallback to project symlink
+    # RAVL_COMMAND: Python interpreter (ensures same venv)
+    # RAVL_SCRIPT: Path to ravl.py script
+    python_cmd = os.environ.get('RAVL_COMMAND', 'python3')
+    ravl_script = os.environ.get('RAVL_SCRIPT', './ravl')
 
-    # Clean venv variable from environment to prevent conflicts
-    # Leave PATH intact so ravl wrapper can find python3
+    # Use parent's environment (already has correct venv)
     env = os.environ.copy()
-    if 'VIRTUAL_ENV' in env:
-        del env['VIRTUAL_ENV']
 
     try:
-        # Call ravl exactly as parent was called, just with different loop name
-        # This ensures child runs in same context (venv, Python interpreter, working dir)
+        # Call ravl.py with same Python interpreter as parent
+        # This ensures child runs in same venv/context as parent
         result = subprocess.run(
-            [ravl_command, qualified_loop_name],
+            [python_cmd, ravl_script, qualified_loop_name],
             env=env,
             capture_output=True,
             text=True,
