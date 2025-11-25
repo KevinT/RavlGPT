@@ -172,66 +172,99 @@ response = client.chat.completions.create(...)
 
 **IF YOUR TASK INVOLVES RUNNING CHILD LOOPS AS AN ORCHESTRATOR:**
 
-**YOU MUST FIND PROJECT ROOT CORRECTLY** - Generated code executes in a temporary directory, so `Path(__file__).parent` resolves incorrectly.
+### Child Loop Metadata
 
-**WRONG methods (DO NOT USE):**
+Child loop paths are provided in the context above under "Child Loop Configuration".
+**DO NOT generate path discovery code** - use the CHILD_LOOPS constant directly:
+
 ```python
-# ❌ WRONG - resolves to temp execution directory, not project root
 from pathlib import Path
-project_root = Path(__file__).parent
-ravl_script = project_root / 'ravl'  # This path doesn't exist!
+import json
+from datetime import datetime
+
+# CHILD_LOOPS constant is provided in context (see "Child Loop Configuration" above)
+# Copy it from context into your code
+
+# Example usage:
+for child_dir_name, metadata in CHILD_LOOPS.items():
+    qualified_name = metadata['qualified_name']  # Full dotted name for ravl command
+    execution_history_file = metadata['execution_history']
+
+    # Check execution history
+    if execution_history_file.exists():
+        with open(execution_history_file, 'r') as f:
+            data = json.load(f)
+
+        last_run = datetime.fromisoformat(data.get('timestamp'))
+        success = data.get('success', False)
+
+        # Decide whether to run child loop based on history
+        if success and (datetime.now() - last_run).days < 1:
+            print(f"⏭️  Skipping {{qualified_name}} - ran successfully <24h ago")
+            continue
+
+    # Run child loop using qualified name (see below)
+    run_child_loop(qualified_name)
 ```
 
-**CORRECT method (YOU MUST USE THIS):**
+### Executing Child Loops
+
+Use subprocess to call ravl.py directly (path provided in RAVL_PY_PATH constant):
+
 ```python
 import subprocess
 import os
+import sys
 from pathlib import Path
 
-# Find project root by looking for .ravl directory marker
-def get_project_root():
-    current = Path(__file__).resolve().parent
-    while current != current.parent:
-        if (current / '.ravl').exists():
-            return current
-        current = current.parent
-    return Path.cwd()
+def run_child_loop(qualified_loop_name):
+    """Execute a child loop using ravl.py Python script"""
 
-project_root = get_project_root()
-ravl_script = project_root / 'ravl'
+    # RAVL_PY_PATH constant is provided in context (see "Child Loop Configuration" above)
+    # No need to discover it - just use the constant directly
 
-# Clean venv from environment (generated code may run in venv, but ravl script needs framework env)
-env = os.environ.copy()
-if 'VIRTUAL_ENV' in env:
-    del env['VIRTUAL_ENV']
-    # Remove venv paths from PATH
-    venv_path = env.get('VIRTUAL_ENV', '')
-    path_parts = env.get('PATH', '').split(os.pathsep)
-    env['PATH'] = os.pathsep.join([p for p in path_parts if not p.startswith(venv_path)])
+    # Clean venv from environment
+    env = os.environ.copy()
+    if 'VIRTUAL_ENV' in env:
+        del env['VIRTUAL_ENV']
+        venv_path = env.get('VIRTUAL_ENV', '')
+        path_parts = env.get('PATH', '').split(os.pathsep)
+        env['PATH'] = os.pathsep.join([p for p in path_parts if not p.startswith(venv_path)])
 
-# Run child loop with proper error handling
-result = subprocess.run(
-    [str(ravl_script), 'child_loop_name'],
-    cwd=str(project_root),
-    env=env,
-    capture_output=True,
-    text=True,
-    timeout=300
-)
+    try:
+        # Call ravl.py using provided path (not bash wrapper)
+        result = subprocess.run(
+            [sys.executable, str(RAVL_PY_PATH), qualified_loop_name],
+            cwd=str(RAVL_PY_PATH.parent.parent.parent.parent),  # project root
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
 
-if result.returncode != 0:
-    print(f"Warning: Child loop failed with exit code {{result.returncode}}")
-    print(f"Error output: {{result.stderr}}")
-    # Continue with partial data or generate status report
-else:
-    print(f"✓ Child loop completed successfully")
+        if result.returncode != 0:
+            print(f"❌ Child loop {{qualified_loop_name}} failed (exit {{result.returncode}})")
+            print(f"Error: {{result.stderr[:500]}}")
+            return False
+        else:
+            print(f"✅ Child loop {{qualified_loop_name}} completed successfully")
+            return True
+
+    except subprocess.TimeoutExpired:
+        print(f"❌ Child loop {{qualified_loop_name}} timed out after 10 minutes")
+        return False
+    except Exception as e:
+        print(f"❌ Error executing {{qualified_loop_name}}: {{str(e)[:200]}}")
+        return False
 ```
 
 **Why this pattern is REQUIRED:**
-- Walk up directories to find `.ravl/` marker for true project root
-- Clean virtual environment from subprocess env to avoid dependency conflicts
-- Always handle child loop failures gracefully (generate partial reports, not hard exits)
-- Enables orchestrator loops to coordinate child loops reliably
+- All paths known at generation time - zero runtime discovery needed
+- RAVL_PY_PATH provided as constant (same script executing the orchestrator)
+- qualified_name handles infinitely nested child loops (e.g., "parent.child.grandchild")
+- Calls ravl.py Python script directly (avoids bash wrapper issues)
+- Handles virtual environment cleanup correctly
+- Graceful error handling for child loop failures
 
 ## CODE GENERATION FORMAT
 

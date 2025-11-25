@@ -156,6 +156,50 @@ class LoopContextBuilder:
 
         return learnings
 
+    def build_child_loop_metadata(self) -> Dict[str, Dict[str, str]]:
+        """
+        Build metadata for child loops (names and learning paths)
+
+        Returns:
+            Dict mapping child loop directory name to metadata:
+            {
+                'child1': {
+                    'qualified_name': 'parent.child1',  # Full dotted name for ravl command
+                    'learning_path': '/path/to/learnings',
+                    'execution_history_file': '/path/to/learnings/execution_learning/latest_run.json'
+                }
+            }
+        """
+        related = self.discover_related_loops()
+        child_metadata = {}
+
+        # Import LoopDiscovery to build qualified names
+        _cli_dir = Path(__file__).parent.parent.parent / 'cli'
+        if str(_cli_dir) not in sys.path:
+            sys.path.insert(0, str(_cli_dir))
+        from loop_discovery import LoopDiscovery
+
+        # Create discovery instance to build namespace
+        discovery = LoopDiscovery(project_root=self.loop_dir.parent.parent)
+
+        for child_loop_dir in related['children']:
+            # Get child loop directory name
+            child_dir_name = child_loop_dir.name
+
+            # Build full qualified name (e.g., "parent.child" or "grandparent.parent.child")
+            qualified_name = discovery._build_namespace_from_path(child_loop_dir)
+
+            # Calculate learning path (follows RAVL hierarchy)
+            child_learning_path = self.learnings_dir / 'child_learnings' / child_dir_name / 'learnings'
+
+            child_metadata[child_dir_name] = {
+                'qualified_name': qualified_name,
+                'learning_path': str(child_learning_path),
+                'execution_history_file': str(child_learning_path / 'execution_learning' / 'latest_run.json')
+            }
+
+        return child_metadata
+
     def build_context_summary(self, reflection: Dict[str, Any]) -> str:
         """
         Build context summary from reflection and loop discovery
@@ -202,5 +246,33 @@ class LoopContextBuilder:
         # Add reflection data
         if reflection.get('learnings'):
             context_parts.append(f"\n## Previous Learnings\n{reflection['learnings']}")
+
+        # Add child loop metadata for orchestrator loops
+        child_metadata = self.build_child_loop_metadata()
+        if child_metadata:
+            # Get ravl.py path (known since we're executing via it right now)
+            # Import here to avoid circular dependencies
+            _cli_dir = Path(__file__).parent.parent.parent / 'cli'
+            if str(_cli_dir) not in sys.path:
+                sys.path.insert(0, str(_cli_dir))
+            from ravl_cli_base import RAVLCLIBase
+
+            framework_root = RAVLCLIBase.find_framework_root()
+            ravl_py_path = framework_root / 'ravl' / 'bin' / 'ravl.py'
+
+            context_parts.append("\n## Child Loop Configuration")
+            context_parts.append("```python")
+            context_parts.append("# Child loop metadata (generated at code generation time)")
+            context_parts.append(f"RAVL_PY_PATH = Path('{ravl_py_path}')")
+            context_parts.append("")
+            context_parts.append("CHILD_LOOPS = {")
+            for child_dir_name, metadata in child_metadata.items():
+                context_parts.append(f"    '{child_dir_name}': {{")
+                context_parts.append(f"        'qualified_name': '{metadata['qualified_name']}',")
+                context_parts.append(f"        'learning_path': Path('{metadata['learning_path']}'),")
+                context_parts.append(f"        'execution_history': Path('{metadata['execution_history_file']}')")
+                context_parts.append("    },")
+            context_parts.append("}")
+            context_parts.append("```")
 
         return '\n'.join(context_parts)
