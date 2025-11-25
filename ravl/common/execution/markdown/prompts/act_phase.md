@@ -223,13 +223,11 @@ def run_child_loop(qualified_loop_name):
     # RAVL_COMMAND contains the exact command used to invoke the parent (e.g., './ravl', 'ravl', '/path/to/ravl')
     ravl_command = os.environ.get('RAVL_COMMAND', './ravl')  # Fallback to project symlink
 
-    # Clean venv from environment to prevent conflicts
+    # Clean venv variable from environment to prevent conflicts
+    # Leave PATH intact so ravl wrapper can find python3
     env = os.environ.copy()
     if 'VIRTUAL_ENV' in env:
         del env['VIRTUAL_ENV']
-        venv_path = env.get('VIRTUAL_ENV', '')
-        path_parts = env.get('PATH', '').split(os.pathsep)
-        env['PATH'] = os.pathsep.join([p for p in path_parts if not p.startswith(venv_path)])
 
     try:
         # Call ravl exactly as parent was called, just with different loop name
