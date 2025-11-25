@@ -179,6 +179,14 @@ class SimpleCodeExecutor:
                 env['RAVL_PY_PATH'] = str(ravl_py_path)
                 env['RAVL_SCRIPT_PATH'] = str(ravl_py_path)  # Also set this name for compatibility
 
+                # Add framework root to PYTHONPATH for absolute imports
+                # This allows generated code to do: from ravl.common.llm.llm_providers import ...
+                current_pythonpath = env.get('PYTHONPATH', '')
+                if current_pythonpath:
+                    env['PYTHONPATH'] = f"{framework_root}:{current_pythonpath}"
+                else:
+                    env['PYTHONPATH'] = str(framework_root)
+
                 # Load .env file from project root and add to environment
                 project_root = self.project_root
                 env_vars = RAVLRunner.load_env_file(project_root)
