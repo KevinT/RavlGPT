@@ -33,6 +33,7 @@ import json
 import inspect
 import os
 import yaml
+import tomli_w
 from pathlib import Path
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional
@@ -476,8 +477,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
             # Save merged config temporarily to learning directory
             temp_config_file = learning_path / '_merged_config.toml'
             temp_config_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(temp_config_file, 'w') as f:
-                yaml.dump(merged_config, f)
+            with open(temp_config_file, 'wb') as f:
+                tomli_w.dump(merged_config, f)
 
             # Run markdown loop with final loop dir but wrapper learning path
             import subprocess
@@ -524,8 +525,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
             # Write merged config to temporary file for loops that read from config_path
             temp_config_file = learning_path / '_merged_config.toml'
             temp_config_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(temp_config_file, 'w') as f:
-                yaml.dump(merged_config, f)
+            with open(temp_config_file, 'wb') as f:
+                tomli_w.dump(merged_config, f)
 
             try:
                 # Initialize loop with wrapper's learning path and merged config
