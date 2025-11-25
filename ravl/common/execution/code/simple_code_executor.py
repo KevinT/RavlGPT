@@ -171,6 +171,13 @@ class SimpleCodeExecutor:
                 env['RAVL_LEARNINGS_DIR'] = str(learnings_dir)
                 env['RAVL_LOOP_DIR'] = str(self.loop_dir)
 
+                # Provide ravl.py path for child loop execution
+                # Generated code may need to call ravl.py to execute child loops
+                from ravl_cli_base import RAVLCLIBase
+                framework_root = RAVLCLIBase.find_framework_root()
+                ravl_py_path = framework_root / 'ravl' / 'bin' / 'ravl.py'
+                env['RAVL_PY_PATH'] = str(ravl_py_path)
+
                 # Load .env file from project root and add to environment
                 project_root = self.project_root
                 env_vars = RAVLRunner.load_env_file(project_root)
