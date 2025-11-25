@@ -177,6 +177,7 @@ class SimpleCodeExecutor:
                 framework_root = RAVLCLIBase.find_framework_root()
                 ravl_py_path = framework_root / 'ravl' / 'bin' / 'ravl.py'
                 env['RAVL_PY_PATH'] = str(ravl_py_path)
+                env['RAVL_SCRIPT_PATH'] = str(ravl_py_path)  # Also set this name for compatibility
 
                 # Load .env file from project root and add to environment
                 project_root = self.project_root
