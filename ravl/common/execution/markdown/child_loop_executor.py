@@ -98,6 +98,9 @@ class ChildLoopExecutor:
             framework_root = RAVLCLIBase.find_framework_root()
             ravl_cmd = [str(framework_root / 'ravl' / 'bin' / 'ravl'), child_name] + child_args
 
+            # Find project root for subprocess cwd
+            project_root = RAVLCLIBase.find_project_root(self.loop_dir)
+
             try:
                 result = subprocess.run(
                     ravl_cmd,
