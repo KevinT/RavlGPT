@@ -435,17 +435,17 @@ class LoopDiscovery:
                     external_config = tomllib.load(f) or {}
             except tomllib.TOMLDecodeError as e:
                 from logging_utils import log_message
-                log_message(f"YAML syntax error in config file: {config_file}", status='error')
+                log_message(f"TOML syntax error in config file: {config_file}", status='error')
                 if hasattr(e, 'problem_mark'):
                     log_message(f"Error at line {e.problem_mark.line + 1}, column {e.problem_mark.column + 1}", status='error', indent=4)
                     if hasattr(e, 'problem'):
                         log_message(f"Problem: {e.problem}", status='error', indent=4)
                 log_message(f"Specified in delegation from loop: {wrapper_dir.name}", status='error')
-                log_message(f"Fix: Check YAML syntax in the config file", status='error')
+                log_message(f"Fix: Check TOML syntax in the config file", status='error')
                 raise ValueError(
-                    f"Invalid YAML syntax in config file: {config_file}\n"
+                    f"Invalid TOML syntax in config file: {config_file}\n"
                     f"  Specified in delegation from: {wrapper_dir.name}/config/ravl.toml\n"
-                    f"  Check the file for YAML syntax errors (indentation, colons, etc.)"
+                    f"  Check the file for TOML syntax errors (indentation, brackets, quotes, etc.)"
                 )
             except Exception as e:
                 from logging_utils import log_message
