@@ -31,6 +31,12 @@ from typing import Dict, List, Any, Optional, Tuple
 import hashlib
 import os
 
+# TOML parsing (tomllib is built-in for Python 3.11+, tomli for older versions)
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
 from ravl.common.config.config_loader import get_max_tokens
 
 # Add paths to find relocated modules
@@ -90,7 +96,6 @@ class DataIngressExecutor:
                 'strategy_cache_file': 'learnings/current_strategy.json'
             }
 
-        import toml
         with open(self.config_file, 'rb') as f:
             return tomllib.load(f) or {}
 
