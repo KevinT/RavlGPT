@@ -1014,6 +1014,12 @@ class RAVLUniversalRunner(RAVLCLIBase):
 def main():
     """Main entry point with command routing"""
 
+    # Capture execution context for child loops to inherit
+    # Child loops will use the same command/interpreter/context as parent
+    os.environ['RAVL_COMMAND'] = sys.argv[0]  # How ravl was invoked (e.g., './ravl', 'ravl', etc.)
+    os.environ['RAVL_PYTHON'] = sys.executable  # Python interpreter being used
+    os.environ['RAVL_CWD'] = os.getcwd()  # Working directory
+
     # Route subcommands before argument parsing
     # This allows --list, --clean, etc. to work identically in local and UV-installed versions
     if len(sys.argv) > 1:

@@ -262,8 +262,13 @@ class LoopContextBuilder:
 
             context_parts.append("\n## Child Loop Configuration")
             context_parts.append("```python")
-            context_parts.append("# Child loop metadata (generated at code generation time)")
-            context_parts.append(f"RAVL_PY_PATH = Path('{ravl_py_path}')")
+            context_parts.append("# Child loop execution - use inherited environment")
+            context_parts.append("# The parent ravl process sets these environment variables:")
+            context_parts.append("# - RAVL_COMMAND: The command used to invoke ravl (e.g., './ravl', 'ravl', '/usr/local/bin/ravl')")
+            context_parts.append("# - RAVL_PYTHON: The Python interpreter being used")
+            context_parts.append("# - RAVL_CWD: The working directory")
+            context_parts.append("#")
+            context_parts.append("# Use os.environ.get('RAVL_COMMAND') to execute child loops")
             context_parts.append("")
             context_parts.append("CHILD_LOOPS = {")
             for child_dir_name, metadata in child_metadata.items():

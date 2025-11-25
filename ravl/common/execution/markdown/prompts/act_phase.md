@@ -209,21 +209,21 @@ for child_dir_name, metadata in CHILD_LOOPS.items():
 
 ### Executing Child Loops
 
-Use subprocess to call ravl.py directly (path provided in RAVL_PY_PATH constant):
+Use the RAVL_COMMAND environment variable to execute child loops in the same context as the parent:
 
 ```python
 import subprocess
 import os
-import sys
 from pathlib import Path
 
 def run_child_loop(qualified_loop_name):
-    """Execute a child loop using ravl.py Python script"""
+    """Execute a child loop using inherited environment"""
 
-    # RAVL_PY_PATH constant is provided in context (see "Child Loop Configuration" above)
-    # No need to discover it - just use the constant directly
+    # Get execution context from environment (set by parent ravl process)
+    # RAVL_COMMAND contains the exact command used to invoke the parent (e.g., './ravl', 'ravl', '/path/to/ravl')
+    ravl_command = os.environ.get('RAVL_COMMAND', './ravl')  # Fallback to project symlink
 
-    # Clean venv from environment
+    # Clean venv from environment to prevent conflicts
     env = os.environ.copy()
     if 'VIRTUAL_ENV' in env:
         del env['VIRTUAL_ENV']
@@ -232,10 +232,10 @@ def run_child_loop(qualified_loop_name):
         env['PATH'] = os.pathsep.join([p for p in path_parts if not p.startswith(venv_path)])
 
     try:
-        # Call ravl.py using provided path (not bash wrapper)
+        # Call ravl exactly as parent was called, just with different loop name
+        # This ensures child runs in same context (venv, Python interpreter, working dir)
         result = subprocess.run(
-            [sys.executable, str(RAVL_PY_PATH), qualified_loop_name],
-            cwd=str(RAVL_PY_PATH.parent.parent.parent.parent),  # project root
+            [ravl_command, qualified_loop_name],
             env=env,
             capture_output=True,
             text=True,
@@ -251,7 +251,7 @@ def run_child_loop(qualified_loop_name):
             return True
 
     except subprocess.TimeoutExpired:
-        print(f"❌ Child loop {{qualified_loop_name}} timed out after 10 minutes")
+        print(f"❌ Child loop {{qualified_loop_name}} timed out")
         return False
     except Exception as e:
         print(f"❌ Error executing {{qualified_loop_name}}: {{str(e)[:200]}}")
@@ -259,10 +259,11 @@ def run_child_loop(qualified_loop_name):
 ```
 
 **Why this pattern is REQUIRED:**
-- All paths known at generation time - zero runtime discovery needed
-- RAVL_PY_PATH provided as constant (same script executing the orchestrator)
+- Uses RAVL_COMMAND environment variable set by parent ravl process
+- Child loops execute in exact same context as parent (venv, Python, working dir)
+- Respects how user invoked ravl (symlink, UV install, direct path, etc.)
+- No path discovery or calculation needed - just use what parent used
 - qualified_name handles infinitely nested child loops (e.g., "parent.child.grandchild")
-- Calls ravl.py Python script directly (avoids bash wrapper issues)
 - Handles virtual environment cleanup correctly
 - Graceful error handling for child loop failures
 

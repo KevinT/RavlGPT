@@ -93,10 +93,11 @@ class ChildLoopExecutor:
                 processed_instructions = processed_instructions.replace(full_match, replacement)
                 continue
 
-            # Execute child loop using the universal ravl runner
-            # Find framework root (where ravl command lives)
+            # Execute child loop using the same ravl command that started the parent
+            # Use RAVL_COMMAND environment variable set at ravl.py entry point
             framework_root = RAVLCLIBase.find_framework_root()
-            ravl_cmd = [str(framework_root / 'ravl' / 'bin' / 'ravl-wrapper'), child_name] + child_args
+            ravl_command = os.environ.get('RAVL_COMMAND', str(framework_root / 'ravl' / 'bin' / 'ravl-wrapper'))
+            ravl_cmd = [ravl_command, child_name] + child_args
 
             # Find project root for subprocess cwd
             project_root = RAVLCLIBase.find_project_root(self.loop_dir)
