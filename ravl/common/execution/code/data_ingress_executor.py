@@ -50,6 +50,11 @@ from credential_validator import CredentialValidator
 from error_semantic_analyzer import ErrorSemanticAnalyzer
 from logging_utils import log_execution, log_message
 
+# Venv support
+sys.path.insert(0, str(_common_dir.parent))  # Add ravl/ to path for imports
+from ravl.common.execution.venv_manager import VenvManager
+from ravl.common.execution.requirements_generator import RequirementsGenerator
+
 
 class DataIngressExecutor:
     """
@@ -64,13 +69,14 @@ class DataIngressExecutor:
     6. Return results for framework to learn from
     """
 
-    def __init__(self, loop_path: Path, llm_provider=None):
+    def __init__(self, loop_path: Path, llm_provider=None, project_root: Optional[Path] = None):
         """
         Initialize executor
 
         Args:
             loop_path: Path to ravl_loop.md directory
             llm_provider: LLM provider instance (from llm_providers.LLMProviderFactory)
+            project_root: Path to project root (for venv/learning path resolution)
         """
         self.loop_path = Path(loop_path)
         self.ravl_loop_file = self.loop_path / 'ravl_loop.md'
@@ -78,11 +84,22 @@ class DataIngressExecutor:
         self.learnings_dir = self.loop_path / 'learnings'
         self.learnings_dir.mkdir(parents=True, exist_ok=True)
 
+        self.project_root = project_root or self._find_project_root()
+
         # Prompts directory - shared with markdown executor
         self.prompts_dir = Path(__file__).parent.parent / 'markdown' / 'prompts'
 
         self.llm_provider = llm_provider
         self.config = self._load_config()
+
+    def _find_project_root(self) -> Path:
+        """Find project root by looking for .git directory"""
+        current = self.loop_path.resolve()
+        while current != current.parent:
+            if (current / '.git').exists():
+                return current
+            current = current.parent
+        return self.loop_path.resolve()
 
     def _load_config(self) -> Dict[str, Any]:
         """Load ravl.toml configuration"""
@@ -377,7 +394,79 @@ class DataIngressExecutor:
                 'credential_validation_passed': False
             }
 
-        # Step 3: Write code to temporary file
+        # Step 3: Setup venv and install requirements
+        try:
+            # Resolve venv path using RAVLRunner resolution logic
+            from ravl_runner import RAVLRunner
+
+            config = self._load_config()
+            venv_path = RAVLRunner.resolve_venv_path(
+                loop_dir=self.loop_path,
+                loop_config=config,
+                project_root=self.project_root
+            )
+
+            # Validate existing venv or create new one
+            venv_manager = VenvManager(venv_path)
+
+            # Check if existing venv has correct Python version
+            is_valid, issue = venv_manager.validate_venv()
+            if not is_valid and venv_manager.exists():
+                # Venv exists but has wrong Python version - recreate it
+                log_execution(f"Venv needs recreation: {issue}", status='info')
+                delete_success, delete_error = venv_manager.delete()
+                if not delete_success:
+                    return {
+                        'success': False,
+                        'error': f'Failed to delete incompatible venv: {delete_error}',
+                        'execution_time': 0,
+                        'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
+                        'credentials_used': list(required_creds.keys()),
+                        'credential_validation_passed': True
+                    }
+                log_execution("Deleted incompatible venv, will recreate with correct Python", status='info')
+
+            # Create venv if needed (with correct Python version)
+            success, error = venv_manager.detect_or_create()
+            if not success:
+                return {
+                    'success': False,
+                    'error': f'Failed to create venv: {error}',
+                    'execution_time': 0,
+                    'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
+                    'credentials_used': list(required_creds.keys()),
+                    'credential_validation_passed': True
+                }
+
+            # Generate requirements.txt from code imports
+            execution_learning_dir = self.learnings_dir / 'execution_learning'
+            execution_learning_dir.mkdir(parents=True, exist_ok=True)
+            requirements_path = execution_learning_dir / 'generated_requirements.txt'
+            RequirementsGenerator.save_requirements(code_clean, requirements_path)
+
+            # Install requirements into venv
+            success, error = venv_manager.install_requirements(requirements_path, quiet=True)
+            if not success:
+                return {
+                    'success': False,
+                    'error': f'Failed to install requirements: {error}',
+                    'execution_time': 0,
+                    'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
+                    'credentials_used': list(required_creds.keys()),
+                    'credential_validation_passed': True
+                }
+
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Failed to setup venv: {str(e)}',
+                'execution_time': 0,
+                'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
+                'credentials_used': list(required_creds.keys()),
+                'credential_validation_passed': True
+            }
+
+        # Step 4: Write code to temporary file
         with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
             temp_file = Path(f.name)
 
@@ -396,16 +485,40 @@ class DataIngressExecutor:
         try:
             start_time = time.time()
 
-            # Execute code in subprocess with timeout
+            # Get environment with venv activated and framework available
+            env = venv_manager.get_environment_vars()
+            env['PYTHONUNBUFFERED'] = '1'
+
+            # Provide loop directories to generated code
+            learnings_dir = RAVLRunner.resolve_learning_path(
+                loop_dir=self.loop_path,
+                loop_config=config,
+                cli_learning_path=None,
+                project_root=self.project_root
+            )
+            env['RAVL_LEARNINGS_DIR'] = str(learnings_dir)
+            env['RAVL_LOOP_DIR'] = str(self.loop_path)
+
+            # Add framework root to PYTHONPATH for absolute imports
+            from ravl_cli_base import RAVLCLIBase
+            framework_root = RAVLCLIBase.find_framework_root()
+            current_pythonpath = env.get('PYTHONPATH', '')
+            if current_pythonpath:
+                env['PYTHONPATH'] = f"{framework_root}:{current_pythonpath}"
+            else:
+                env['PYTHONPATH'] = str(framework_root)
+
+            # Load .env file from project root and add to environment
+            env_vars = RAVLRunner.load_env_file(self.project_root)
+            env.update(env_vars)
+
+            # Execute code in subprocess with venv Python
             result = subprocess.run(
-                ['python3', str(temp_file)],
+                [str(venv_manager.get_python_executable()), str(temp_file)],
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                env={
-                    **subprocess.os.environ,
-                    'PYTHONUNBUFFERED': '1'
-                }
+                env=env
             )
 
             execution_time = time.time() - start_time

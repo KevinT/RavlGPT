@@ -357,7 +357,7 @@ class ActOrchestrator:
                 if DataIngressExecutor is None:
                     from data_ingress_executor import DataIngressExecutor
 
-                executor = DataIngressExecutor(self.loop_dir, self.llm)
+                executor = DataIngressExecutor(self.loop_dir, self.llm, project_root=self.project_root)
                 execution_result = executor.execute_code(generated_code, timeout=self.config.get('execution_timeout', 300))
 
                 act_result['code_executed'] = True
