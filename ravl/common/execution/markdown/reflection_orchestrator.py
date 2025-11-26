@@ -328,7 +328,7 @@ class ReflectionOrchestrator:
 
     def _parse_answered_unknowns(self, md_file: Path) -> Dict[str, str]:
         """
-        Parse markdown file to extract answered questions using LLM.
+        Parse markdown file to extract answered questions.
 
         Args:
             md_file: Path to known_unknowns.md file
@@ -345,21 +345,28 @@ class ReflectionOrchestrator:
             log_message(f"Failed to read {md_file.name}: {e}", status='warning')
             return {}
 
-        # Use LLM to parse markdown (as user specified)
-        prompt = f"""Extract answered questions from this markdown file.
+        # Parse markdown to extract Q&A pairs
+        answers = {}
+        lines = content.split('\n')
+        current_question = None
 
-{content}
+        for line in lines:
+            # Question headers: "## Question N"
+            if line.startswith('## Question'):
+                current_question = None  # Reset for new question
+                continue
 
-Return JSON with question -> answer mapping.
-Only include questions that have actual answers (not "_[Fill in...]" or empty).
+            # Question text (non-empty line after "## Question")
+            if current_question is None and line.strip() and not line.startswith('**Answer**') and not line.startswith('---'):
+                current_question = line.strip()
+                continue
 
-{{"answers": {{"question text": "answer text"}}}}
-"""
+            # Answer line: "**Answer**: actual answer text"
+            if line.startswith('**Answer**:') and current_question:
+                answer = line.replace('**Answer**:', '').strip()
+                # Only include if answer is not placeholder
+                if answer and not answer.startswith('_[Fill in') and answer != '_[Fill in your answer here, or delete this question if not applicable]_':
+                    answers[current_question] = answer
+                current_question = None  # Reset after processing
 
-        try:
-            llm_response = self.llm.complete(prompt, max_tokens=1024)
-            parsed = self.llm_helper.parse_json_response(llm_response)
-            return parsed.get('answers', {})
-        except Exception as e:
-            log_message(f"Failed to parse {md_file.name}: {e}", status='warning')
-            return {}
+        return answers
