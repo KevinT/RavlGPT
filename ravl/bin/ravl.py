@@ -481,12 +481,14 @@ class RAVLUniversalRunner(RAVLCLIBase):
                 tomli_w.dump(merged_config, f)
 
             # Run markdown loop with final loop dir but wrapper learning path
+            # IMPORTANT: Pass --config pointing to merged config so config_overrides are used
             import subprocess
             markdown_runner_path = self.find_framework_root() / 'ravl' / 'common' / 'llm' / 'run_markdown_ravl.py'
             cmd = [
                 sys.executable,
                 str(markdown_runner_path),
                 '--loop-dir', str(final_loop_dir),
+                '--config', str(temp_config_file),  # Use merged config with config_overrides
                 '--mode', args.mode,
                 '--learning-path', str(learning_path)
             ]

@@ -45,19 +45,21 @@ from ravl.common.cli.config_display import ConfigDisplay
 class ConfigBasedRAVLRunner:
     """Runs markdown RAVL loops based on config.toml"""
 
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path, loop_dir: Optional[Path] = None):
         """
         Initialize runner from config file
 
         Args:
             config_path: Path to config.toml file
+            loop_dir: Optional explicit loop directory (for delegation with external config)
         """
         self.config_path = config_path
 
-        # Determine loop directory
-        # If config is in config/ subdirectory, loop_dir is parent of config/
-        # Otherwise loop_dir is parent of config file
-        if config_path.parent.name == 'config':
+        # Use explicit loop_dir if provided (e.g., from delegation)
+        # Otherwise determine from config path
+        if loop_dir is not None:
+            self.loop_dir = loop_dir
+        elif config_path.parent.name == 'config':
             self.loop_dir = config_path.parent.parent
         else:
             self.loop_dir = config_path.parent
@@ -130,7 +132,11 @@ class ConfigBasedRAVLRunner:
 
     def extract_template_vars(self, args: argparse.Namespace) -> Dict[str, str]:
         """
-        Extract template variables from parsed arguments
+        Extract template variables from config and CLI arguments
+
+        Sources (lower priority first, later overrides):
+        1. Top-level string config keys (for config_overrides from delegation)
+        2. Explicit template_variables mapped from CLI args
 
         Args:
             args: Parsed command-line arguments
@@ -140,6 +146,13 @@ class ConfigBasedRAVLRunner:
         """
         template_vars = {}
 
+        # First, add all top-level string values from config
+        # (These come from config_overrides in delegation)
+        for key, value in self.config.items():
+            if isinstance(value, str):
+                template_vars[key] = value
+
+        # Then, override with explicit template_variables from CLI args
         for var_name, var_config in self.config['template_variables'].items():
             cli_arg = var_config['cli_arg'].lstrip('-').replace('-', '_')
             value = getattr(args, cli_arg, None)
@@ -739,7 +752,8 @@ def main():
 
     # Create runner and parse full arguments
     try:
-        runner = ConfigBasedRAVLRunner(config_path)
+        # Pass explicit loop_dir if provided (for delegation with external config)
+        runner = ConfigBasedRAVLRunner(config_path, loop_dir=initial_args.loop_dir)
         parser = runner.create_argument_parser()
 
         # Re-parse with full argument list

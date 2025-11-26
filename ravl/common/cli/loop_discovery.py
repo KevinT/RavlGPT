@@ -469,6 +469,10 @@ class LoopDiscovery:
         # Apply config_overrides from delegation (highest priority)
         overrides = delegation.get('config_overrides', {})
         for key, value in overrides.items():
+            # Expand ~ for path-like string values (framework handles infrastructure)
+            if isinstance(value, str) and ('~/' in value or value.startswith('~')):
+                value = os.path.expanduser(value)
+
             if isinstance(value, dict) and isinstance(merged.get(key), dict):
                 # Deep merge for dict values
                 merged[key] = {**merged.get(key, {}), **value}
