@@ -151,7 +151,7 @@ class VerificationManager:
             if not execution_result.get('success', False):
                 error_msg = execution_result.get('error', 'Execution failed')
                 # Extract meaningful error message (show last line if multiline)
-                error_preview = error_msg[:200] if error_msg else 'Unknown error'
+                error_preview = error_msg[:500] if error_msg else 'Unknown error'
                 if '\n' in error_preview:
                     error_preview = error_preview.split('\n')[-1]  # Show last line of error
                 log_verification_error('Code execution failed', error_preview, max_length=200)

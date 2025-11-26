@@ -1,4 +1,4 @@
-description = "Simple loop - change me in ravl.yml"
+description = "Simple loop - change me in ravl.toml"
 type = "markdown"
 
 [template_variables]

@@ -97,7 +97,7 @@ class ErrorSemanticAnalyzer:
                     hints.append(
                         ErrorHint(
                             category=category,
-                            message=error_message[:200],  # Truncate for storage
+                            message=error_message[:500],  # Truncate for storage
                             suggestion=suggestion,
                             confidence=confidence,
                         )
@@ -118,7 +118,7 @@ class ErrorSemanticAnalyzer:
             result.append(
                 ErrorHint(
                     category="unknown",
-                    message=error_message[:200],
+                    message=error_message[:500],
                     suggestion="Execution failed. Review error message and verify API documentation.",
                     confidence=0.3,
                 )

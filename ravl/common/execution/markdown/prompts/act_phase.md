@@ -267,7 +267,7 @@ def run_child_loop(qualified_loop_name):
         print(f"❌ Child loop {{qualified_loop_name}} timed out")
         return False
     except Exception as e:
-        print(f"❌ Error executing {{qualified_loop_name}}: {{str(e)[:200]}}")
+        print(f"❌ Error executing {{qualified_loop_name}}: {{str(e)[:500]}}")
         return False
 ```
 
