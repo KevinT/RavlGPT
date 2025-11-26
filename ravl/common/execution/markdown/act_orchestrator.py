@@ -311,8 +311,8 @@ class ActOrchestrator:
             'inferred_dsl': gen_result['inferred_dsl'],
         }
 
-        # Execute the generated code
-        if self.should_attempt_code_generation():
+        # Execute the generated code if it exists
+        if gen_result['generated_code']:
             log_execution("Generated code detected - executing...")
             action_result = self._execute_generated_code(gen_result['generated_code'], action_result)
 
@@ -381,7 +381,7 @@ class ActOrchestrator:
                 if execution_result.get('success'):
                     log_execution("Code executed successfully", status='success')
                     if execution_result.get('stdout'):
-                        log_execution(f"Output: {execution_result.get('stdout')[:200]}")
+                        log_execution(f"Output: {execution_result.get('stdout')}")
                 else:
                     log_execution(f"Code execution failed: {execution_result.get('error', 'Unknown error')[:100]}", status='error')
                     act_result['execution_error'] = execution_result.get('error', 'Unknown error')
