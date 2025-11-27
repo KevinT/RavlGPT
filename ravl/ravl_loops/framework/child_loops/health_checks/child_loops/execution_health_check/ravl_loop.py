@@ -160,12 +160,16 @@ class ExecutionHealthCheckLoop(BaseRAVLLoop):
         # Check if loop has been modified since last run
         loop_modified = self._check_loop_modification()
 
+        # Check venv health for Python version mismatches
+        venv_health = self._check_venv_health()
+
         reflection = {
             'target_loop': self.target_loop_name,
             'target_dir': str(self.target_loop_dir),
             'loop_modified': loop_modified,
             'execution_data': execution_data,
-            'thread_history': self.thread_manager.format_thread_history(limit=5)
+            'thread_history': self.thread_manager.format_thread_history(limit=5),
+            'venv_health': venv_health
         }
 
         return reflection
@@ -194,11 +198,82 @@ class ExecutionHealthCheckLoop(BaseRAVLLoop):
 
         return loop_mtime > attempt_time
 
+    def _check_venv_health(self) -> Dict[str, Any]:
+        """
+        Check framework venv health for Python version mismatches
+
+        Returns dict with venv health status including version mismatch detection.
+        This helps diagnose issues caused by Python upgrades (e.g., 3.12 → 3.14)
+        where binary wheels become incompatible.
+        """
+        # Find framework venv (check both project and framework locations)
+        framework_venv = _framework_root / 'venv'
+
+        result = {
+            'has_venv': framework_venv.exists(),
+            'venv_path': str(framework_venv),
+            'system_python_version': f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            'venv_python_version': None,
+            'version_mismatch': False,
+            'recommendation': None
+        }
+
+        if not result['has_venv']:
+            result['recommendation'] = "venv will be auto-created on next loop run"
+            return result
+
+        # Read venv's Python version from pyvenv.cfg
+        pyvenv_cfg = framework_venv / 'pyvenv.cfg'
+        if not pyvenv_cfg.exists():
+            result['recommendation'] = "venv missing pyvenv.cfg - delete and recreate"
+            return result
+
+        try:
+            with open(pyvenv_cfg, 'r') as f:
+                for line in f:
+                    if line.startswith('version ='):
+                        venv_version = line.split('=')[1].strip()
+                        result['venv_python_version'] = venv_version
+                        break
+        except Exception as e:
+            result['recommendation'] = f"Could not read pyvenv.cfg: {e}"
+            return result
+
+        if not result['venv_python_version']:
+            result['recommendation'] = "venv pyvenv.cfg missing version - delete and recreate"
+            return result
+
+        # Compare major.minor versions
+        system_major_minor = f"{sys.version_info.major}.{sys.version_info.minor}"
+        venv_major_minor = '.'.join(result['venv_python_version'].split('.')[:2])
+
+        if system_major_minor != venv_major_minor:
+            result['version_mismatch'] = True
+            result['recommendation'] = (
+                f"venv Python {venv_major_minor} incompatible with system Python {system_major_minor}. "
+                f"Binary wheels (like pydantic_core) won't load. "
+                f"Delete venv: rm -rf {framework_venv}"
+            )
+
+        return result
+
     def act(self, reflection: Dict[str, Any]) -> Dict[str, Any]:
         """ACT: Generate diagnostic report with LLM analysis - ALWAYS calls LLM"""
         # Handle no data or old structure
         if reflection.get('status') in ['no_data', 'old_structure']:
             return reflection
+
+        # Check for critical venv issues first
+        venv_health = reflection.get('venv_health', {})
+        if venv_health.get('version_mismatch'):
+            print(f"  ⚠️  venv Python version mismatch detected!", file=sys.stderr)
+            print(f"  {venv_health['recommendation']}", file=sys.stderr)
+            return {
+                **reflection,
+                'critical_issue': 'venv_version_mismatch',
+                'status': 'critical_venv_issue',
+                'message': venv_health['recommendation']
+            }
 
         print(f"  Generating execution diagnostics...", file=sys.stderr)
 
