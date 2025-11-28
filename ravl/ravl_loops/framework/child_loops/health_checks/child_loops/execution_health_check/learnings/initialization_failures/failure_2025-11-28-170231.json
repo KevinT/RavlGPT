@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-11-28T17:02:31.670648+00:00",
+  "failure_phase": "execution",
+  "error_type": "NameError",
+  "error_message": "name '_current' is not defined",
+  "stack_trace": "Traceback (most recent call last):\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/bin/ravl.py\", line 378, in run\n    loop_instance = self._initialize_loop(LoopClass, loop_dir, config, learning_path)\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/bin/ravl.py\", line 800, in _initialize_loop\n    return LoopClass(**params)\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/execution_health_check/ravl_loop.py\", line 47, in __init__\n    self.project_root = _current\n                        ^^^^^^^^\nNameError: name '_current' is not defined\n",
+  "context": {
+    "loop_dir": "/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/execution_health_check",
+    "phase": "initialization or execution"
+  }
+}

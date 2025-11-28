@@ -46,17 +46,25 @@ parser.add_argument('--focus', type=str, default=None,
 
 args = parser.parse_args()
 
-# Find framework directory
-_current = Path(__file__).resolve().parent.parent
-_framework_dir = _current  # .ravl directory
-project_root = _framework_dir.parent
+# Bootstrap: Add framework to path so we can import utilities
+# The framework is installed/available via normal Python imports
+try:
+    from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+    from ravl.common.cli.loop_discovery import LoopDiscovery
+except ImportError:
+    # If ravl isn't installed, we're running from source - add to path
+    _framework_root = Path(__file__).resolve().parent.parent.parent
+    sys.path.insert(0, str(_framework_root))
+    from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+    from ravl.common.cli.loop_discovery import LoopDiscovery
+
+# Find project root using framework utilities
+project_root = RAVLCLIBase.find_project_root(required=False)
 
 loop_name = args.loop_name
 
 # Validate that the loop exists before running health check
-sys.path.insert(0, str(_framework_dir / "ravl"))
 try:
-    from ravl.common.cli.loop_discovery import LoopDiscovery
 
     discovery = LoopDiscovery(project_root)
 
@@ -95,9 +103,10 @@ except Exception as e:
     print(f"Error validating loop: {str(e)}", file=sys.stderr)
     sys.exit(1)
 
-# Build ravl command
+# Build ravl command - use the project's ravl wrapper
+ravl_wrapper = project_root / "ravl"
 ravl_cmd = [
-    str(_framework_dir / "bin" / "ravl"),
+    str(ravl_wrapper),
     "health_checks.loop_health_check",
     "--quiet"  # Suppress framework banners, show only health diagnostics
 ]

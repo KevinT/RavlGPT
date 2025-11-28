@@ -43,7 +43,11 @@ class LoopHealthCheckLoop(BaseRAVLLoop):
         super().__init__(Path(model_path), loop_name="Loop Health Check")
 
         self.loop_dir = Path(__file__).parent
-        self.project_root = _current
+
+        # Find project root using framework utility
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        self.project_root = RAVLCLIBase.find_project_root(required=False)
+
         self.learning_path = Path(model_path).parent if model_path else self.loop_dir / 'learnings'
 
         # Initialize model

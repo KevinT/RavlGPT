@@ -1,0 +1,6 @@
+learning_iterations: 1
+last_learned: '2025-11-28T17:03:51.285474+00:00'
+known_domain_patterns: {}
+improvement_suggestions: []
+loops_diagnosed:
+- experimental.andries_loop_1

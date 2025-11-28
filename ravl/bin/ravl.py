@@ -1057,14 +1057,16 @@ def main():
             return health_main()
 
         elif cmd == '--execution-health':
-            from ravl.bin.ravl_execution_health import main as exec_health_main
-            sys.argv = [sys.argv[0]] + sys.argv[2:]
-            return exec_health_main()
+            import subprocess
+            script_path = Path(__file__).parent / "ravl_execution_health.py"
+            result = subprocess.run([sys.executable, str(script_path)] + sys.argv[2:])
+            sys.exit(result.returncode)
 
         elif cmd == '--loop-health':
-            from ravl.bin.ravl_loop_health import main as loop_health_main
-            sys.argv = [sys.argv[0]] + sys.argv[2:]
-            return loop_health_main()
+            import subprocess
+            script_path = Path(__file__).parent / "ravl_loop_health.py"
+            result = subprocess.run([sys.executable, str(script_path)] + sys.argv[2:])
+            sys.exit(result.returncode)
 
         elif cmd == '--config':
             from ravl.bin.ravl_setup import main as setup_main
