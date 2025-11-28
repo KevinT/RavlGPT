@@ -69,6 +69,16 @@ class RAVLSetup:
 
     def _print_header(self):
         """Print the RAVL setup header with current config."""
+        # Import version from framework root
+        import sys
+        from pathlib import Path
+        framework_root = Path(__file__).resolve().parent.parent.parent
+        sys.path.insert(0, str(framework_root))
+        try:
+            from __init__ import __version__
+        except ImportError:
+            __version__ = "0.1.0"  # Fallback
+
         current_llm = get_configured_llm_provider()
         current_apis = get_configured_apis()
         api_count = len(current_apis)
@@ -76,13 +86,28 @@ class RAVLSetup:
         llm_display = current_llm if current_llm else "none"
         cwd = os.getcwd()
 
-        print("█ RavlGPT █ v 0.001 ██████████████████████████████████████████████████████████")
+        # Fixed configuration display width
+        HEADER_WIDTH = 80
+
+        # Top row with dynamic version
+        header_prefix = "█ RavlGPT █ v "
+        header_suffix = " █"
+        version_part = f"{header_prefix}{__version__}{header_suffix}"
+        top_padding = HEADER_WIDTH - len(version_part)
+        top_row = version_part + ("█" * top_padding)
+
+        # Bottom row (matches width)
+        bottom_prefix = "░ ░ ░ ░ ░ ░ ░ ║ "
+        bottom_padding = HEADER_WIDTH - len(bottom_prefix)
+        bottom_row = bottom_prefix + ("░" * bottom_padding)
+
+        print(top_row)
         print("║    ╔════╬═══╗")
         print(f"▓    ▓    ▓   ║ Default intelligence provider: {llm_display}")
         print(f"║  ╔═╩╗  ╔╩═╦═║ API Integrations: {api_count}")
         print(f"▒  ▒  ▒  ▒  ▒ ║ {cwd}")
         print("║ ╔╩╗ ╔═╦╩╗ ║ ║")
-        print("░ ░ ░ ░ ░ ░ ░ ║ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░")
+        print(bottom_row)
         print()
 
     def _validate_llm_key(self, provider: str, api_key: str) -> bool:
@@ -307,7 +332,11 @@ class RAVLSetup:
 
     def run(self):
         """Run the setup wizard."""
-        self.main_menu()
+        try:
+            self.main_menu()
+        except KeyboardInterrupt:
+            print("\n\nSetup cancelled.")
+            sys.exit(0)
 
 
 def main():
@@ -324,7 +353,12 @@ def main():
         sys.exit(1)
 
     setup = RAVLSetup(project_root)
-    setup.run()
+
+    try:
+        setup.run()
+    except KeyboardInterrupt:
+        print("\n\nSetup cancelled.")
+        sys.exit(0)
 
 
 if __name__ == '__main__':
