@@ -119,6 +119,7 @@ env["HEALTH_CHECK_TARGET_LOOP"] = loop_name
 # Pass focus parameter via environment variable if provided
 if args.focus:
     env["HEALTH_CHECK_FOCUS"] = args.focus
+    print(f"\n🔍 Focusing specifically on: {args.focus}\n")
 
 try:
     result = subprocess.run(ravl_cmd, cwd=str(project_root), env=env)
