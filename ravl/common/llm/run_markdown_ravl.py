@@ -36,10 +36,12 @@ sys.path.insert(0, str(_ravl_root))
 
 from ravl.common.ravl_runner import RAVLRunner
 from ravl.common.execution.markdown.markdown_ravl_executor import MarkdownRAVLExecutor
+from ravl.common.execution.venv_manager import VenvManager
 from ravl.common.utils.constants import DEFAULT_EXECUTION_TIMEOUT
 from ravl.common.utils.file_utils import load_toml_file
 from ravl.common.utils.logging_utils import log_message, log_execution
 from ravl.common.cli.config_display import ConfigDisplay
+from ravl.common.cli.ravl_cli_base import RAVLCLIBase
 
 
 class ConfigBasedRAVLRunner:
@@ -289,6 +291,26 @@ class ConfigBasedRAVLRunner:
 
             # Extract force_code_regeneration flag from args
             force_code_regeneration = getattr(args, 'force_code_regeneration', False)
+
+            # ===== Venv Setup =====
+            # Ensure venv exists before creating executor (needed for code generation/execution)
+            from cli.ravl_cli_base import RAVLCLIBase as _RAVLCLIBase
+
+            project_root = _RAVLCLIBase.find_project_root(required=False)
+            venv_path = RAVLRunner.resolve_venv_path(
+                loop_dir=self.loop_dir,
+                loop_config=self.config,
+                cli_venv_path=Path(args.venv_path) if hasattr(args, 'venv_path') and args.venv_path else None,
+                project_root=project_root
+            )
+
+            # Initialize venv manager and ensure venv exists
+            venv_manager = VenvManager(venv_path)
+            success, error = venv_manager.detect_or_create()
+            if not success:
+                raise RuntimeError(f"Failed to initialize virtual environment: {error}")
+
+            log_message(f"Using venv: {venv_path}", status='info', indent=3)
 
             # Initialize executor (with initialization failure handling)
             executor = None
