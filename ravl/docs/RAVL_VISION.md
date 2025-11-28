@@ -380,8 +380,8 @@ If you're extending or improving RAVL:
 
 **Want to learn about the specifics?**
 - See [RAVL Protocol](RAVL_PROTOCOL.md) for the four-phase specification
-- Check [examples](examples/) for working implementations
-- Try [templates](../templates/) to get started
+- Check [examples](../ravl_loops/examples/) for working implementations
+- Try [templates](../ravl_loops/templates/) to get started
 
 **Want to evaluate alignment?**
 - Read the "Alignment Questions" above

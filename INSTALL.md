@@ -259,15 +259,15 @@ Add command completion (future enhancement).
 
 ## Next Steps
 
-- **Learn**: Read [RAVL Protocol](docs/RAVL_PROTOCOL.md)
-- **Explore**: Browse [Examples](examples/)
+- **Learn**: Read [RAVL Protocol](ravl/docs/RAVL_PROTOCOL.md)
+- **Explore**: Browse [Examples](ravl/ravl_loops/examples/)
 - **Create**: Clone a template with `./ravl-clone`
 - **Customize**: Edit loop configurations
 
 ## Getting Help
 
-- **Documentation**: See [docs/](docs/)
-- **Examples**: See [examples/](examples/)
+- **Documentation**: See [docs/](ravl/docs/)
+- **Examples**: See [examples/](ravl/ravl_loops/examples/)
 - **Issues**: Report at https://github.com/KevinT/RavlGPT/issues
 
 ## Uninstalling
