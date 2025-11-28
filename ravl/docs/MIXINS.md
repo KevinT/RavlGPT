@@ -15,7 +15,7 @@ Mixins extend RAVL loops with optional functionality through multiple inheritanc
 
 ## Mixin Types
 
-### Framework Mixins (`.ravl/common/mixins/`)
+### Framework Mixins (`.ravl/ravl/common/mixins/`)
 
 Generic, reusable functionality that any RAVL agent might need.
 
@@ -39,7 +39,7 @@ Project-specific functionality for a family of related agents.
 
 **Purpose:** LLM provider detection and JSON extraction utilities
 
-**Location:** `.ravl/common/mixins/llm_mixin.py`
+**Location:** `.ravl/ravl/common/mixins/llm_mixin.py`
 
 **Methods:**
 - `detect_llm_provider()` - Auto-detect provider from environment
@@ -70,7 +70,7 @@ class MyLoop(BaseRAVLLoop, LLMMixin):
 
 **Purpose:** Google API integrations
 
-**Location:** `.ravl/common/mixins/google_apis_mixin.py`
+**Location:** `.ravl/ravl/common/mixins/google_apis_mixin.py`
 
 **Services:**
 - Google Docs
@@ -109,7 +109,7 @@ class MyLoop(BaseRAVLLoop, GoogleAPIsMixin):
 ### Framework Mixin Template
 
 ```python
-# .ravl/common/mixins/my_mixin.py
+# .ravl/ravl/common/mixins/my_mixin.py
 """
 MyMixin - Brief description
 

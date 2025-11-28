@@ -10,14 +10,14 @@ This directory contains the **RAVL framework** - reusable infrastructure for bui
 
 1. **[RAVL Vision](RAVL_VISION.md)** - Why RAVL exists: Design principles, philosophy, end-state goals
 2. **[RAVL Protocol](RAVL_PROTOCOL.md)** - How RAVL works: The four phases (Reflect → Act → Verify → Learn)
-3. **[Examples](../examples/)** - See working implementations:
-   - [Rugby Tips](../examples/example_3_analysis_loop/) - Simple Markdown RAVL loop
-   - [Simple Learning Loop](../examples/example_4_learning_loop/) - Demonstrates basic learning patterns
-   - [Tech News Curator](../examples/example_tech_news_curator/) - Multi-source aggregation with nested loops
-4. **[Templates](../templates/)** - Ready-to-use blueprints:
-   - [Data Ingestion](../templates/data_ingress_template/) - Auto-generate API integration code
-   - [Strategic Coherence](../templates/strategic_coherence_template/) - Parent/child coordination pattern
-   - [Empty Loop](../templates/empty_loop_template/) - Minimal starter template
+3. **[Examples](../ravl_loops/examples/)** - See working implementations:
+   - [Rugby Tips](../ravl_loops/examples/child_loops/example_3_analysis_loop/) - Simple Markdown RAVL loop
+   - [Simple Learning Loop](../ravl_loops/examples/child_loops/example_4_learning_loop/) - Demonstrates basic learning patterns
+   - [Tech News Curator](../ravl_loops/examples/child_loops/example_tech_news_curator/) - Multi-source aggregation with nested loops
+4. **[Templates](../ravl_loops/templates/)** - Ready-to-use blueprints:
+   - [Data Ingestion](../ravl_loops/templates/child_loops/data_ingress_template/) - Auto-generate API integration code
+   - [Strategic Coherence](../ravl_loops/templates/child_loops/strategic_coherence_template/) - Parent/child coordination pattern
+   - [Empty Loop](../ravl_loops/templates/child_loops/empty_loop_template/) - Minimal starter template
 
 **Advanced Features?**
 
@@ -34,8 +34,8 @@ This directory contains the **RAVL framework** - reusable infrastructure for bui
 **Using Templates?**
 
 See each template's own documentation for full details:
-- [Data Ingestion Guide](../templates/data_ingress_template/README.md) - API data ingestion loops
-- [Strategic Coherence Guide](../templates/strategic_coherence_template/config/ravl.toml) - Multi-agent coordination
+- [Data Ingestion Guide](../ravl_loops/templates/child_loops/data_ingress_template/README.md) - API data ingestion loops
+- [Strategic Coherence Guide](../ravl_loops/templates/child_loops/strategic_coherence_template/config/ravl.toml) - Multi-agent coordination
 
 ## Architecture Philosophy
 
@@ -79,32 +79,37 @@ Every RAVL loop implements the same four phases:
 ```
 project/                              # Your project repository
 ├── .ravl/                            # RAVL framework (can be git submodule)
-│   ├── docs/                        # 📚 Framework documentation
-│   │   ├── README.md                # Framework overview (this file)
-│   │   ├── RAVL_VISION.md           # Design philosophy and principles
-│   │   ├── RAVL_PROTOCOL.md         # Detailed protocol specification
-│   │   ├── MIXINS.md                # Mixin system guide
-│   │   └── llm/                     # LLM infrastructure docs
-│   │       └── README.md            # LLM-based loops guide
-│   ├── examples/                    # 🎯 Ready-to-run example loops
-│   │   ├── README.md                # Examples overview
-│   │   ├── example_3_analysis_loop/    # Simple Markdown RAVL
-│   │   ├── example_4_learning_loop/ # Learning patterns demo
-│   │   └── example_tech_news_curator/       # Multi-loop orchestration
-│   ├── templates/                   # 📝 Starter blueprints (ready to clone and customize)
-│   │   ├── data_ingress_template/   # Self-healing API data ingestion
-│   │   ├── strategic_coherence_template/ # Parent + children coordination pattern
-│   │   └── empty_loop_template/     # Minimal starter
-│   ├── bin/                         # CLI commands
-│   │   ├── ravl                     # Main RAVL runner
-│   │   ├── ravl-list                # List all loops
-│   │   ├── ravl-clone               # Clone templates or existing loops
-│   │   ├── ravl-clean               # Clean loop learnings
-│   │   ├── ravl-execution-health    # Analyze code generation & DSL (solution space)
-│   │   ├── ravl-loop-health         # Analyze domain learning & patterns (problem space)
-│   │   ├── ravl-sync-claude         # Sync commands to Claude Code
-│   │   └── ravl-sync-opencode       # Sync commands to Opencode
-│   ├── common/                      # 🔧 Framework code
+│   ├── ravl/
+│   │   ├── docs/                    # 📚 Framework documentation
+│   │   │   ├── README.md            # Framework overview (this file)
+│   │   │   ├── RAVL_VISION.md       # Design philosophy and principles
+│   │   │   ├── RAVL_PROTOCOL.md     # Detailed protocol specification
+│   │   │   ├── MIXINS.md            # Mixin system guide
+│   │   │   └── llm/                 # LLM infrastructure docs
+│   │   │       └── README.md        # LLM-based loops guide
+│   │   ├── ravl_loops/              # Framework loops
+│   │   │   ├── examples/            # 🎯 Ready-to-run example loops
+│   │   │   │   ├── README.md        # Examples overview
+│   │   │   │   └── child_loops/
+│   │   │   │       ├── example_3_analysis_loop/    # Simple Markdown RAVL
+│   │   │   │       ├── example_4_learning_loop/    # Learning patterns demo
+│   │   │   │       └── example_tech_news_curator/  # Multi-loop orchestration
+│   │   │   ├── templates/           # 📝 Starter blueprints
+│   │   │   │   └── child_loops/
+│   │   │   │       ├── data_ingress_template/      # Self-healing API data ingestion
+│   │   │   │       ├── strategic_coherence_template/ # Parent + children coordination
+│   │   │   │       └── empty_loop_template/        # Minimal starter
+│   │   │   └── framework/           # Framework internal loops (health checks, etc.)
+│   │   ├── bin/                     # CLI commands
+│   │   │   ├── ravl                 # Main RAVL runner
+│   │   │   ├── ravl-list            # List all loops
+│   │   │   ├── ravl-clone           # Clone templates or existing loops
+│   │   │   ├── ravl-clean           # Clean loop learnings
+│   │   │   ├── ravl-execution-health # Analyze code generation & DSL (solution space)
+│   │   │   ├── ravl-loop-health     # Analyze domain learning & patterns (problem space)
+│   │   │   ├── ravl-sync-claude     # Sync commands to Claude Code
+│   │   │   └── ravl-sync-opencode   # Sync commands to Opencode
+│   │   ├── common/                  # 🔧 Framework code
 │   │   ├── ravl_base.py             # Core base class (model persistence, cross-loop communication)
 │   │   ├── ravl_protocol.py         # Protocol definition for type checking
 │   │   ├── ravl_runner.py           # Runner utilities (CLI parsing, phase execution)
@@ -409,10 +414,10 @@ quality_guardian/              # Parent
 
 ```bash
 # Install framework dependencies
-pip install -r .ravl/common/requirements.txt
+pip install -r .ravl/ravl/common/requirements.txt
 
 # List all agents
-python3 .ravl/common/cli/list_agents.py
+python3 .ravl/ravl/common/cli/list_agents.py
 
 # Run an agent
 python3 ravl_loops/my_agent/run.py --mode full
@@ -421,7 +426,7 @@ python3 ravl_loops/my_agent/run.py --mode full
 ## Contributing
 
 When adding to the framework:
-1. Keep `.ravl/common/` generic and reusable
+1. Keep `.ravl/ravl/common/` generic and reusable
 2. Project-specific code goes in `ravl_loops/`
 3. Extract to mixins only when patterns emerge
 4. Document in `.ravl/docs/`

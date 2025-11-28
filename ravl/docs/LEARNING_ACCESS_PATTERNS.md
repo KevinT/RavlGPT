@@ -51,7 +51,7 @@ This document explains how loops access learning artifacts across the hierarchy,
 
 **Purpose**: Learn HOW to make the loop RUN without errors
 
-**Managed by**: `ExecutionLearningManager` (`.ravl/common/core/learning/execution_learning_manager.py`)
+**Managed by**: `ExecutionLearningManager` (`.ravl/ravl/common/core/learning/execution_learning_manager.py`)
 
 **Contains**:
 - Code generation attempts and DSL iterations
@@ -85,7 +85,7 @@ execution_learning/
 
 **Purpose**: Learn WHAT the loop discovers about its domain (THE "L" IN RAVL)
 
-**Managed by**: `LoopLearningManager` (`.ravl/common/core/learning/loop_learning_manager.py`)
+**Managed by**: `LoopLearningManager` (`.ravl/ravl/common/core/learning/loop_learning_manager.py`)
 
 **Contains**:
 - Domain patterns and insights

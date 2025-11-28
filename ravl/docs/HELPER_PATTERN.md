@@ -152,7 +152,7 @@ This is **genuinely hard** - 4 levels of nesting with type checks at each level.
 
 ### The Helper
 
-**File**: `.ravl/common/integrations/notion_helpers.py`
+**File**: `.ravl/ravl/common/integrations/notion_helpers.py`
 
 ```python
 class NotionLinkExtractor:
@@ -212,7 +212,7 @@ All three are valid! The helper is infrastructure, not a requirement.
 
 ### Google Helpers (Existing - Workflow-Oriented)
 
-**File**: `.ravl/common/integrations/google_docs_exporter.py`
+**File**: `.ravl/ravl/common/integrations/google_docs_exporter.py`
 
 ```python
 class GoogleDocsExporter:
@@ -285,7 +285,7 @@ Example: Notion rich_text mention parsing
 ### Step 2: Create Minimal Helper
 
 ```python
-# .ravl/common/integrations/{api}_helpers.py
+# .ravl/ravl/common/integrations/{api}_helpers.py
 
 class {API}Helper:
     """Minimal utility for {specific hard pattern}"""

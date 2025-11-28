@@ -4,7 +4,7 @@
 
 **This is pre-release software.** There are no guarantees of non-breaking changes. If the most recent version is not working, fall back to a tag or contact the authors.
 
-📚 **[→ Read the Full Documentation](docs/README.md)** for architecture, philosophy, and detailed guides.
+📚 **[→ Read the Full Documentation](ravl/docs/README.md)** for architecture, philosophy, and detailed guides.
 
 ## 🚀 Installation
 
@@ -136,11 +136,6 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 
 ## Quick Start
 
-**New to RAVL?** Start with the examples:
-- [Rugby Tips](examples/example_3_analysis_loop/) - Simple Markdown RAVL loop
-- [Simple Learning Loop](examples/example_4_learning_loop/) - Demonstrates basic learning patterns
-- [Examples Overview](examples/README.md) - Detailed guide to all examples
-
 **Using RAVL CLI:**
 ```bash
 # List all loops in your project
@@ -200,21 +195,21 @@ Store learning artifacts and virtual environments anywhere - see project documen
 ## 📚 Documentation
 
 ### Getting Started
-- **[Framework Overview](docs/README.md)** - Architecture, philosophy, getting started
-- **[RAVL Protocol](docs/RAVL_PROTOCOL.md)** - Core four-phase specification
-- **[RAVL Vision](docs/RAVL_VISION.md)** - Design principles and philosophy
-- **[Examples](examples/)** - Ready-to-run Python and Markdown examples
+- **[Framework Overview](ravl/docs/README.md)** - Architecture, philosophy, getting started
+- **[RAVL Protocol](ravl/docs/RAVL_PROTOCOL.md)** - Core four-phase specification
+- **[RAVL Vision](ravl/docs/RAVL_VISION.md)** - Design principles and philosophy
+- **[Examples](ravl/ravl_loops/examples/)** - Ready-to-run Python and Markdown examples
 
 ### Advanced Topics
-- **[Mixins Guide](docs/MIXINS.md)** - Add reusable functionality to loops
-- **[LLM Infrastructure](docs/llm/README.md)** - Build LLM-powered loops
-- **[Configuration Format](docs/llm/CONFIG_FORMAT.md)** - Loop configuration reference
-- **[Prompt Templates](docs/llm/PROMPTS.md)** - Prompt template system
+- **[Mixins Guide](ravl/docs/MIXINS.md)** - Add reusable functionality to loops
+- **[LLM Infrastructure](ravl/docs/llm/README.md)** - Build LLM-powered loops
+- **[Configuration Format](ravl/docs/llm/CONFIG_FORMAT.md)** - Loop configuration reference
+- **[Prompt Templates](ravl/docs/llm/PROMPTS.md)** - Prompt template system
 
 ### Templates
-- **[Data Ingestion](templates/data_ingress_template/)** - Self-healing API integration template
-- **[Strategic Coherence](templates/strategic_coherence_template/)** - Parent/child coordination template
-- **[Empty Loop](templates/empty_loop_template/)** - Minimal starter template
+- **[Data Ingestion](ravl/ravl_loops/templates/child_loops/data_ingress_template/)** - Self-healing API integration template
+- **[Strategic Coherence](ravl/ravl_loops/templates/child_loops/strategic_coherence_template/)** - Parent/child coordination template
+- **[Empty Loop](ravl/ravl_loops/templates/child_loops/empty_loop_template/)** - Minimal starter template
 
 ## 📄 License
 
@@ -235,9 +230,9 @@ See [LICENSE](LICENSE) for the full license text.
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Quick guidelines:**
-1. Keep `common/` generic and reusable
+1. Keep `ravl/common/` generic and reusable
 2. Project-specific code goes in `ravl_loops/`
-3. Documentation goes in `docs/`
+3. Documentation goes in `ravl/docs/`
 4. Extract to mixins only when patterns emerge
 5. Add tests for new features
 6. Follow MPL-2.0 license requirements
@@ -248,4 +243,4 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 **Protocol Version**: 1.0
 **Last Updated**: 2025-10-22
 
-For detailed documentation, see **[docs/README.md](docs/README.md)**
+For detailed documentation, see **[ravl/docs/README.md](ravl/docs/README.md)**

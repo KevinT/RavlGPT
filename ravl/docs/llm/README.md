@@ -19,7 +19,7 @@ Instead of writing Python code, RAVL loops can be defined in markdown with Act a
 - `ravl_loop.md` - Markdown instructions
 
 ```bash
-python3 .ravl/common/llm/run_markdown_ravl.py \
+python3 .ravl/ravl/common/llm/run_markdown_ravl.py \
   --loop-dir path/to/loop \
   --role "CTO"
 ```
@@ -72,7 +72,7 @@ Process {my_input} and generate output
 EOF
 
 # 4. Run it!
-python3 .ravl/common/llm/run_markdown_ravl.py \
+python3 .ravl/ravl/common/llm/run_markdown_ravl.py \
   --loop-dir .ravl/ravls/my_group/child_loops/my_loop \
   --input "test"
 ```
@@ -157,7 +157,7 @@ template_variables:
 
 **Usage:**
 ```bash
-python3 .ravl/common/llm/run_markdown_ravl.py \
+python3 .ravl/ravl/common/llm/run_markdown_ravl.py \
   --loop-dir .ravl/ravls/strategy_guardian/child_loops/role_ambitions \
   --role "CTO" \
   --mode full

@@ -267,7 +267,7 @@ parent.learn(parent_verification, parent_action)
 
 ### For Python Implementations
 
-Use the `RAVLLoop` Protocol from `.ravl/common/ravl_loop.py`:
+Use the `RAVLLoop` Protocol from `.ravl/ravl/common/ravl_loop.py`:
 
 ```python
 from typing import Dict, Any, Optional

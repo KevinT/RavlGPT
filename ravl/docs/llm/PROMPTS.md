@@ -15,7 +15,7 @@ ravl_loops/my_loop/
 
 Common locations:
 - **Loop prompts**: `ravl_loops/my_loop/config/prompt_*.md`
-- **Framework prompts**: `.ravl/common/execution/markdown/prompts/prompt_*.md`
+- **Framework prompts**: `.ravl/ravl/common/execution/markdown/prompts/prompt_*.md`
 
 ## Using the PromptLoader
 
