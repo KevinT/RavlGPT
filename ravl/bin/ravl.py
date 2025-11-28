@@ -1066,6 +1066,21 @@ def main():
             sys.argv = [sys.argv[0]] + sys.argv[2:]
             return loop_health_main()
 
+        elif cmd == '--setup':
+            from ravl.bin.ravl_setup import main as setup_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return setup_main()
+
+    # Check if setup is needed (no LLM provider configured)
+    from ravl.common.cli.first_run_detector import needs_setup
+    if needs_setup():
+        print("\nWelcome to RAVL!\n")
+        print("RAVL needs an LLM provider to generate and analyze code.\n")
+        print("To get started, run:")
+        print("  ravl --setup\n")
+        print("This will help you configure an LLM provider.")
+        sys.exit(0)
+
     # Stage 1: Parse loop name and check for --help
     initial_parser = argparse.ArgumentParser(add_help=False)
     initial_parser.add_argument('loop', nargs='?')
