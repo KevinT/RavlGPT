@@ -1066,7 +1066,7 @@ def main():
             sys.argv = [sys.argv[0]] + sys.argv[2:]
             return loop_health_main()
 
-        elif cmd == '--setup':
+        elif cmd == '--config':
             from ravl.bin.ravl_setup import main as setup_main
             sys.argv = [sys.argv[0]] + sys.argv[2:]
             return setup_main()
@@ -1077,7 +1077,7 @@ def main():
         print("\nWelcome to RAVL!\n")
         print("RAVL needs an LLM provider to generate and analyze code.\n")
         print("To get started, run:")
-        print("  ravl --setup\n")
+        print("  ravl --config\n")
         print("This will help you configure an LLM provider.")
         sys.exit(0)
 
