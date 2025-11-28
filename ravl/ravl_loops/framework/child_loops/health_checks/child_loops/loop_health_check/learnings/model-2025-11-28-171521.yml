@@ -1,5 +1,5 @@
-learning_iterations: 8
-last_learned: '2025-11-28T17:34:38.674989+00:00'
+learning_iterations: 3
+last_learned: '2025-11-28T17:15:21.347081+00:00'
 known_domain_patterns: {}
 improvement_suggestions: []
 loops_diagnosed:

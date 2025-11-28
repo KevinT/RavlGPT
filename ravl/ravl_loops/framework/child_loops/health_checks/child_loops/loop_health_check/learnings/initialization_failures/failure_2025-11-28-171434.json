@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-11-28T17:14:34.510133+00:00",
+  "failure_phase": "execution",
+  "error_type": "ValueError",
+  "error_message": "ANTHROPIC_API_KEY not found in environment",
+  "stack_trace": "Traceback (most recent call last):\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/bin/ravl.py\", line 378, in run\n    loop_instance = self._initialize_loop(LoopClass, loop_dir, config, learning_path)\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/bin/ravl.py\", line 800, in _initialize_loop\n    return LoopClass(**params)\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/loop_health_check/ravl_loop.py\", line 83, in __init__\n    self.llm_analyzer = DomainLLMAnalyzer(prompts_dir=self.loop_dir / \"config\")\n                        ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/loop_health_check/domain_llm_analyzer.py\", line 48, in __init__\n    self.llm = LLMProviderFactory.create_provider(provider_name=\"anthropic\", api_key=api_key)\n               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/common/llm/llm_providers.py\", line 347, in create_provider\n    return AnthropicProvider(\n        api_key=api_key,\n    ...<3 lines>...\n        top_p=top_p\n    )\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/common/llm/llm_providers.py\", line 86, in __init__\n    raise ValueError(\"ANTHROPIC_API_KEY not found in environment\")\nValueError: ANTHROPIC_API_KEY not found in environment\n",
+  "context": {
+    "loop_dir": "/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/loop_health_check",
+    "phase": "initialization or execution"
+  }
+}

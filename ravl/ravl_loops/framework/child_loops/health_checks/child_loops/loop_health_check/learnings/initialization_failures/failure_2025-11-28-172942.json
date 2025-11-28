@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-11-28T17:29:42.182121+00:00",
+  "failure_phase": "execution",
+  "error_type": "BrokenPipeError",
+  "error_message": "[Errno 32] Broken pipe",
+  "stack_trace": "Traceback (most recent call last):\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/bin/ravl.py\", line 384, in run\n    action_results = RAVLRunner.run_ravl_phases(\n        loop_instance,\n    ...<2 lines>...\n        quiet=args.quiet\n    )\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/common/ravl_runner.py\", line 689, in run_ravl_phases\n    loop.learn(verification, action_results)\n    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/loop_health_check/ravl_loop.py\", line 251, in learn\n    self._extract_pattern(action_result)\n    ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/loop_health_check/ravl_loop.py\", line 313, in _extract_pattern\n    print(f\"   \ud83d\udcda Extracted domain pattern: {pattern['id']}\", file=sys.stderr)\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nBrokenPipeError: [Errno 32] Broken pipe\n",
+  "context": {
+    "loop_dir": "/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/loop_health_check",
+    "phase": "initialization or execution"
+  }
+}
