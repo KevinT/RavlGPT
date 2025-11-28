@@ -86,8 +86,13 @@ class RAVLSetup:
         llm_display = current_llm if current_llm else "none"
         cwd = os.getcwd()
 
-        # Fixed configuration display width
-        HEADER_WIDTH = 80
+        # Dynamic header width based on terminal size
+        try:
+            terminal_width = os.get_terminal_size().columns
+            # Clamp between reasonable min/max
+            HEADER_WIDTH = max(80, min(terminal_width, 120))
+        except:
+            HEADER_WIDTH = 80  # Fallback for non-terminal environments
 
         # Top row with dynamic version
         header_prefix = "█ RavlGPT █ v "
@@ -97,16 +102,16 @@ class RAVLSetup:
         top_row = version_part + ("█" * top_padding)
 
         # Bottom row (matches width)
-        bottom_prefix = "░ ░ ░ ░ ░ ░ ░ ║ "
+        bottom_prefix = "░ ░ ░ ░ ░ ░ ░ ░ ░ ░ "
         bottom_padding = HEADER_WIDTH - len(bottom_prefix)
         bottom_row = bottom_prefix + ("░" * bottom_padding)
 
         print(top_row)
-        print("║    ╔════╬═══╗")
-        print(f"▓    ▓    ▓   ║ Default intelligence provider: {llm_display}")
-        print(f"║  ╔═╩╗  ╔╩═╦═║ API Integrations: {api_count}")
-        print(f"▒  ▒  ▒  ▒  ▒ ║ {cwd}")
-        print("║ ╔╩╗ ╔═╦╩╗ ║ ║")
+        print("║    ╔════╬════╦════╣")
+        print(f"▓    ▓    ▓    ▓    ║ Default intelligence provider: {llm_display}")
+        print(f"║  ╔═╩╗  ╔╩═╦══╗ ➿ ║ API Integrations: {api_count}")
+        print(f"▒  ▒  ▒  ▒  ▒  ▒    ║ {cwd}")
+        print("║ ╔╩╗ ╔═╦╩╗ ║ ╔╩╦═╦═╣")
         print(bottom_row)
         print()
 
