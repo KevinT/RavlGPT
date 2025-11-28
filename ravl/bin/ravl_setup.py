@@ -76,13 +76,13 @@ class RAVLSetup:
         llm_display = current_llm if current_llm else "none"
         cwd = os.getcwd()
 
-        print("█ RavlGPT █ v 0.001 █████████████████████████████████████████████████")
+        print("█ RavlGPT █ v 0.001 ██████████████████████████████████████████████████████████")
         print("║    ╔════╬═══╗")
         print(f"▓    ▓    ▓   ║ Default intelligence provider: {llm_display}")
         print(f"║  ╔═╩╗  ╔╩═╦═║ API Integrations: {api_count}")
         print(f"▒  ▒  ▒  ▒  ▒ ║ {cwd}")
         print("║ ╔╩╗ ╔═╦╩╗ ║ ║")
-        print("░ ░ ░ ░ ░ ░ ░ ║ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░")
+        print("░ ░ ░ ░ ░ ░ ░ ║ ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░")
         print()
 
     def _validate_llm_key(self, provider: str, api_key: str) -> bool:
@@ -188,27 +188,86 @@ class RAVLSetup:
         """
         print("\n=== API Integrations ===\n")
 
-        api_name = input("Enter the API name (e.g., \"ClickUp\", \"Stripe\", \"GitHub\"): ").strip()
+        # Show currently configured APIs
+        current_apis = get_configured_apis()
+        if current_apis:
+            print("Currently configured:")
+            for i, (api_name, env_key) in enumerate(current_apis.items(), 1):
+                print(f"{i}) {api_name} ({env_key})")
+            next_option = len(current_apis) + 1
+        else:
+            print("No APIs configured yet.")
+            next_option = 1
 
-        if not api_name:
-            print("No API name provided.")
+        print(f"{next_option}) Add new API integration")
+        print(f"{next_option + 1}) Back to main menu")
+
+        choice = input(f"\nSelect (1-{next_option + 1}): ").strip()
+
+        # Check if user wants to go back
+        if choice == str(next_option + 1):
             return False
 
-        # Convert to env var format: ClickUp -> CLICKUP_API_TOKEN
-        env_key = f"{api_name.upper().replace(' ', '_')}_API_TOKEN"
+        # Check if user wants to add new API
+        if choice == str(next_option):
+            api_name = input("\nEnter the API name (e.g., \"ClickUp\", \"Stripe\", \"GitHub\"): ").strip()
 
-        api_token = input(f"\nEnter your {api_name} API token: ").strip()
+            if not api_name:
+                print("No API name provided.")
+                return False
 
-        if not api_token:
-            print("No API token provided.")
-            return False
+            # Convert to env var format: ClickUp -> CLICKUP_API_TOKEN
+            env_key = f"{api_name.upper().replace(' ', '_')}_API_TOKEN"
 
-        # Save
-        self.env_vars[env_key] = api_token
-        self._save_env()
+            api_token = input(f"\nEnter your {api_name} API token: ").strip()
 
-        print(f"✓ {api_name} configured (saved as {env_key})")
-        return True
+            if not api_token:
+                print("No API token provided.")
+                return False
+
+            # Save
+            self.env_vars[env_key] = api_token
+            self._save_env()
+
+            print(f"✓ {api_name} configured (saved as {env_key})")
+            return True
+
+        # Check if user selected an existing API to reconfigure
+        try:
+            choice_num = int(choice)
+            if 1 <= choice_num <= len(current_apis):
+                api_name = list(current_apis.keys())[choice_num - 1]
+                env_key = current_apis[api_name]
+
+                print(f"\n=== Configure {api_name} ===")
+                print(f"Current: {env_key}")
+                print("\n1) Update token")
+                print("2) Remove")
+                print("3) Back")
+
+                action = input("\nSelect (1-3): ").strip()
+
+                if action == '1':
+                    api_token = input(f"\nEnter new {api_name} API token: ").strip()
+                    if api_token:
+                        self.env_vars[env_key] = api_token
+                        self._save_env()
+                        print(f"✓ {api_name} token updated")
+                        return True
+                elif action == '2':
+                    confirm = input(f"\nRemove {api_name}? (y/n): ").strip().lower()
+                    if confirm in ['y', 'yes']:
+                        del self.env_vars[env_key]
+                        self._save_env()
+                        print(f"✓ {api_name} removed")
+                        return True
+                elif action == '3':
+                    return False
+        except (ValueError, IndexError):
+            pass
+
+        print("Invalid choice.")
+        return False
 
     def main_menu(self):
         """Main setup menu."""
@@ -231,20 +290,15 @@ class RAVLSetup:
 
         if choice == '1':
             self.setup_llm_provider()
-            # Ask if they want to continue
-            cont = input("\nContinue configuring? (y/n): ").strip().lower()
-            if cont in ['y', 'yes']:
-                self.main_menu()
+            # Return to main menu
+            self.main_menu()
 
         elif choice == '2':
             self.setup_api_integration()
-            # Ask if they want to add more
-            cont = input("\nContinue adding APIs? (y/n): ").strip().lower()
-            if cont in ['y', 'yes']:
-                self.main_menu()
+            # Return to main menu
+            self.main_menu()
 
         elif choice == '3':
-            print("\n=== Setup Complete! ===")
             return
 
         else:
