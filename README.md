@@ -100,12 +100,13 @@ The project includes a `./ravl` symlink that provides a unified interface:
 chmod +x .ravl/bin/*
 
 # From project root, use the unified wrapper:
-ravl --list              # List all loops
-ravl my_loop            # Run a loop
-ravl --clean my_loop    # Clean up learnings
-ravl --clone            # Clone a loop
-ravl --health my_loop   # Check loop health
-ravl --help             # Show all options
+ravl --list              			# List all loops
+ravl my_loop            			# Run a loop
+ravl --clean my_loop    			# Clean up learnings
+ravl --clone loop_name   	        # Clone a loop
+ravl --loop-health my_loop   		# Check loop health
+ravl --execution-health my_loop   	# Check loop health
+ravl --help             			# Show all options
 ```
 
 If the `./ravl` symlink doesn't exist in your project, create it:

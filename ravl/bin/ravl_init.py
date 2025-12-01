@@ -44,12 +44,11 @@ def main():
     config_file.write_text('''# RAVL Project Configuration
 [project]
 name = "My RAVL Project"
-version = "1.0.0"
 ''')
     print("✓ Created ravl_loops/config/ravl.toml")
 
     # Create README
-    readme = cwd / 'README.md'
+    readme = cwd / 'ravl_loops' / 'README.md'
     if not readme.exists():
         readme.write_text('''# RAVL Project
 
@@ -57,15 +56,23 @@ This is a RAVL (Reflect-Act-Verify-Learn) project.
 
 ## Getting Started
 
-1. Create a new loop: `ravl --clone template_name ravl_loops/my_loop`
+1. Create a new loop: `ravl --new my_name` or run an example `ravl example_1_single_loop`
 2. Run your loop: `ravl my_loop`
-3. View loop health: `ravl --loop-health my_loop`
+3. View loop health: `ravl --health my_loop`
+4. Use `ravl --help` or `ravl --COMMAND --help` to see options
 
 ## Directory Structure
 
-- `ravl_loops/` - Loop definitions (each loop stores its own learning artifacts)
+- `ravl_loops/` - Loop definitions
+- `ravl_loops/my_name/learnings/.` - Learning files
+
+By default, each loop stores its own learning artifacts in it's loop folder. This can be changed in config.toml.
 
 Note: Loops create their own learning directories and output directories as needed.
+
+## Framework documentation
+
+Running `ravl --synch-docs` will copy the RavlGPT framework documentation into your `ravl_loops/docs/.` folder. Note that running this command will always replace the files in this folder with the latest framework documentations.
 ''')
         print("✓ Created README.md")
 
@@ -74,8 +81,8 @@ Note: Loops create their own learning directories and output directories as need
     print()
     print("Next steps:")
     print("  1. Run 'ravl --config' to configure settings")
-    print("  2. Run 'ravl --clone' to create your first loop")
-    print("  3. Run 'ravl --list' to see available templates")
+    print("  2. Run 'ravl --list' to see available examples and templates")
+    print("  3. See /ravl_loops/README.md for more")
 
 
 if __name__ == '__main__':
