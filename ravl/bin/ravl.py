@@ -1052,9 +1052,10 @@ def main():
             return new_main()
 
         elif cmd == '--health':
-            from ravl.bin.ravl_health import main as health_main
-            sys.argv = [sys.argv[0]] + sys.argv[2:]
-            return health_main()
+            import subprocess
+            script_path = Path(__file__).parent / "ravl_health.py"
+            result = subprocess.run([sys.executable, str(script_path)] + sys.argv[2:])
+            sys.exit(result.returncode)
 
         elif cmd == '--execution-health':
             import subprocess
