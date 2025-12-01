@@ -1079,6 +1079,10 @@ def main():
             init_main()
             sys.exit(0)
 
+        elif cmd == '--sync-docs':
+            from ravl.bin.ravl_sync_docs import main as sync_docs_main
+            return sync_docs_main()
+
     # Check if setup is needed (no LLM provider configured)
     from ravl.common.cli.first_run_detector import needs_setup
     if needs_setup():
