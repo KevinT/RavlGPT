@@ -275,13 +275,12 @@ class MarkdownRAVLExecutor:
         return self._phases_cache
 
     def _find_project_root(self) -> Path:
-        """Find project root by looking for .git directory"""
-        current = self.loop_dir.resolve()
-        while current.parent != current:
-            if (current / '.git').exists():
-                return current
-            current = current.parent
-        return self.loop_dir.parent
+        """Find project root using framework utility"""
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        return RAVLCLIBase.find_project_root(
+            start_path=self.loop_dir,
+            required=False
+        )
 
     def _load_config(self) -> Dict[str, Any]:
         """Load loop configuration from config/ravl.toml if it exists"""

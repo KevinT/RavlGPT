@@ -346,16 +346,28 @@ class RAVLSetup:
 
 def main():
     """Main entry point for setup wizard."""
-    # Find project root
-    project_root = Path.cwd()
-    while project_root != project_root.parent:
-        if (project_root / '.ravl').exists():
-            break
-        project_root = project_root.parent
+    from ravl.common.cli.ravl_cli_base import RAVLCLIBase
 
-    if not (project_root / '.ravl').exists():
-        print("Error: Could not find RAVL project root (.ravl directory not found)")
-        sys.exit(1)
+    # Detect installation type
+    install_type = RAVLCLIBase.get_installation_type()
+    config_path = RAVLCLIBase.get_config_path()
+
+    print(f"RAVL Configuration Wizard")
+    print(f"Installation type: {install_type}")
+    print(f"Config location: {config_path}")
+    print()
+
+    # Try to find project (optional for config)
+    try:
+        project_root = RAVLCLIBase.find_project_root(required=False)
+        if (project_root / 'ravl_loops').exists():
+            print(f"Found RAVL project at: {project_root}")
+        else:
+            print("No RAVL project found in current directory.")
+            print("Run 'ravl --init' to create a new project.")
+    except Exception as e:
+        print(f"Note: {e}")
+        project_root = Path.cwd()
 
     setup = RAVLSetup(project_root)
 

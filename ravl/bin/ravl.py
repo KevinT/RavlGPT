@@ -1073,6 +1073,11 @@ def main():
             sys.argv = [sys.argv[0]] + sys.argv[2:]
             return setup_main()
 
+        elif cmd == '--init':
+            from ravl.bin.ravl_init import main as init_main
+            init_main()
+            sys.exit(0)
+
     # Check if setup is needed (no LLM provider configured)
     from ravl.common.cli.first_run_detector import needs_setup
     if needs_setup():

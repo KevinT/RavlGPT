@@ -72,13 +72,12 @@ class SimpleCodeExecutor:
         )
 
     def _find_project_root(self) -> Path:
-        """Find project root by looking for .git directory"""
-        current = self.loop_dir.resolve()
-        while current.parent != current:
-            if (current / '.git').exists():
-                return current
-            current = current.parent
-        return self.loop_dir.parent
+        """Find project root using framework utility"""
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        return RAVLCLIBase.find_project_root(
+            start_path=self.loop_dir,
+            required=False
+        )
 
     def execute_code(self, code: str, timeout: int = 300) -> Dict[str, Any]:
         """

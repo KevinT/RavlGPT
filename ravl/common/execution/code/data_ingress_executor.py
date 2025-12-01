@@ -93,13 +93,12 @@ class DataIngressExecutor:
         self.config = self._load_config()
 
     def _find_project_root(self) -> Path:
-        """Find project root by looking for .git directory"""
-        current = self.loop_path.resolve()
-        while current != current.parent:
-            if (current / '.git').exists():
-                return current
-            current = current.parent
-        return self.loop_path.resolve()
+        """Find project root using framework utility"""
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        return RAVLCLIBase.find_project_root(
+            start_path=self.loop_path,
+            required=False
+        )
 
     def _load_config(self) -> Dict[str, Any]:
         """Load ravl.toml configuration"""
