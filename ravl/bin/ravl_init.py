@@ -25,9 +25,9 @@ def main():
 
     # Check if project already exists
     if (cwd / 'ravl_loops').exists():
-        print(f"Error: RAVL project already exists in {cwd}")
+        print(f"ℹ️  RAVL project already exists in {cwd}")
         print("ravl_loops/ directory found.")
-        sys.exit(1)
+        sys.exit(0)
 
     print(f"Initializing RAVL project in: {cwd}")
     print()
