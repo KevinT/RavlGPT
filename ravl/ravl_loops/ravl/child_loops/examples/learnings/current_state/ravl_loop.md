@@ -1,1 +1,0 @@
-Your child loops are a set of examples which a user can run - if they are run, they will be cloned into their own user directory. List each example available, along with a brief explanation of it's purpose. Be aware that some examples have child loops, but those should be considered part of the same example loop. Show output to the screen only.

@@ -186,10 +186,19 @@ class RAVLListCommand(RAVLCLIBase):
 
             for loop_info in sorted(project_loops, key=lambda x: str(x['path'])):
                 config = loop_info['config']
-                emoji = config.get('emoji', '➰')
+                is_organizer = loop_info.get('is_namespace_organizer', False)
+
+                # Emoji: 📁 for organizers, otherwise use config emoji
+                emoji = '📁' if is_organizer else config.get('emoji', '➰')
+
                 loop_name = loop_info['path'].name
                 display_name = self._format_loop_name(loop_name)
-                last_run = loop_info.get('last_run') or 'Never'
+
+                # Last run: "-" for organizers, otherwise show date
+                if is_organizer:
+                    last_run = '-'
+                else:
+                    last_run = loop_info.get('last_run') or 'Never'
 
                 # Show full path
                 rel_path = loop_info['path'].relative_to(self.project_root)
@@ -199,10 +208,19 @@ class RAVLListCommand(RAVLCLIBase):
             self.print_header("[Framework Loops (built-in)]", "")
             for loop_info in sorted(framework_loops, key=lambda x: str(x['path'])):
                 config = loop_info['config']
-                emoji = config.get('emoji', '➰')
+                is_organizer = loop_info.get('is_namespace_organizer', False)
+
+                # Emoji: 📁 for organizers, otherwise use config emoji
+                emoji = '📁' if is_organizer else config.get('emoji', '➰')
+
                 loop_name = loop_info['path'].name
                 display_name = self._format_loop_name(loop_name)
-                last_run = loop_info.get('last_run') or 'Never'
+
+                # Last run: "-" for organizers, otherwise show date
+                if is_organizer:
+                    last_run = '-'
+                else:
+                    last_run = loop_info.get('last_run') or 'Never'
 
                 # Show full path
                 rel_path = loop_info['path'].relative_to(self.project_root)
@@ -212,6 +230,7 @@ class RAVLListCommand(RAVLCLIBase):
         """Print loops as JSON"""
         output_project = []
         for loop_info in project_loops:
+            is_organizer = loop_info.get('is_namespace_organizer', False)
             loop_name = loop_info['path'].name
             output_project.append({
                 'name': loop_name,
@@ -220,11 +239,14 @@ class RAVLListCommand(RAVLCLIBase):
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"ravl {loop_name}"
+                'run_command': f"ravl {loop_name}",
+                'is_namespace_organizer': is_organizer,
+                'runnable': not is_organizer
             })
 
         output_framework = []
         for loop_info in framework_loops:
+            is_organizer = loop_info.get('is_namespace_organizer', False)
             loop_name = loop_info['path'].name
             output_framework.append({
                 'name': loop_name,
@@ -233,7 +255,9 @@ class RAVLListCommand(RAVLCLIBase):
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"ravl {loop_name}"
+                'run_command': f"ravl {loop_name}",
+                'is_namespace_organizer': is_organizer,
+                'runnable': not is_organizer
             })
 
         output = {
@@ -522,6 +546,7 @@ class RAVLListCommand(RAVLCLIBase):
 
         # Add project loops
         for loop_info in project_loops:
+            is_organizer = loop_info.get('is_namespace_organizer', False)
             loop_name = loop_info['config']['name']
             namespace = self._build_loop_namespace(loop_info['path'])
             output['project_loops'].append({
@@ -532,12 +557,15 @@ class RAVLListCommand(RAVLCLIBase):
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"ravl {namespace}"
+                'run_command': f"ravl {namespace}",
+                'is_namespace_organizer': is_organizer,
+                'runnable': not is_organizer
             })
 
         # Add framework loops (combines framework_loops and templates)
         all_framework = framework_loops + templates
         for loop_info in all_framework:
+            is_organizer = loop_info.get('is_namespace_organizer', False)
             loop_name = loop_info['config']['name']
             namespace = self._build_loop_namespace(loop_info['path'])
             output['framework_loops'].append({
@@ -548,7 +576,9 @@ class RAVLListCommand(RAVLCLIBase):
                 'path': str(loop_info['path'].relative_to(self.project_root)),
                 'last_run': loop_info.get('last_run'),
                 'parent': str(loop_info['parent'].relative_to(self.project_root)) if loop_info['parent'] else None,
-                'run_command': f"ravl {namespace}"
+                'run_command': f"ravl {namespace}",
+                'is_namespace_organizer': is_organizer,
+                'runnable': not is_organizer
             })
 
         print(json.dumps(output, indent=2))
@@ -563,10 +593,19 @@ class RAVLListCommand(RAVLCLIBase):
             is_last: Whether this is the last loop in the list
         """
         config = loop_info['config']
-        emoji = config.get('emoji', '➿')
+        is_organizer = loop_info.get('is_namespace_organizer', False)
+
+        # Emoji: 📁 for organizers, otherwise use config emoji
+        emoji = '📁' if is_organizer else config.get('emoji', '➿')
+
         loop_name = loop_info['path'].name
         display_name = self._format_loop_name(loop_name)
-        last_run = loop_info.get('last_run') or 'Never'
+
+        # Last run: "-" for organizers (they don't execute), otherwise show date
+        if is_organizer:
+            last_run = '-'
+        else:
+            last_run = loop_info.get('last_run') or 'Never'
 
         # Use appropriate tree character
         branch = " └──" if is_last else " ├──"
@@ -593,10 +632,19 @@ class RAVLListCommand(RAVLCLIBase):
             is_last: Whether this is the last child in the parent's list
         """
         config = loop_info['config']
-        emoji = config.get('emoji', '➿')
+        is_organizer = loop_info.get('is_namespace_organizer', False)
+
+        # Emoji: 📁 for organizers, otherwise use config emoji
+        emoji = '📁' if is_organizer else config.get('emoji', '➿')
+
         loop_name = config['name']
         display_name = self._format_loop_name(loop_name)
-        last_run = loop_info.get('last_run') or 'Never'
+
+        # Last run: "-" for organizers (they don't execute), otherwise show date
+        if is_organizer:
+            last_run = '-'
+        else:
+            last_run = loop_info.get('last_run') or 'Never'
 
         branch = "└──" if is_last else "├──"
         print(f"{prefix}{branch} {emoji} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)

@@ -546,7 +546,7 @@ class LoopDiscovery:
 
     def find_all_loops(self) -> List[Dict[str, Any]]:
         """
-        Recursively find all loops in project
+        Recursively find all loops and namespace organizers in project
 
         Returns:
             List of loop info dicts with keys:
@@ -555,6 +555,7 @@ class LoopDiscovery:
             - parent: Parent loop path (if nested)
             - last_run: Last run timestamp (if available)
             - loop_type: 'framework' or 'project'
+            - is_namespace_organizer: True if this is a namespace organizer (optional)
         """
         loops = []
 
@@ -580,7 +581,10 @@ class LoopDiscovery:
                 last_child_loops_idx = child_loops_indices[-1]
                 # Parent is everything before the last 'child_loops'
                 parent_path = Path(*loop_dir.parts[:last_child_loops_idx])
-            # If no 'child_loops' in path, it's a top-level loop (parent = None)
+            # Check if immediate parent is a namespace organizer (e.g., examples/, framework/)
+            elif loop_dir.parent and self._is_namespace_organizer(loop_dir.parent):
+                parent_path = loop_dir.parent
+            # If no 'child_loops' in path and parent isn't an organizer, it's a top-level loop (parent = None)
 
             # Get last run date (pass config for custom learning path resolution)
             last_run = self._get_last_run_date(loop_dir, config)
@@ -592,6 +596,33 @@ class LoopDiscovery:
                 'last_run': last_run,
                 'loop_type': 'framework' if is_framework else 'project'
             })
+
+        # NEW: Discover namespace organizers in framework loops directory
+        if self.framework_loops_dir.exists():
+            for category_dir in self.framework_loops_dir.iterdir():
+                if category_dir.is_dir() and self._is_namespace_organizer(category_dir):
+                    # Extract description from README first line if possible
+                    description = category_dir.name.replace('_', ' ').title()
+                    try:
+                        readme_content = (category_dir / 'README.md').read_text()
+                        first_line = readme_content.split('\n')[0]
+                        if first_line.startswith('#'):
+                            description = first_line.lstrip('#').strip()
+                    except:
+                        pass
+
+                    loops.append({
+                        'path': category_dir,
+                        'config': {
+                            'name': category_dir.name,
+                            'description': description,
+                            'emoji': '📁'  # Folder emoji for organizers
+                        },
+                        'parent': None,  # Top-level under ravl namespace
+                        'last_run': None,  # Organizers don't execute
+                        'loop_type': 'framework',
+                        'is_namespace_organizer': True  # NEW FLAG
+                    })
 
         return loops
 
@@ -664,6 +695,33 @@ class LoopDiscovery:
             if part in ('learnings', 'ravl_learning') and i < len(path.parts) - 1:
                 # This path is inside a learnings directory
                 return False
+
+        return True
+
+    def _is_namespace_organizer(self, path: Path) -> bool:
+        """
+        Check if directory is a namespace organizer (has README.md but no loop files).
+
+        Namespace organizers are directories that group loops but aren't loops themselves.
+        Examples: examples/, framework/, library/, templates/
+
+        Args:
+            path: Directory path to check
+
+        Returns:
+            True if directory has README.md and no ravl_loop.py or ravl_loop.md
+        """
+        # Must have README.md
+        if not (path / 'README.md').exists():
+            return False
+
+        # Must NOT have loop files (that would make it a loop, not an organizer)
+        if (path / 'ravl_loop.py').exists() or (path / 'ravl_loop.md').exists():
+            return False
+
+        # Exclude learnings directories
+        if 'learnings' in str(path) or 'ravl_learning' in str(path):
+            return False
 
         return True
 

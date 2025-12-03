@@ -1,4 +1,0 @@
-[loop]
-name = "framework"
-description = "Core framework diagnostic and health check tools"
-version = "1.0.0"

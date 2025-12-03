@@ -1,4 +1,0 @@
-[loop]
-name = "library"
-description = "Delegatable loops with reusable patterns (may move to separate project)"
-version = "1.0.0"

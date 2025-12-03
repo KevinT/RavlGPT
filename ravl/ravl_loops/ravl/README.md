@@ -1,7 +1,3 @@
-# Act
-
-If someone tries to run this loop, just show them this output directly on their screen:
-
 # RAVL Framework Namespace
 
 The `ravl.*` namespace contains all framework-provided loops organized by purpose:
@@ -35,11 +31,3 @@ ravl --clone ravl.library.data_ingress my_api_integration
 # Run examples
 ravl ravl.examples.example_1_single_loop
 ```
-
-# Verify
-
-- The output is displayed directly to the user's screen
-- All four namespace categories are shown: `ravl.framework`, `ravl.library`, `ravl.templates`, and `ravl.examples`
-- Each category includes its description
-- The usage section with example commands is displayed correctly
-- The output format matches the markdown structure specified in the Act section

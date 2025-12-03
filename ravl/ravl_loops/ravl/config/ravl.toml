@@ -1,4 +1,0 @@
-[loop]
-name = "ravl"
-description = "RAVL framework namespace - contains all framework-provided loops organized by category"
-version = "1.0.0"
