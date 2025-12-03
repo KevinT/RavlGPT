@@ -32,9 +32,9 @@ STATUS_SYMBOLS = {
 }
 
 # ANSI color codes for visual distinction
-ANSI_DIM = '\033[2m'
-ANSI_RESET = '\033[0m'
-ANSI_CYAN = '\033[36m'
+ANSI_EXECUTION = '\033[36m'  # Cyan - for execution logs (visible in all themes)
+ANSI_RESET = '\033[0m'       # Reset to default
+ANSI_GRAY = '\033[90m'       # Bright black (gray) - alternative option
 
 # Global flag for execution detail visibility
 # Controls whether execution learning messages (code generation, DSL, caching) are shown
@@ -126,15 +126,15 @@ def log_execution(message: str, indent: int = 2, status: str = 'working'):
     if not should_show_execution():
         return
 
-    # Skip dimming if verbose mode enabled or terminal doesn't support color
+    # Skip coloring if verbose mode enabled or terminal doesn't support color
     if is_verbose_mode() or not _supports_color():
         log_message(message, status=status, indent=indent)
     else:
-        # Apply dimming to execution logs for visual distinction
+        # Apply cyan color to execution logs for visual distinction from domain logs
         symbol = STATUS_SYMBOLS.get(status, '[i]')
         indent_str = ' ' * indent
         for line in message.split('\n'):
-            print(f"{ANSI_DIM}{indent_str}{symbol} {line}{ANSI_RESET}",
+            print(f"{ANSI_EXECUTION}{indent_str}{symbol} {line}{ANSI_RESET}",
                   file=sys.stderr, flush=True)
 
 
