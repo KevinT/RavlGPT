@@ -1,0 +1,4 @@
+[loop]
+name = "examples"
+description = "Working demonstration loops showcasing RAVL capabilities"
+version = "1.0.0"

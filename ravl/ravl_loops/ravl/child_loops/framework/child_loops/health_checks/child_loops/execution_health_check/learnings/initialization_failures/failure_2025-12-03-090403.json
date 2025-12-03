@@ -1,0 +1,11 @@
+{
+  "timestamp": "2025-12-03T09:04:03.142691+00:00",
+  "failure_phase": "execution",
+  "error_type": "ValueError",
+  "error_message": "No target loop specified. Use: ./ravl --execution-health <loop_name>",
+  "stack_trace": "Traceback (most recent call last):\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/bin/ravl.py\", line 391, in run\n    loop_instance = self._initialize_loop(LoopClass, loop_dir, config, learning_path)\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/bin/ravl.py\", line 813, in _initialize_loop\n    return LoopClass(**params)\n  File \"/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/execution_health_check/ravl_loop.py\", line 62, in __init__\n    raise ValueError(\"No target loop specified. Use: ./ravl --execution-health <loop_name>\")\nValueError: No target loop specified. Use: ./ravl --execution-health <loop_name>\n",
+  "context": {
+    "loop_dir": "/Users/sand-mbp-002/Source/_sand-internal/Sand.Delivery.DigitalTerrain/.ravl/ravl/ravl_loops/framework/child_loops/health_checks/child_loops/execution_health_check",
+    "phase": "initialization or execution"
+  }
+}

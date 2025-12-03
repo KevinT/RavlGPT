@@ -50,9 +50,10 @@ Examples:
     ravl-clone data_ingress my_api --target ./custom_dir/
 
 Search sources (all available):
-1. Templates in .ravl/templates/
-2. Examples in .ravl/docs/examples/
-3. Existing RAVL loops in ravl_loops/
+1. Templates in .ravl/ravl/ravl_loops/ravl/templates/
+2. Library loops in .ravl/ravl/ravl_loops/ravl/library/
+3. Examples in .ravl/ravl/ravl_loops/ravl/examples/
+4. Existing RAVL loops in ravl_loops/
 
 Note: Parent loops in the destination path must exist and be valid RAVL loops.
 """
@@ -87,8 +88,10 @@ class RAVLCloneCommand(RAVLCLIBase):
 
         # Find framework root (where templates/examples live)
         self.ravl_dir = self.find_framework_root()
-        self.templates_dir = self.ravl_dir / 'ravl' / 'ravl_loops' / 'templates'
-        self.examples_dir = self.ravl_dir / 'ravl' / 'ravl_loops' / 'examples'
+        self.ravl_namespace = self.ravl_dir / 'ravl' / 'ravl_loops' / 'ravl'
+        self.templates_dir = self.ravl_namespace / 'templates'
+        self.examples_dir = self.ravl_namespace / 'examples'
+        self.library_dir = self.ravl_namespace / 'library'
         self.project_loops_dir = project_loops_dir if project_loops_dir else (self.project_root / 'ravl_loops')
 
     def run(self, args: argparse.Namespace):
@@ -159,7 +162,7 @@ class RAVLCloneCommand(RAVLCLIBase):
         source_paths = self._find_all_loop_sources(source_name)
         if not source_paths:
             self.print_error(f"Loop not found: {source_name}")
-            print(f"  Searched in: templates/, examples/, and existing RAVL loops", file=sys.stderr)
+            print(f"  Searched in: templates/, library/, examples/, and existing RAVL loops", file=sys.stderr)
             sys.exit(1)
 
         # If multiple matches, ask user to select
@@ -263,9 +266,9 @@ class RAVLCloneCommand(RAVLCLIBase):
             Path if found and valid, None otherwise
 
         Example:
-            base_dir = .ravl/templates/
+            base_dir = .ravl/ravl/ravl_loops/ravl/templates/
             path_segments = ['strategic_coherence', 'content_coherence']
-            Returns: .ravl/templates/strategic_coherence/child_loops/content_coherence/
+            Returns: .ravl/ravl/ravl_loops/ravl/templates/strategic_coherence/child_loops/content_coherence/
         """
         if not base_dir.exists():
             return None
@@ -307,6 +310,7 @@ class RAVLCloneCommand(RAVLCLIBase):
         matches = []
         search_dirs = [
             (self.templates_dir, 'template'),
+            (self.library_dir, 'library'),
             (self.examples_dir, 'example'),
             (self.project_loops_dir, 'existing'),
         ]

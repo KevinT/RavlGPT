@@ -1,0 +1,49 @@
+{
+  "inferred_at": "2025-12-03T09:06:25.561503+00:00",
+  "attempt_number": 2,
+  "output": {
+    "format": "json",
+    "destination": "stdout",
+    "include_metadata": true
+  },
+  "data_structure": {
+    "type": "unknown",
+    "fields": [
+      "id"
+    ],
+    "constraints": []
+  },
+  "persistence": {
+    "enabled": false,
+    "format": null,
+    "location": null,
+    "change_detection": null
+  },
+  "act_requirements": {
+    "has_api_call": false,
+    "api_types": [],
+    "has_transformation": false,
+    "has_aggregation": false,
+    "needs_llm_calls": true
+  },
+  "previous_attempts": [
+    {
+      "iteration": "dsl_iteration_1",
+      "status": null,
+      "failures": [],
+      "suggestions": []
+    }
+  ],
+  "failure_analysis": {
+    "has_failures": false,
+    "failure_categories": [],
+    "improvement_suggestions": [],
+    "recent_failures": []
+  },
+  "warning_history": {
+    "has_warnings": false,
+    "warning_patterns": {},
+    "recent_warnings": []
+  },
+  "llm_guidance": "# Code Generation Guidance\n\nGenerate Python code wrapped in custom delimiters (NOT markdown code blocks):\n===RAVL_CODE_START===\n[Your Python code here]\n===RAVL_CODE_END===\n\nYour generated code should:\n\n- Output results as JSON to stdout\n- Include metadata: timestamp, record count, if data changed\n- Save metadata to: learnings/state/metadata.json (relative to project root)\n- Each item should have fields: id\n\n# REQUIRED: LLM API Calls:\n- YOU MUST use framework LLM provider (automatic logging and error handling)\n- from ravl.common.llm.llm_providers import LLMProviderFactory\n- provider = LLMProviderFactory.create_provider('anthropic')  # or 'openai', 'google', 'ollama'\n- response = provider.complete(prompt, max_tokens=8192)\n- DO NOT make direct Anthropic/OpenAI API calls - this bypasses framework logging\n- All LLM calls must go through LLMProvider for debugging and health monitoring\n\n# Learning from Previous Attempts:\n\n# Your code will be verified against:\n- - Confirm that the intended outcome described in the Act section was achieved\n- - Validate that no errors or exceptions occurred during execution\n- - Check that any outputs or artifacts are present and properly formatted"
+}

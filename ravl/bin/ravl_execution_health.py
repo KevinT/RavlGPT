@@ -20,7 +20,7 @@ Analyzes:
 
 The --focus parameter biases the analysis toward specific concerns (formal or casual phrasing).
 
-Runs: ./.ravl/bin/ravl health_checks.execution_health_check --loop <loop-name>
+Runs: ./.ravl/bin/ravl ravl.framework.health_checks.execution_health_check --loop <loop-name>
 """
 
 import sys
@@ -107,7 +107,7 @@ except Exception as e:
 ravl_wrapper = project_root / "ravl"
 ravl_cmd = [
     str(ravl_wrapper),
-    "health_checks.execution_health_check",
+    "ravl.framework.health_checks.execution_health_check",
     "--quiet"  # Suppress framework banners, show only health diagnostics
 ]
 

@@ -40,8 +40,8 @@ class LoopDiscovery:
         # Set loops directory (project loops)
         self.loops_dir = loops_dir if loops_dir else (project_root / 'ravl_loops')
 
-        # Framework loops are always at framework root (discovered via __file__)
-        self.framework_loops_dir = RAVLCLIBase.find_framework_root() / 'ravl' / 'ravl_loops'
+        # Framework loops are now under ravl namespace
+        self.framework_loops_dir = RAVLCLIBase.find_framework_root() / 'ravl' / 'ravl_loops' / 'ravl'
 
     def _build_namespace_from_path(self, loop_path: Path) -> str:
         """
@@ -49,6 +49,7 @@ class LoopDiscovery:
 
         Converts hierarchical loop paths to namespaces for easy copy-paste.
         Example: ravl_loops/parent/ravl_loops/child -> parent.child
+        Example: .ravl/ravl/ravl_loops/ravl/framework/health_checks -> ravl.framework.health_checks
 
         Args:
             loop_path: Path to loop directory
@@ -56,7 +57,17 @@ class LoopDiscovery:
         Returns:
             Dot-separated namespace string
         """
-        # Get path relative to project root
+        # For framework loops, get path relative to framework root
+        try:
+            rel_path = loop_path.relative_to(self.framework_loops_dir)
+            # Framework loops: start from ravl namespace
+            # Filter structural directories but preserve namespace
+            parts = [p for p in rel_path.parts if p not in ('child_loops',)]
+            return 'ravl.' + '.'.join(parts) if parts else 'ravl'
+        except ValueError:
+            pass
+
+        # For project loops, get path relative to project root
         try:
             rel_path = loop_path.relative_to(self.project_root)
         except ValueError:
@@ -666,7 +677,7 @@ class LoopDiscovery:
         Returns:
             True if loop is under examples parent loop
         """
-        # Examples are now under framework_loops_dir/examples/
+        # Examples are now under ravl/examples/ (framework_loops_dir = .../ravl/)
         examples_dir = self.framework_loops_dir / 'examples'
         try:
             loop_path.relative_to(examples_dir)

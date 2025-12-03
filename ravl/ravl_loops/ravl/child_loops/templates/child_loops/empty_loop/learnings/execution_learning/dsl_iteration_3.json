@@ -1,0 +1,55 @@
+{
+  "inferred_at": "2025-12-03T09:13:44.651014+00:00",
+  "attempt_number": 3,
+  "output": {
+    "format": "json",
+    "destination": "file",
+    "include_metadata": false
+  },
+  "data_structure": {
+    "type": "unknown",
+    "fields": [
+      "id",
+      "data"
+    ],
+    "constraints": []
+  },
+  "persistence": {
+    "enabled": true,
+    "format": "json",
+    "location": null,
+    "change_detection": null
+  },
+  "act_requirements": {
+    "has_api_call": true,
+    "api_types": [],
+    "has_transformation": true,
+    "has_aggregation": false
+  },
+  "previous_attempts": [
+    {
+      "iteration": "dsl_iteration_1",
+      "status": null,
+      "failures": [],
+      "suggestions": []
+    },
+    {
+      "iteration": "dsl_iteration_2",
+      "status": null,
+      "failures": [],
+      "suggestions": []
+    }
+  ],
+  "failure_analysis": {
+    "has_failures": false,
+    "failure_categories": [],
+    "improvement_suggestions": [],
+    "recent_failures": []
+  },
+  "warning_history": {
+    "has_warnings": false,
+    "warning_patterns": {},
+    "recent_warnings": []
+  },
+  "llm_guidance": "# Code Generation Guidance\n\nGenerate Python code wrapped in custom delimiters (NOT markdown code blocks):\n===RAVL_CODE_START===\n[Your Python code here]\n===RAVL_CODE_END===\n\nYour generated code should:\n\n- Save results to file in: learnings/data/ (use relative path from project root, or use absolute paths for desktop/explicit locations)\n- File format: JSON\n- Each item should have fields: id, data\n\n# Learning from Previous Attempts:\n\n# Your code will be verified against:\n- When you implement your loop, define clear, testable criteria that determine whether the Act phase succeeded. Consider:\n- - What specific conditions must be true?\n- - What quality standards must be met?\n- - What outputs must exist and in what format?\n- - What edge cases or error conditions should be checked?\n- Example verification criteria:\n- - \"Output file exists and contains valid JSON\"\n- - \"All required fields are populated\"\n- - \"Data matches expected schema\"\n- - \"No errors or warnings in execution log\"\n- - \"Results meet accuracy threshold of X%\""
+}

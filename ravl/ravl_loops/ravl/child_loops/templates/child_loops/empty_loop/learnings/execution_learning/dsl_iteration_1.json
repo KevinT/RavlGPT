@@ -1,0 +1,43 @@
+{
+  "inferred_at": "2025-12-03T09:04:20.595517+00:00",
+  "attempt_number": 1,
+  "output": {
+    "format": "json",
+    "destination": "file",
+    "include_metadata": true
+  },
+  "data_structure": {
+    "type": "unknown",
+    "fields": [
+      "id",
+      "status",
+      "state"
+    ],
+    "constraints": []
+  },
+  "persistence": {
+    "enabled": true,
+    "format": "json",
+    "location": null,
+    "change_detection": "hash_based"
+  },
+  "act_requirements": {
+    "has_api_call": false,
+    "api_types": [],
+    "has_transformation": false,
+    "has_aggregation": false
+  },
+  "previous_attempts": [],
+  "failure_analysis": {
+    "has_failures": false,
+    "failure_categories": [],
+    "improvement_suggestions": [],
+    "recent_failures": []
+  },
+  "warning_history": {
+    "has_warnings": false,
+    "warning_patterns": {},
+    "recent_warnings": []
+  },
+  "llm_guidance": "# Code Generation Guidance\n\nGenerate Python code wrapped in custom delimiters (NOT markdown code blocks):\n===RAVL_CODE_START===\n[Your Python code here]\n===RAVL_CODE_END===\n\nYour generated code should:\n\n- Save results to file in: learnings/data/ (use relative path from project root, or use absolute paths for desktop/explicit locations)\n- File format: JSON\n- Include metadata: timestamp, record count, if data changed\n- Save metadata to: learnings/state/metadata.json (relative to project root)\n- Each item should have fields: id, status, state\n- Implement change detection (hash-based comparison)\n- Only save if data has changed from previous run\n\n**IMPORTANT - File Placement:**\n- Default output location: learnings/data/ (for task outputs)\n- Metadata/state files: learnings/state/ (for tracking files)\n- Explicit paths: Honor user requests (e.g., 'save to desktop' \u2192 ~/Desktop/)\n- Keep outputs organized within learnings directory\n\n# Your code will be verified against:\n- Define how to verify that the Act phase succeeded.\n- Include:\n- - Clear, testable criteria for success\n- - Expected outputs or state changes\n- - Quality thresholds or validation checks\n- - Error conditions that indicate failure\n- Examples:\n- - \"All input files processed without errors\"\n- - \"Output JSON validates against schema\"\n- - \"API returned 200 status code\"\n- - \"Generated report contains required sections\""
+}

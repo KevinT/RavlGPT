@@ -1,0 +1,40 @@
+{
+  "criteria_results": [
+    {
+      "criterion": "The template's core guidance has been reviewed: outcome-focused vs step-focused design trade-offs",
+      "passed": true,
+      "explanation": "The output explicitly reviews and documents the design philosophy trade-offs between outcome-focused (high learning potential, less control) and step-focused (more control, explicit breakdown) approaches. This is clearly addressed in the 'DESIGN PHILOSOPHY REVIEWED' section."
+    },
+    {
+      "criterion": "All terminal commands in the template are documented: ravl basic usage, configuration display, execution visibility, health diagnostics, and help access",
+      "passed": true,
+      "explanation": "The output comprehensively documents all 7 terminal commands: ravl [loop_name], --show-config, --show-execution, --loop-health, --execution-health, --list, and --help. Each command is listed with its purpose in the 'TERMINAL COMMANDS DOCUMENTED' section and saved to the JSON summary."
+    },
+    {
+      "criterion": "The template's flexibility is understood: users can provide explicit RAVL sections or let the framework infer structure",
+      "passed": true,
+      "explanation": "The output clearly demonstrates understanding of framework flexibility in the 'FRAMEWORK FLEXIBILITY UNDERSTOOD' section, noting that explicit RAVL sections are optional, the framework can infer structure from natural language, and users can mix approaches based on preference."
+    },
+    {
+      "criterion": "The template's instructional text is recognized as meant to be removed before actual loop execution",
+      "passed": true,
+      "explanation": "The output explicitly recognizes in the 'INSTRUCTIONAL TEXT PURPOSE RECOGNIZED' section that template guidance should be removed before actual execution, serves as a starting point, and is for guidance only. This is also reinforced in the 'Next Steps' section."
+    }
+  ],
+  "overall_passed": true,
+  "suggestions": [
+    "Consider adding examples of what outcome-focused vs step-focused loop descriptions look like in practice to make the trade-offs more concrete",
+    "The review could benefit from showing a before/after example of template customization to illustrate the transformation from instructional template to production loop",
+    "Consider documenting which terminal commands are most relevant at different stages of loop development (initial setup, debugging, production monitoring)"
+  ],
+  "recommend_code_regeneration": false,
+  "regeneration_rationale": "Code has not been executed yet (code_executed: false), so there's no execution pattern to evaluate. The generated code appears logically sound for reviewing template documentation - it systematically addresses each verification criterion, outputs structured information, and saves a summary. No code logic issues are evident. Regeneration would only be considered after execution reveals actual behavioral problems.",
+  "known_loop_unknowns": [
+    "What constitutes 'sufficient' review depth for a template - should users also understand the learnings directory structure and how verification failures are stored?",
+    "Are there specific patterns or anti-patterns in loop design that users commonly struggle with that should be highlighted in template review?",
+    "Should the review verify understanding of when to use --loop-health vs --execution-health, or is command existence sufficient?",
+    "What level of ravl.toml customization knowledge is expected before a user moves from template review to actual loop implementation?",
+    "Are there specific use cases or domains where outcome-focused vs step-focused design is clearly superior that should inform the review?"
+  ],
+  "timestamp": "2025-12-03T09:06:10.780020+00:00"
+}
