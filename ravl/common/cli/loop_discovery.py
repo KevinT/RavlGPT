@@ -597,62 +597,9 @@ class LoopDiscovery:
                 'loop_type': 'framework' if is_framework else 'project'
             })
 
-        # NEW: Discover namespace organizers in framework loops directory
-        if self.framework_loops_dir.exists():
-            for category_dir in self.framework_loops_dir.iterdir():
-                if category_dir.is_dir() and self._is_namespace_organizer(category_dir):
-                    # Extract description from README first line if possible
-                    description = category_dir.name.replace('_', ' ').title()
-                    try:
-                        readme_content = (category_dir / 'README.md').read_text()
-                        first_line = readme_content.split('\n')[0]
-                        if first_line.startswith('#'):
-                            description = first_line.lstrip('#').strip()
-                    except:
-                        pass
-
-                    loops.append({
-                        'path': category_dir,
-                        'config': {
-                            'name': category_dir.name,
-                            'description': description,
-                            'emoji': '📁'  # Folder emoji for organizers
-                        },
-                        'parent': None,  # Top-level under ravl namespace
-                        'last_run': None,  # Organizers don't execute
-                        'loop_type': 'framework',
-                        'is_namespace_organizer': True  # NEW FLAG
-                    })
-
-        # Discover namespace organizers in project loops directory
-        if self.loops_dir.exists():
-            for category_dir in self.loops_dir.iterdir():
-                if not category_dir.is_dir():
-                    continue
-
-                if self._is_namespace_organizer(category_dir):
-                    # Extract description from README first line if possible
-                    description = category_dir.name.replace('_', ' ').title()
-                    try:
-                        readme_content = (category_dir / 'README.md').read_text()
-                        first_line = readme_content.split('\n')[0]
-                        if first_line.startswith('#'):
-                            description = first_line.lstrip('#').strip()
-                    except:
-                        pass
-
-                    loops.append({
-                        'path': category_dir,
-                        'config': {
-                            'name': category_dir.name,
-                            'description': description,
-                            'emoji': '📁'  # Folder emoji for organizers
-                        },
-                        'parent': None,  # Top-level project organizers
-                        'last_run': None,  # Organizers don't execute
-                        'loop_type': 'project',
-                        'is_namespace_organizer': True
-                    })
+        # Discover namespace organizers in both framework and project directories
+        self._discover_namespace_organizers(self.framework_loops_dir, 'framework', loops)
+        self._discover_namespace_organizers(self.loops_dir, 'project', loops)
 
         return loops
 
@@ -754,6 +701,49 @@ class LoopDiscovery:
             return False
 
         return True
+
+    def _discover_namespace_organizers(self, search_dir: Path, loop_type: str, loops: list) -> None:
+        """
+        Discover namespace organizers in a given directory.
+
+        Namespace organizers are directories with README.md but no loop files.
+        They group related loops hierarchically without being executable themselves.
+
+        Args:
+            search_dir: Directory to search for organizers (framework_loops_dir or loops_dir)
+            loop_type: Type of loops ('framework' or 'project')
+            loops: List to append discovered organizers to
+        """
+        if not search_dir.exists():
+            return
+
+        for category_dir in search_dir.iterdir():
+            if not category_dir.is_dir():
+                continue
+
+            if self._is_namespace_organizer(category_dir):
+                # Extract description from README first line if possible
+                description = category_dir.name.replace('_', ' ').title()
+                try:
+                    readme_content = (category_dir / 'README.md').read_text()
+                    first_line = readme_content.split('\n')[0]
+                    if first_line.startswith('#'):
+                        description = first_line.lstrip('#').strip()
+                except:
+                    pass
+
+                loops.append({
+                    'path': category_dir,
+                    'config': {
+                        'name': category_dir.name,
+                        'description': description,
+                        'emoji': '📁'  # Folder emoji for organizers
+                    },
+                    'parent': None,  # Top-level organizers
+                    'last_run': None,  # Organizers don't execute
+                    'loop_type': loop_type,
+                    'is_namespace_organizer': True
+                })
 
     def is_example_loop(self, loop_path: Path) -> bool:
         """
