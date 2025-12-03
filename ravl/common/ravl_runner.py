@@ -48,6 +48,10 @@ class TeeLogger:
         self.file.flush()
         self.original_stream.flush()
 
+    def isatty(self):
+        """Delegate isatty() to original stream for color detection"""
+        return hasattr(self.original_stream, 'isatty') and self.original_stream.isatty()
+
     def close(self):
         self.file.close()
 
