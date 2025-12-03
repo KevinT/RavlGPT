@@ -624,6 +624,36 @@ class LoopDiscovery:
                         'is_namespace_organizer': True  # NEW FLAG
                     })
 
+        # Discover namespace organizers in project loops directory
+        if self.loops_dir.exists():
+            for category_dir in self.loops_dir.iterdir():
+                if not category_dir.is_dir():
+                    continue
+
+                if self._is_namespace_organizer(category_dir):
+                    # Extract description from README first line if possible
+                    description = category_dir.name.replace('_', ' ').title()
+                    try:
+                        readme_content = (category_dir / 'README.md').read_text()
+                        first_line = readme_content.split('\n')[0]
+                        if first_line.startswith('#'):
+                            description = first_line.lstrip('#').strip()
+                    except:
+                        pass
+
+                    loops.append({
+                        'path': category_dir,
+                        'config': {
+                            'name': category_dir.name,
+                            'description': description,
+                            'emoji': '📁'  # Folder emoji for organizers
+                        },
+                        'parent': None,  # Top-level project organizers
+                        'last_run': None,  # Organizers don't execute
+                        'loop_type': 'project',
+                        'is_namespace_organizer': True
+                    })
+
         return loops
 
     def _matches_hierarchical_path(self, loop_path: Path, segments: List[str]) -> bool:
