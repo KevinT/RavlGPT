@@ -363,9 +363,11 @@ class RAVLListCommand(RAVLCLIBase):
     def _build_loop_namespace(self, loop_path: Path) -> str:
         """
         Build dot-separated namespace from loop path.
+        Uses the same logic as loop_discovery.py for consistency.
 
         Converts hierarchical loop paths to namespaces for easy copy-paste.
         Example: ravl_loops/parent/ravl_loops/child -> parent.child
+        Example: .ravl/ravl/ravl_loops/ravl/framework/health_checks -> ravl.framework.health_checks
 
         Args:
             loop_path: Path to loop directory
@@ -373,18 +375,23 @@ class RAVLListCommand(RAVLCLIBase):
         Returns:
             Dot-separated namespace string
         """
-        # Get path relative to project root
+        # For framework loops, use framework_loops_dir as base
+        try:
+            rel_path = loop_path.relative_to(self.discovery.framework_loops_dir)
+            # Framework loops start with 'ravl.' namespace
+            parts = [p for p in rel_path.parts if p not in ('child_loops',)]
+            return 'ravl.' + '.'.join(parts) if parts else 'ravl'
+        except ValueError:
+            pass
+
+        # For project loops, use project root as base
         try:
             rel_path = loop_path.relative_to(self.project_root)
         except ValueError:
-            # If not relative to project root, try framework root (submodule installation)
-            try:
-                rel_path = loop_path.relative_to(self.project_root / '.ravl')
-            except ValueError:
-                # If not in submodule, try framework loops dir (UV installation)
-                rel_path = loop_path.relative_to(self.discovery.framework_loops_dir)
+            # Fallback: use path as-is
+            rel_path = loop_path
 
-        # Filter out 'ravl_loops' and 'child_loops' structural directories and build namespace
+        # Filter structural directories
         parts = [p for p in rel_path.parts if p not in ('ravl_loops', 'child_loops')]
 
         # Return dot-separated namespace

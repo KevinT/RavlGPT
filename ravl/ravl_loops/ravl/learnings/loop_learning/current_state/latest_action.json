@@ -1,0 +1,60 @@
+{
+  "timestamp": "2025-12-03T11:25:13.421062+00:00",
+  "action": {
+    "timestamp": "2025-12-03T11:24:37.906925+00:00",
+    "context_vars": {
+      "name": "ravl"
+    },
+    "output": "===RAVL_CODE_START===\n#!/usr/bin/env python3\n\"\"\"\nRAVL Loop: Display available namespaces and their descriptions\nDomain: Show user the four main namespace categories with usage examples\n\"\"\"\n\nprint(\"\"\"\n# RAVL Namespaces\n\nRAVL organizes loops into four main namespace categories:\n\n## ravl.framework\n**Description:** Core framework loops for RAVL development and maintenance\n- Internal framework testing and validation\n- Framework feature development loops\n- System health monitoring\n\n## ravl.library\n**Description:** Reusable loop components and utilities\n- Common patterns and building blocks\n- Shared utilities for domain-specific tasks\n- Pre-built integrations with external services\n\n## ravl.templates\n**Description:** Template loops for quick project bootstrapping\n- Starter templates for common use cases\n- Example implementations of RAVL patterns\n- Copy-and-customize foundations\n\n## ravl.examples\n**Description:** Example loops demonstrating RAVL capabilities\n- Learning resources and tutorials\n- Reference implementations\n- Best practice demonstrations\n\n## Usage\n\nTo run a loop from any namespace, use the qualified name:\n\n```bash\n# Run a framework loop\nravl ravl.framework.some-loop\n\n# Run a library component\nravl ravl.library.some-utility\n\n# Bootstrap from a template\nravl ravl.templates.starter-template\n\n# Explore an example\nravl ravl.examples.demo-loop\n```\n\nTo list all available loops in a namespace:\n\n```bash\n# List all loops (shows namespace organization)\nravl --list\n\n# Filter by namespace prefix\nravl --list | grep \"ravl.framework\"\nravl --list | grep \"ravl.library\"\nravl --list | grep \"ravl.templates\"\nravl --list | grep \"ravl.examples\"\n```\n\"\"\")\n===RAVL_CODE_END===",
+    "code_executed": true,
+    "execution_result": {
+      "success": true,
+      "stdout": "\n# RAVL Namespaces\n\nRAVL organizes loops into four main namespace categories:\n\n## ravl.framework\n**Description:** Core framework loops for RAVL development and maintenance\n- Internal framework testing and validation\n- Framework feature development loops\n- System health monitoring\n\n## ravl.library\n**Description:** Reusable loop components and utilities\n- Common patterns and building blocks\n- Shared utilities for domain-specific tasks\n- Pre-built integrations with external services\n\n## ravl.templates\n**Description:** Template loops for quick project bootstrapping\n- Starter templates for common use cases\n- Example implementations of RAVL patterns\n- Copy-and-customize foundations\n\n## ravl.examples\n**Description:** Example loops demonstrating RAVL capabilities\n- Learning resources and tutorials\n- Reference implementations\n- Best practice demonstrations\n\n## Usage\n\nTo run a loop from any namespace, use the qualified name:\n\n```bash\n# Run a framework loop\nravl ravl.framework.some-loop\n\n# Run a library component\nravl ravl.library.some-utility\n\n# Bootstrap from a template\nravl ravl.templates.starter-template\n\n# Explore an example\nravl ravl.examples.demo-loop\n```\n\nTo list all available loops in a namespace:\n\n```bash\n# List all loops (shows namespace organization)\nravl --list\n\n# Filter by namespace prefix\nravl --list | grep \"ravl.framework\"\nravl --list | grep \"ravl.library\"\nravl --list | grep \"ravl.templates\"\nravl --list | grep \"ravl.examples\"\n```\n\n",
+      "stderr": "",
+      "execution_time": 0.03834986686706543,
+      "code_hash": "fa313aa2090ac3a801d118aff5759c33"
+    },
+    "inferred_dsl": {
+      "inferred_at": "2025-12-03T11:24:45.359384+00:00",
+      "attempt_number": 1,
+      "output": {
+        "format": "json",
+        "destination": "stdout",
+        "include_metadata": false
+      },
+      "data_structure": {
+        "type": "unknown",
+        "fields": [
+          "name"
+        ],
+        "constraints": []
+      },
+      "persistence": {
+        "enabled": false,
+        "format": null,
+        "location": null,
+        "change_detection": null
+      },
+      "act_requirements": {
+        "has_api_call": false,
+        "api_types": [],
+        "has_transformation": false,
+        "has_aggregation": false
+      },
+      "previous_attempts": [],
+      "failure_analysis": {
+        "has_failures": false,
+        "failure_categories": [],
+        "improvement_suggestions": [],
+        "recent_failures": []
+      },
+      "warning_history": {
+        "has_warnings": false,
+        "warning_patterns": {},
+        "recent_warnings": []
+      },
+      "llm_guidance": "# Code Generation Guidance\n\nGenerate Python code wrapped in custom delimiters (NOT markdown code blocks):\n===RAVL_CODE_START===\n[Your Python code here]\n===RAVL_CODE_END===\n\nYour generated code should:\n\n- Output results as JSON to stdout\n- Each item should have fields: name\n\n# Your code will be verified against:\n- - The output is displayed directly to the user's screen\n- - All four namespace categories are shown: `ravl.framework`, `ravl.library`, `ravl.templates`, and `ravl.examples`\n- - Each category includes its description\n- - The usage section with example commands is displayed correctly\n- - The output format matches the markdown structure specified in the Act section",
+      "ravl_loop_mtime": 1764761057.5109856
+    }
+  }
+}

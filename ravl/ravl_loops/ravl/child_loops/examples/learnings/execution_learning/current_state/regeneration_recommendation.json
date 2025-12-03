@@ -1,0 +1,14 @@
+{
+  "loop_type": "routine",
+  "loop_intent": "List and describe all available RAVL example loops with their configurations and child loops",
+  "requires_progression": false,
+  "progression_evidence": "The loop definition is informational/display-only: 'List each example available, along with a brief explanation of it's purpose. Show output to the screen only.' This is a static catalog task, not exploratory or progressive.",
+  "result_pattern": "failed_discovery",
+  "result_pattern_evidence": "First run executed successfully but found 0 examples when child_loops context shows 9 examples exist (example_1_single_loop, example_2_nested_loops, etc.). Code logic is flawed, not discovering existing data.",
+  "code_quality": "poor",
+  "code_quality_rationale": "Code has a fundamental logic flaw - it scans the wrong directory or uses incorrect assumptions about config file locations. The reflection context clearly shows 9 child loops exist, but the code found none. Verification shows 3 of 6 criteria failed, all related to discovery failure.",
+  "recommend_regeneration": true,
+  "rationale": "Code has a logic flaw preventing it from discovering existing example loops. This is the first run, and the code is clearly scanning the wrong location or making incorrect assumptions about file structure. The reflection context provides direct evidence that 9 example loops exist as child_loops, but the code found zero. The verification explicitly recommends regeneration due to logic issues. This is not an external failure - it's a code defect that needs fixing.",
+  "confidence": "high",
+  "timestamp": "2025-12-03T11:24:19.699309+00:00"
+}

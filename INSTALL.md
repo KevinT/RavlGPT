@@ -78,7 +78,7 @@ No setup needed - runs locally. (UNTESTED!)
 
 ```bash
 # Run the rugby tips example
-$ ravl example_3_analysis_loop
+$ ravl ravl.examples.example_3_analysis_loop
 
 # List all available loops
 $ ravl --list

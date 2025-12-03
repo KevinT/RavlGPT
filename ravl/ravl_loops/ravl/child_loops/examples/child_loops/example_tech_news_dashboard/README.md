@@ -438,5 +438,5 @@ Generate charts from parent output:
 ## Further Reading
 
 - `.ravl/docs/RAVL_PROTOCOL.md` - Coordination patterns
-- `.ravl/templates/strategic_coherence_template/` - Another delegation example
+- `.ravl/ravl/ravl_loops/ravl/child_loops/templates/child_loops/strategic_coherence/` - Another delegation example
 - Project `ravl_loops/clickup_intelligence/` - Real-world orchestrator loop

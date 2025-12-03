@@ -11,7 +11,7 @@ Self-healing data ingress loops use LLMs and Context7 API documentation to autom
 ### 1. Clone the Template
 
 ```bash
-./ravl --clone data_ingress_template my_api_integration
+./ravl --clone ravl.library.data_ingress my_api_integration
 ```
 
 This creates:

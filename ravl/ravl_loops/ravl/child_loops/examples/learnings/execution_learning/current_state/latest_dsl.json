@@ -1,0 +1,44 @@
+{
+  "inferred_at": "2025-12-03T11:23:26.838825+00:00",
+  "attempt_number": 1,
+  "output": {
+    "format": "json",
+    "destination": "file",
+    "include_metadata": false,
+    "file_location": "paths/"
+  },
+  "data_structure": {
+    "type": "unknown",
+    "fields": [
+      "name",
+      "id"
+    ],
+    "constraints": []
+  },
+  "persistence": {
+    "enabled": true,
+    "format": null,
+    "location": "names/",
+    "change_detection": null
+  },
+  "act_requirements": {
+    "has_api_call": false,
+    "api_types": [],
+    "has_transformation": false,
+    "has_aggregation": false,
+    "needs_subprocess_execution": true
+  },
+  "previous_attempts": [],
+  "failure_analysis": {
+    "has_failures": false,
+    "failure_categories": [],
+    "improvement_suggestions": [],
+    "recent_failures": []
+  },
+  "warning_history": {
+    "has_warnings": false,
+    "warning_patterns": {},
+    "recent_warnings": []
+  },
+  "llm_guidance": "# Code Generation Guidance\n\nGenerate Python code wrapped in custom delimiters (NOT markdown code blocks):\n===RAVL_CODE_START===\n[Your Python code here]\n===RAVL_CODE_END===\n\nYour generated code should:\n\n- Save results to file in: paths/ (use relative path from project root, or use absolute paths for desktop/explicit locations)\n- File format: JSON\n- Each item should have fields: name, id\n\n# Subprocess/Child Loop Execution:\n- OPTIONAL HELPER: from ravl.common.execution.subprocess_helpers import SubprocessHelper\n- Use SubprocessHelper.get_project_root() to find ravl script location\n- Use SubprocessHelper.call_with_clean_env() to run commands without venv interference\n- Or implement environment cleanup inline (remove VIRTUAL_ENV, clean PATH)\n- Example: SubprocessHelper.call_with_clean_env([f'{project_root}/ravl', 'child_loop'], cwd=project_root)\n\n# Your code will be verified against:\n- - All available example loops are listed with their names/paths\n- - Each example includes a brief, clear explanation of its purpose\n- - Examples with child loops are identified and noted as part of the same example family\n- - Output is displayed to screen in a readable format\n- - No files are created or modified\n- - No errors occur during directory scanning or loop discovery"
+}

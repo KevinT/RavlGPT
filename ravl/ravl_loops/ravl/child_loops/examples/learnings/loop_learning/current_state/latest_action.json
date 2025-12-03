@@ -1,0 +1,62 @@
+{
+  "timestamp": "2025-12-03T11:24:08.469837+00:00",
+  "action": {
+    "timestamp": "2025-12-03T11:23:18.583996+00:00",
+    "context_vars": {
+      "name": "examples"
+    },
+    "output": "===RAVL_CODE_START===\nimport os\nfrom pathlib import Path\n\n# Get loop directory from environment (set by framework)\nloop_dir = Path(os.environ.get('RAVL_LOOP_DIR'))\n\n# The examples directory is the current loop directory\nexamples_dir = loop_dir\n\nprint(\"=\" * 80)\nprint(\"RAVL EXAMPLE LOOPS\")\nprint(\"=\" * 80)\nprint()\n\n# Scan for all subdirectories that contain loop configuration\nexample_loops = []\n\nfor item in sorted(examples_dir.iterdir()):\n    if not item.is_dir():\n        continue\n    \n    # Skip hidden directories and special directories\n    if item.name.startswith('.') or item.name in ['__pycache__', 'node_modules']:\n        continue\n    \n    # Check if this directory contains a RAVL loop configuration\n    config_file = item / 'config' / 'ravl.toml'\n    if not config_file.exists():\n        continue\n    \n    # Check for child loops\n    child_loops = []\n    loops_subdir = item / 'loops'\n    if loops_subdir.exists() and loops_subdir.is_dir():\n        for child_item in sorted(loops_subdir.iterdir()):\n            if child_item.is_dir() and not child_item.name.startswith('.'):\n                child_config = child_item / 'config' / 'ravl.toml'\n                if child_config.exists():\n                    child_loops.append(child_item.name)\n    \n    example_loops.append({\n        'name': item.name,\n        'path': str(item.relative_to(examples_dir)),\n        'has_children': len(child_loops) > 0,\n        'children': child_loops\n    })\n\n# Display examples grouped by type\nprint(\"\ud83d\udcda AVAILABLE EXAMPLE LOOPS\")\nprint()\n\n# Categorize examples\nsingle_loops = [ex for ex in example_loops if not ex['has_children'] and 'nested' not in ex['name'].lower() and 'orchestrat' not in ex['name'].lower()]\norchestrator_loops = [ex for ex in example_loops if ex['has_children'] or 'nested' in ex['name'].lower() or 'orchestrat' in ex['name'].lower()]\n\n# Display single loops\nif single_loops:\n    print(\"\ud83d\udd39 SINGLE LOOP EXAMPLES\")\n    print(\"   (Simple, self-contained loops that demonstrate core RAVL functionality)\")\n    print()\n    \n    for example in single_loops:\n        print(f\"   \u2022 {example['name']}\")\n        print(f\"     Path: {example['path']}\")\n        \n        # Provide description based on name\n        if 'single_loop' in example['name']:\n            print(f\"     Purpose: Basic single-loop example demonstrating the core RAVL cycle\")\n        elif 'python' in example['name']:\n            print(f\"     Purpose: Python-specific loop example showing language-specific patterns\")\n        elif 'analysis' in example['name']:\n            print(f\"     Purpose: Data analysis loop demonstrating analytical workflows\")\n        elif 'learning' in example['name']:\n            print(f\"     Purpose: Learning loop showing how RAVL accumulates knowledge over iterations\")\n        elif 'communication' in example['name']:\n            print(f\"     Purpose: Communication-focused loop for message processing or interaction patterns\")\n        elif 'tech_news' in example['name']:\n            if 'curator' in example['name']:\n                print(f\"     Purpose: Tech news curation loop for collecting and organizing news content\")\n            elif 'dashboard' in example['name']:\n                print(f\"     Purpose: Tech news dashboard for displaying curated technology news\")\n            else:\n                print(f\"     Purpose: Tech news processing loop\")\n        elif 'github' in example['name'] and 'trending' in example['name']:\n            print(f\"     Purpose: GitHub trending tracker for monitoring popular repositories\")\n        else:\n            print(f\"     Purpose: Example demonstrating RAVL loop patterns\")\n        \n        print()\n\n# Display orchestrator/nested loops\nif orchestrator_loops:\n    print(\"\ud83d\udd38 ORCHESTRATOR / NESTED LOOP EXAMPLES\")\n    print(\"   (Parent loops that coordinate multiple child loops)\")\n    print()\n    \n    for example in orchestrator_loops:\n        print(f\"   \u2022 {example['name']}\")\n        print(f\"     Path: {example['path']}\")\n        \n        if 'nested' in example['name']:\n            print(f\"     Purpose: Demonstrates nested loop architecture with parent-child coordination\")\n        else:\n            print(f\"     Purpose: Orchestrator loop managing multiple child loops\")\n        \n        if example['has_children']:\n            print(f\"     \u26a0\ufe0f  This example is part of a loop family with child loops:\")\n            for child in example['children']:\n                print(f\"        - {child}\")\n        \n        print()\n\nprint(\"=\" * 80)\nprint(f\"TOTAL EXAMPLES FOUND: {len(example_loops)}\")\nprint(\"=\" * 80)\nprint()\nprint(\"\ud83d\udca1 TIP: To run an example, use: ./ravl examples.<example_name>\")\nprint(\"   Example: ./ravl examples.example_1_single_loop\")\nprint()\n\n===RAVL_CODE_END===",
+    "code_executed": true,
+    "execution_result": {
+      "success": true,
+      "stdout": "================================================================================\nRAVL EXAMPLE LOOPS\n================================================================================\n\n\ud83d\udcda AVAILABLE EXAMPLE LOOPS\n\n================================================================================\nTOTAL EXAMPLES FOUND: 0\n================================================================================\n\n\ud83d\udca1 TIP: To run an example, use: ./ravl examples.<example_name>\n   Example: ./ravl examples.example_1_single_loop\n\n",
+      "stderr": "",
+      "execution_time": 0.0407259464263916,
+      "code_hash": "30b4796496421fc313f5e8c2bff6363a"
+    },
+    "inferred_dsl": {
+      "inferred_at": "2025-12-03T11:23:26.838825+00:00",
+      "attempt_number": 1,
+      "output": {
+        "format": "json",
+        "destination": "file",
+        "include_metadata": false,
+        "file_location": "paths/"
+      },
+      "data_structure": {
+        "type": "unknown",
+        "fields": [
+          "name",
+          "id"
+        ],
+        "constraints": []
+      },
+      "persistence": {
+        "enabled": true,
+        "format": null,
+        "location": "names/",
+        "change_detection": null
+      },
+      "act_requirements": {
+        "has_api_call": false,
+        "api_types": [],
+        "has_transformation": false,
+        "has_aggregation": false,
+        "needs_subprocess_execution": true
+      },
+      "previous_attempts": [],
+      "failure_analysis": {
+        "has_failures": false,
+        "failure_categories": [],
+        "improvement_suggestions": [],
+        "recent_failures": []
+      },
+      "warning_history": {
+        "has_warnings": false,
+        "warning_patterns": {},
+        "recent_warnings": []
+      },
+      "llm_guidance": "# Code Generation Guidance\n\nGenerate Python code wrapped in custom delimiters (NOT markdown code blocks):\n===RAVL_CODE_START===\n[Your Python code here]\n===RAVL_CODE_END===\n\nYour generated code should:\n\n- Save results to file in: paths/ (use relative path from project root, or use absolute paths for desktop/explicit locations)\n- File format: JSON\n- Each item should have fields: name, id\n\n# Subprocess/Child Loop Execution:\n- OPTIONAL HELPER: from ravl.common.execution.subprocess_helpers import SubprocessHelper\n- Use SubprocessHelper.get_project_root() to find ravl script location\n- Use SubprocessHelper.call_with_clean_env() to run commands without venv interference\n- Or implement environment cleanup inline (remove VIRTUAL_ENV, clean PATH)\n- Example: SubprocessHelper.call_with_clean_env([f'{project_root}/ravl', 'child_loop'], cwd=project_root)\n\n# Your code will be verified against:\n- - All available example loops are listed with their names/paths\n- - Each example includes a brief, clear explanation of its purpose\n- - Examples with child loops are identified and noted as part of the same example family\n- - Output is displayed to screen in a readable format\n- - No files are created or modified\n- - No errors occur during directory scanning or loop discovery"
+    }
+  }
+}

@@ -10,14 +10,14 @@ This directory contains the **RAVL framework** - reusable infrastructure for bui
 
 1. **[RAVL Vision](RAVL_VISION.md)** - Why RAVL exists: Design principles, philosophy, end-state goals
 2. **[RAVL Protocol](RAVL_PROTOCOL.md)** - How RAVL works: The four phases (Reflect → Act → Verify → Learn)
-3. **[Examples](../ravl_loops/examples/)** - See working implementations:
-   - [Rugby Tips](../ravl_loops/examples/child_loops/example_3_analysis_loop/) - Simple Markdown RAVL loop
-   - [Simple Learning Loop](../ravl_loops/examples/child_loops/example_4_learning_loop/) - Demonstrates basic learning patterns
-   - [Tech News Curator](../ravl_loops/examples/child_loops/example_tech_news_curator/) - Multi-source aggregation with nested loops
-4. **[Templates](../ravl_loops/templates/)** - Ready-to-use blueprints:
-   - [Data Ingestion](../ravl_loops/templates/child_loops/data_ingress_template/) - Auto-generate API integration code
-   - [Strategic Coherence](../ravl_loops/templates/child_loops/strategic_coherence_template/) - Parent/child coordination pattern
-   - [Empty Loop](../ravl_loops/templates/child_loops/empty_loop_template/) - Minimal starter template
+3. **[Examples](../ravl_loops/ravl/child_loops/examples/)** - See working implementations:
+   - [Rugby Tips](../ravl_loops/ravl/child_loops/examples/child_loops/example_3_analysis_loop/) - Simple Markdown RAVL loop
+   - [Simple Learning Loop](../ravl_loops/ravl/child_loops/examples/child_loops/example_4_learning_loop/) - Demonstrates basic learning patterns
+   - [Tech News Curator](../ravl_loops/ravl/child_loops/examples/child_loops/example_tech_news_curator/) - Multi-source aggregation with nested loops
+4. **[Templates](../ravl_loops/ravl/child_loops/templates/)** - Ready-to-use blueprints:
+   - [Data Ingestion](../ravl_loops/ravl/child_loops/library/child_loops/data_ingress/) - Auto-generate API integration code (library loop)
+   - [Strategic Coherence](../ravl_loops/ravl/child_loops/templates/child_loops/strategic_coherence/) - Parent/child coordination pattern
+   - [Empty Loop](../ravl_loops/ravl/child_loops/templates/child_loops/empty_loop/) - Minimal starter template
 
 **Advanced Features?**
 
@@ -34,8 +34,8 @@ This directory contains the **RAVL framework** - reusable infrastructure for bui
 **Using Templates?**
 
 See each template's own documentation for full details:
-- [Data Ingestion Guide](../ravl_loops/templates/child_loops/data_ingress_template/README.md) - API data ingestion loops
-- [Strategic Coherence Guide](../ravl_loops/templates/child_loops/strategic_coherence_template/config/ravl.toml) - Multi-agent coordination
+- [Data Ingestion Guide](../ravl_loops/ravl/child_loops/library/child_loops/data_ingress/README.md) - API data ingestion loops
+- [Strategic Coherence Guide](../ravl_loops/ravl/child_loops/templates/child_loops/strategic_coherence/config/ravl.toml) - Multi-agent coordination
 
 ## Architecture Philosophy
 
@@ -88,18 +88,20 @@ project/                              # Your project repository
 │   │   │   └── llm/                 # LLM infrastructure docs
 │   │   │       └── README.md        # LLM-based loops guide
 │   │   ├── ravl_loops/              # Framework loops
-│   │   │   ├── examples/            # 🎯 Ready-to-run example loops
-│   │   │   │   ├── README.md        # Examples overview
-│   │   │   │   └── child_loops/
-│   │   │   │       ├── example_3_analysis_loop/    # Simple Markdown RAVL
-│   │   │   │       ├── example_4_learning_loop/    # Learning patterns demo
-│   │   │   │       └── example_tech_news_curator/  # Multi-loop orchestration
-│   │   │   ├── templates/           # 📝 Starter blueprints
-│   │   │   │   └── child_loops/
-│   │   │   │       ├── data_ingress_template/      # Self-healing API data ingestion
-│   │   │   │       ├── strategic_coherence_template/ # Parent + children coordination
-│   │   │   │       └── empty_loop_template/        # Minimal starter
-│   │   │   └── framework/           # Framework internal loops (health checks, etc.)
+│   │   │   └── ravl/                # RAVL namespace
+│   │   │       ├── examples/        # 🎯 Ready-to-run example loops
+│   │   │       │   ├── example_3_analysis_loop/
+│   │   │       │   ├── example_4_learning_loop/
+│   │   │       │   └── example_tech_news_curator/
+│   │   │       ├── templates/       # 📝 Starter blueprints
+│   │   │       │   ├── empty_loop/
+│   │   │       │   └── strategic_coherence/
+│   │   │       ├── library/         # Delegatable patterns
+│   │   │       │   ├── data_ingress/
+│   │   │       │   ├── content_coherence/
+│   │   │       │   └── google_docs_fetching/
+│   │   │       └── framework/       # Core diagnostic tools
+│   │   │           └── health_checks/
 │   │   ├── bin/                     # CLI commands
 │   │   │   ├── ravl                 # Main RAVL runner
 │   │   │   ├── ravl-list            # List all loops

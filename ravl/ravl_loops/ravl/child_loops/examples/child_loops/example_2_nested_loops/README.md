@@ -7,7 +7,7 @@ Demonstrates multi-LLM support with two child loops that playfully compete.
 Run directly - the system will clone a local copy for you, you will find it in `./ravl_loops/simple_loop_tree`:
 
 ```bash
-ravl example_2_nested_loops
+ravl ravl.examples.example_2_nested_loops
 ```
 
 ## Run Individual Loops

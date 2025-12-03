@@ -38,7 +38,7 @@ export OPENAI_API_KEY="sk-svc-..."  # Get key from platform.openai.com
 
 **Run your first loop:**
 ```bash
-ravl example_3_analysis_loop
+ravl ravl.examples.example_3_analysis_loop
 ```
 
 ### Option 2: Submodule Install
@@ -59,7 +59,7 @@ This automatically:
 
 **Then run your first loop:**
 ```bash
-ravl example_3_analysis_loop
+ravl ravl.examples.example_3_analysis_loop
 ```
 
 📖 **[Full Installation Guide](INSTALL.md)** - Detailed instructions, troubleshooting, and manual installation.
@@ -143,10 +143,10 @@ ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/rav
 $ ravl --list
 
 # Run a loop
-$ ravl example_3_analysis_loop --mode fast
+$ ravl ravl.examples.example_3_analysis_loop --mode fast
 
 # Clone a new loop from template
-$ ravl --clone empty_loop_template ravl_loops/my_analytics
+$ ravl --clone ravl.templates.empty_loop ravl_loops/my_analytics
 
 # Diagnose a failing loop (execution issues)
 $ ravl --execution-health my_analytics
@@ -208,9 +208,9 @@ Store learning artifacts and virtual environments anywhere - see project documen
 - **[Prompt Templates](ravl/docs/llm/PROMPTS.md)** - Prompt template system
 
 ### Templates
-- **[Data Ingestion](ravl/ravl_loops/templates/child_loops/data_ingress_template/)** - Self-healing API integration template
-- **[Strategic Coherence](ravl/ravl_loops/templates/child_loops/strategic_coherence_template/)** - Parent/child coordination template
-- **[Empty Loop](ravl/ravl_loops/templates/child_loops/empty_loop_template/)** - Minimal starter template
+- **[Data Ingestion](ravl/ravl_loops/ravl/child_loops/library/child_loops/data_ingress/)** - Self-healing API integration template
+- **[Strategic Coherence](ravl/ravl_loops/ravl/child_loops/templates/child_loops/strategic_coherence/)** - Parent/child coordination template
+- **[Empty Loop](ravl/ravl_loops/ravl/child_loops/templates/child_loops/empty_loop/)** - Minimal starter template
 
 ## 📄 License
 

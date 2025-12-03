@@ -37,8 +37,8 @@ Run this multiple times and watch:
 
 ```bash
 # From framework root
-ravl example_5_python_loop
-ravl example_5_python_loop --show-config # framework can also resolve loops by name alone
+ravl ravl.examples.example_5_python_loop
+ravl ravl.examples.example_5_python_loop --show-config # framework resolves full dot notation
 
 # Or directly
 cd examples/example_5_python_loop

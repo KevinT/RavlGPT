@@ -8,10 +8,10 @@ Self-healing data ingestion loop template for automatically generating, testing,
 
 ```bash
 # Clone to create my_api loop
-./ravl --clone data_ingress_template my_api
+./ravl --clone ravl.library.data_ingress my_api
 
 # Clone and rename in one step
-./ravl --clone data_ingress_template my_hibob_employees
+./ravl --clone ravl.library.data_ingress my_hibob_employees
 ```
 
 This creates a new loop directory with:
