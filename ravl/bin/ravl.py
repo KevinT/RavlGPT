@@ -12,18 +12,37 @@ Execute any RAVL loop by name or path.
 
 Usage:
     ravl <loop-name-or-path> [options]
+    ravl <command>
 
-Examples:
-    ravl external_drift --mode fast
-    ravl ravl_loops/strategy_guardian --mode full
+Loop Execution Examples:
+    ravl experimental.andries_loop_1 --mode fast
+    ravl delivery_function.capability_dd_report --mode full
     ravl . --mode fast  # From within loop directory
 
-Standard Options:
-    --mode {fast|full}      Analysis mode (default: full)
-    --no-deep-learning      Skip verify and learn phases
-    --timeout SECONDS       Timeout in seconds (default: 300)
+Loop Execution Options:
+    --mode {full|fast|execute}  Execution mode (default: full)
+    --no-deep-learning          Skip verify and learn phases
+    --timeout SECONDS           Timeout in seconds (default: 300)
+    --hide-execution            Hide execution logs (show domain only)
+    -v, --verbose               Show execution logs without dimming
+    --debug                     Maximum verbosity
+    --show-config               Display configuration without running
 
-Run 'ravl-list' to see available loops.
+Management Commands:
+    --list, -l              List all available loops
+    --clean, -c <loop>      Clear learning artifacts for a loop
+    --clone <src> <name>    Clone a loop from template or existing loop
+    --new <name>            Create a new loop from scratch
+    --init                  Initialize a new RAVL project
+    --config                Configure LLM provider settings
+
+Diagnostic Commands:
+    --health <loop>             AI-powered loop diagnostics
+    --execution-health <loop>   Analyze execution/framework issues
+    --loop-health <loop>        Analyze domain learning issues
+
+Documentation Commands:
+    --sync-docs             Sync framework docs to project
 """
 
 import sys
@@ -1133,7 +1152,7 @@ def main():
 
     parser.add_argument(
         'loop',
-        help='Loop name or path (e.g., "external_drift" or "ravl_loops/strategy_guardian")'
+        help='Loop name with dot notation (e.g., "andries_loop_1" or "experimental.andries_loop_1")'
     )
     parser.add_argument(
         '--mode',

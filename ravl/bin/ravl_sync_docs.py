@@ -24,8 +24,13 @@ class RAVLSyncDocsCommand(RAVLCLIBase):
     """Sync framework documentation to project"""
 
     def __init__(self):
-        # Find project root (where ravl_loops/ lives)
-        self.project_root = self.find_project_root(required=True)
+        # Find project root (where ravl_loops/ lives) - optional for sync-docs
+        self.project_root = self.find_project_root(required=False)
+
+        # If no project found, use current directory
+        if not self.project_root:
+            self.project_root = Path.cwd()
+            print(f"⚠️  No RAVL project found. Creating ravl_loops/ in current directory.")
 
         # Find framework root (where docs source lives)
         self.framework_root = self.find_framework_root()
@@ -41,6 +46,10 @@ class RAVLSyncDocsCommand(RAVLCLIBase):
         if not self.source_docs.exists():
             self.print_error(f"Framework docs not found at: {self.source_docs}")
             sys.exit(1)
+
+        # Show warning if creating new project structure
+        if not (self.project_root / 'ravl_loops').exists():
+            print("⚠️  No RAVL project found. Creating ravl_loops/ structure.")
 
         # Clean sync: Delete existing docs directory first
         if self.dest_docs.exists():
