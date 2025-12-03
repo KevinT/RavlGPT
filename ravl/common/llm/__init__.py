@@ -122,6 +122,11 @@ try:
 except (ImportError, ModuleNotFoundError):
     log_llm_call = None
 
+try:
+    from llm_mixin import LLMMixin
+except (ImportError, ModuleNotFoundError):
+    LLMMixin = None
+
 __all__ = [
     # Core
     'LearningManager',
@@ -143,4 +148,5 @@ __all__ = [
     'LLMProviderFactory',
     'LLMProvider',
     'log_llm_call',
+    'LLMMixin',
 ]

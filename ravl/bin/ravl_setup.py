@@ -299,6 +299,245 @@ class RAVLSetup:
         print("Invalid choice.")
         return False
 
+    def setup_llm_defaults(self) -> bool:
+        """
+        Interactive LLM defaults configuration.
+
+        Configures prompt normalization and max tokens via environment variables.
+        """
+        while True:
+            print("\n" + "="*70)
+            print("LLM DEFAULTS")
+            print("="*70)
+            print("\nConfigure token limits and optimization settings for LLM calls.\n")
+
+            print("What would you like to configure?")
+            print("1) Prompt Normalization (token optimization)")
+            print("2) Max Tokens (per-use-case limits)")
+            print("3) Back to main menu")
+
+            choice = input("\nSelect (1-3): ").strip()
+
+            if choice == '1':
+                self._setup_prompt_normalization()
+            elif choice == '2':
+                self._setup_max_tokens()
+            elif choice == '3':
+                return False
+            else:
+                print("\n✗ Invalid choice. Please select 1-3.")
+                input("\nPress Enter to continue...")
+
+    def _setup_prompt_normalization(self) -> None:
+        """
+        Interactive prompt normalization configuration sub-menu.
+        """
+        while True:
+            print("\n" + "="*70)
+            print("PROMPT NORMALIZATION SETTINGS")
+            print("="*70)
+            print("\nReduce LLM token consumption by 40-70% through intelligent")
+            print("deduplication of repeated blocks in prompts.\n")
+
+            # Get current values (env vars override TOML)
+            current_enabled = self.env_vars.get('RAVL_PROMPT_NORMALIZATION_ENABLED',
+                                                os.environ.get('RAVL_PROMPT_NORMALIZATION_ENABLED', 'true'))
+            current_min_block = self.env_vars.get('RAVL_PROMPT_NORMALIZATION_MIN_BLOCK_SIZE',
+                                                  os.environ.get('RAVL_PROMPT_NORMALIZATION_MIN_BLOCK_SIZE', '200'))
+            current_logging = self.env_vars.get('RAVL_PROMPT_NORMALIZATION_ENABLE_LOGGING',
+                                                os.environ.get('RAVL_PROMPT_NORMALIZATION_ENABLE_LOGGING', 'true'))
+
+            # Display current configuration
+            print("Current Settings:")
+            print(f"  Enabled: {current_enabled} {'(✓ Active)' if current_enabled == 'true' else '(✗ Disabled)'}")
+            print(f"  Minimum block size: {current_min_block} chars")
+            print(f"  Enable logging: {current_logging}\n")
+
+            print("What would you like to do?")
+            print("1) Toggle normalization on/off")
+            print("2) Change minimum block size")
+            print("3) Toggle logging on/off")
+            print("4) Reset to framework defaults")
+            print("5) Back to LLM Defaults menu")
+
+            choice = input("\nSelect (1-5): ").strip()
+
+            if choice == '1':
+                # Toggle enabled
+                new_value = 'false' if current_enabled == 'true' else 'true'
+                self.env_vars['RAVL_PROMPT_NORMALIZATION_ENABLED'] = new_value
+                self._save_env()
+                status = "enabled" if new_value == 'true' else "disabled"
+                print(f"\n✓ Prompt normalization {status}")
+                input("\nPress Enter to continue...")
+
+            elif choice == '2':
+                # Change min block size
+                print(f"\nCurrent minimum block size: {current_min_block} chars")
+                print("Smaller values = more aggressive deduplication")
+                print("Recommended range: 100-500 chars")
+                new_value = input("Enter new minimum block size (or press Enter to cancel): ").strip()
+
+                if new_value:
+                    try:
+                        min_block = int(new_value)
+                        if min_block < 50:
+                            print("\n⚠  Warning: Values below 50 may cause excessive deduplication")
+                        if min_block > 1000:
+                            print("\n⚠  Warning: Values above 1000 reduce effectiveness")
+
+                        confirm = input(f"Set minimum block size to {min_block}? (y/n): ").strip().lower()
+                        if confirm == 'y':
+                            self.env_vars['RAVL_PROMPT_NORMALIZATION_MIN_BLOCK_SIZE'] = str(min_block)
+                            self._save_env()
+                            print(f"\n✓ Minimum block size set to {min_block} chars")
+                    except ValueError:
+                        print("\n✗ Invalid number. Please enter an integer.")
+
+                input("\nPress Enter to continue...")
+
+            elif choice == '3':
+                # Toggle logging
+                new_value = 'false' if current_logging == 'true' else 'true'
+                self.env_vars['RAVL_PROMPT_NORMALIZATION_ENABLE_LOGGING'] = new_value
+                self._save_env()
+                status = "enabled" if new_value == 'true' else "disabled"
+                print(f"\n✓ Normalization logging {status}")
+                input("\nPress Enter to continue...")
+
+            elif choice == '4':
+                # Reset to defaults
+                print("\nThis will remove environment overrides and use framework defaults:")
+                print("  - Enabled: true")
+                print("  - Minimum block size: 200 chars")
+                print("  - Enable logging: true")
+                confirm = input("\nReset to defaults? (y/n): ").strip().lower()
+
+                if confirm == 'y':
+                    # Remove env vars to fall back to TOML defaults
+                    self.env_vars.pop('RAVL_PROMPT_NORMALIZATION_ENABLED', None)
+                    self.env_vars.pop('RAVL_PROMPT_NORMALIZATION_MIN_BLOCK_SIZE', None)
+                    self.env_vars.pop('RAVL_PROMPT_NORMALIZATION_ENABLE_LOGGING', None)
+                    self._save_env()
+                    print("\n✓ Reset to framework defaults")
+
+                input("\nPress Enter to continue...")
+
+            elif choice == '5':
+                # Back to LLM Defaults menu
+                return
+
+            else:
+                print("\n✗ Invalid choice. Please select 1-5.")
+                input("\nPress Enter to continue...")
+
+    def _setup_max_tokens(self) -> None:
+        """
+        Interactive max tokens configuration sub-menu.
+        """
+        # Max tokens use cases from ravl.toml
+        max_tokens_keys = [
+            ('code_generation', 'Code Generation', 16384),
+            ('act_phase_code_generation', 'Act Phase Code Generation', 16384),
+            ('data_ingress_code_generation', 'Data Ingestion Code Generation', 8192),
+            ('domain_context_synthesis', 'Domain Context Synthesis', 4096),
+            ('verification', 'Verification', 4096),
+            ('learn_insights', 'Learn Insights', 4096),
+            ('markdown_enhancement', 'Markdown Enhancement', 4096),
+            ('health_check_execution_analysis', 'Health Check (Execution)', 4096),
+            ('health_check_domain_analysis', 'Health Check (Domain)', 4096),
+            ('default', 'Default (fallback)', 8192)
+        ]
+
+        while True:
+            print("\n" + "="*70)
+            print("MAX TOKENS CONFIGURATION")
+            print("="*70)
+            print("\nConfigure maximum token limits for different LLM use cases.")
+            print("Higher values = more detailed output, but higher cost.\n")
+
+            print("Current Settings:")
+            # Show current values (env var overrides, or framework defaults)
+            for i, (key, label, default) in enumerate(max_tokens_keys, start=1):
+                env_var = f'RAVL_MAX_TOKENS_{key.upper()}'
+                current = self.env_vars.get(env_var, os.environ.get(env_var, str(default)))
+                print(f"  {i:2d}) {label:35s} {current:>6s} tokens")
+
+            print("\nWhat would you like to do?")
+            print(f"{len(max_tokens_keys) + 1}) Change a specific limit")
+            print(f"{len(max_tokens_keys) + 2}) Reset all to framework defaults")
+            print(f"{len(max_tokens_keys) + 3}) Back to LLM Defaults menu")
+
+            choice = input(f"\nSelect (1-{len(max_tokens_keys) + 3}): ").strip()
+
+            # Parse choice
+            try:
+                choice_num = int(choice)
+            except ValueError:
+                print("\n✗ Invalid choice. Please enter a number.")
+                input("\nPress Enter to continue...")
+                continue
+
+            if 1 <= choice_num <= len(max_tokens_keys):
+                # User selected a specific key to modify
+                key, label, default = max_tokens_keys[choice_num - 1]
+                env_var = f'RAVL_MAX_TOKENS_{key.upper()}'
+                current = self.env_vars.get(env_var, os.environ.get(env_var, str(default)))
+
+                print(f"\nCurrent {label}: {current} tokens")
+                print("Common values: 4096, 8192, 16384, 32768")
+                print("(Higher = more detailed, but more expensive)")
+                new_value = input("Enter new max tokens (or press Enter to cancel): ").strip()
+
+                if new_value:
+                    try:
+                        max_tokens = int(new_value)
+                        if max_tokens < 1024:
+                            print("\n⚠  Warning: Values below 1024 may truncate output")
+                        if max_tokens > 100000:
+                            print("\n⚠  Warning: Very large values may be rejected by LLM provider")
+
+                        confirm = input(f"Set {label} to {max_tokens} tokens? (y/n): ").strip().lower()
+                        if confirm == 'y':
+                            self.env_vars[env_var] = str(max_tokens)
+                            self._save_env()
+                            print(f"\n✓ {label} set to {max_tokens} tokens")
+                    except ValueError:
+                        print("\n✗ Invalid number. Please enter an integer.")
+
+                input("\nPress Enter to continue...")
+
+            elif choice_num == len(max_tokens_keys) + 1:
+                # Change specific limit (redirect to top of loop)
+                continue
+
+            elif choice_num == len(max_tokens_keys) + 2:
+                # Reset all to defaults
+                print("\nThis will remove all max_tokens environment overrides.")
+                print("Framework defaults will be used:")
+                for key, label, default in max_tokens_keys:
+                    print(f"  - {label}: {default} tokens")
+
+                confirm = input("\nReset all to defaults? (y/n): ").strip().lower()
+
+                if confirm == 'y':
+                    # Remove all max_tokens env vars
+                    for key, _, _ in max_tokens_keys:
+                        env_var = f'RAVL_MAX_TOKENS_{key.upper()}'
+                        self.env_vars.pop(env_var, None)
+                    self._save_env()
+                    print("\n✓ Reset all max_tokens to framework defaults")
+
+                input("\nPress Enter to continue...")
+
+            elif choice_num == len(max_tokens_keys) + 3:
+                # Back to LLM Defaults menu
+                return
+
+            else:
+                print(f"\n✗ Invalid choice. Please select 1-{len(max_tokens_keys) + 3}.")
+                input("\nPress Enter to continue...")
+
     def main_menu(self):
         """Main setup menu."""
         self._print_header()
@@ -314,9 +553,10 @@ class RAVLSetup:
         print("What would you like to configure?")
         print("1) LLM Provider" + (f" (✓ {current_llm.title()})" if current_llm else " (required - RAVL uses this to generate code)"))
         print("2) API Integrations (optional - add APIs your loops need)")
-        print("3) Exit")
+        print("3) LLM Defaults (token limits, optimization)")
+        print("4) Exit")
 
-        choice = input("\nSelect (1-3): ").strip()
+        choice = input("\nSelect (1-4): ").strip()
 
         if choice == '1':
             self.setup_llm_provider()
@@ -329,6 +569,11 @@ class RAVLSetup:
             self.main_menu()
 
         elif choice == '3':
+            self.setup_llm_defaults()
+            # Return to main menu
+            self.main_menu()
+
+        elif choice == '4':
             return
 
         else:

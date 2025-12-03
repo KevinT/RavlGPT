@@ -5,6 +5,7 @@ Configuration Loader for RAVL Framework
 Loads and caches framework configuration from .ravl/config/ravl.toml
 """
 
+import os
 from pathlib import Path
 from typing import Dict, Any, Optional
 
@@ -78,6 +79,8 @@ def get_max_tokens(key: str, default: int = DEFAULT_MAX_TOKENS) -> int:
     """
     Get max_tokens for specific use case from framework config
 
+    Priority: Environment variables > ravl.toml > defaults
+
     Args:
         key: Config key under llm.max_tokens (e.g., 'code_generation')
         default: Fallback value if config not found
@@ -85,13 +88,48 @@ def get_max_tokens(key: str, default: int = DEFAULT_MAX_TOKENS) -> int:
     Returns:
         Maximum tokens to use for this LLM call
     """
-    config = load_framework_config()
+    # Check environment variable first (wizard overrides)
+    env_var = f'RAVL_MAX_TOKENS_{key.upper()}'
+    env_value = os.environ.get(env_var, '')
 
+    if env_value:
+        try:
+            return int(env_value)
+        except ValueError:
+            pass  # Fall through to TOML/default
+
+    # Fall back to TOML config
+    config = load_framework_config()
     try:
         max_tokens = config.get('llm', {}).get('max_tokens', {}).get(key, default)
         return int(max_tokens)
     except (KeyError, ValueError, TypeError):
         return default
+
+
+def get_prompt_normalization_config() -> Dict[str, Any]:
+    """
+    Get prompt normalization configuration.
+
+    Priority: Environment variables > ravl.toml > defaults
+    This allows wizard-configured overrides via .env
+
+    Returns:
+        Dict with keys: enabled (bool), min_block_size (int), enable_logging (bool)
+    """
+    config = load_framework_config()
+    norm_config = config.get('llm', {}).get('prompt_normalization', {})
+
+    # Check environment variables first (wizard overrides)
+    env_enabled = os.environ.get('RAVL_PROMPT_NORMALIZATION_ENABLED', '').lower()
+    env_min_block = os.environ.get('RAVL_PROMPT_NORMALIZATION_MIN_BLOCK_SIZE', '')
+    env_logging = os.environ.get('RAVL_PROMPT_NORMALIZATION_ENABLE_LOGGING', '').lower()
+
+    return {
+        'enabled': env_enabled == 'true' if env_enabled else norm_config.get('enabled', True),
+        'min_block_size': int(env_min_block) if env_min_block else norm_config.get('min_block_size', 200),
+        'enable_logging': env_logging == 'true' if env_logging else norm_config.get('enable_logging', True)
+    }
 
 
 def reload_config() -> None:

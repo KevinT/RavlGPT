@@ -280,8 +280,8 @@ The framework provides optional mixins for common functionality:
 
 ```python
 from ravl_base import BaseRAVLLoop
-from mixins.llm_mixin import LLMMixin
-from mixins.google_apis_mixin import GoogleAPIsMixin
+from llm.llm_mixin import LLMMixin
+from integrations.google_apis_mixin import GoogleAPIsMixin
 
 class MyLoop(BaseRAVLLoop, LLMMixin, GoogleAPIsMixin):
     """Agent that needs LLM and Google APIs"""

@@ -12,16 +12,38 @@ Supports multiple LLM providers: Anthropic, OpenAI, Google, etc.
 
 import os
 import sys
+import logging
 from pathlib import Path
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional
 from llm.llm_logger import log_llm_call
 
+logger = logging.getLogger(__name__)
+
 # Import config_loader with path-based import (works whether framework is installed or not)
 _config_path = Path(__file__).parent.parent / 'config'
 if str(_config_path) not in sys.path:
     sys.path.insert(0, str(_config_path))
-from config_loader import get_max_tokens
+from config_loader import get_max_tokens, get_prompt_normalization_config
+
+# Module-level normalizer singleton (lazy-loaded)
+_normalizer = None
+
+def get_normalizer():
+    """Get or create the prompt normalizer singleton."""
+    global _normalizer
+    if _normalizer is None:
+        try:
+            from llm.prompt_normalizer import PromptNormalizer
+            config = get_prompt_normalization_config()
+            _normalizer = PromptNormalizer(
+                min_block_size=config['min_block_size'],
+                enable_logging=config['enable_logging']
+            )
+        except Exception as e:
+            logger.warning(f"Failed to initialize prompt normalizer: {e}")
+            _normalizer = None
+    return _normalizer
 
 
 class LLMProvider(ABC):
@@ -96,11 +118,25 @@ class AnthropicProvider(LLMProvider):
         if max_tokens is None:
             max_tokens = self.default_max_tokens or get_max_tokens('default')
 
+        # Apply prompt normalization if enabled in config
+        normalized_prompt = prompt
+        original_length = len(prompt)
+        config = get_prompt_normalization_config()
+        if config['enabled']:
+            try:
+                normalizer = get_normalizer()
+                if normalizer:
+                    normalized_prompt = normalizer.normalize(prompt)
+            except Exception as e:
+                # Graceful degradation: use original prompt on error
+                logger.warning(f"Prompt normalization failed: {e}")
+                normalized_prompt = prompt
+
         # Build API params
         api_params = {
             'model': self.model,
             'max_tokens': max_tokens,
-            'messages': [{"role": "user", "content": prompt}]
+            'messages': [{"role": "user", "content": normalized_prompt}]
         }
 
         # Add optional parameters if configured
@@ -164,6 +200,20 @@ class OpenAIProvider(LLMProvider):
         if max_tokens is None:
             max_tokens = self.default_max_tokens or get_max_tokens('default')
 
+        # Apply prompt normalization if enabled in config
+        normalized_prompt = prompt
+        original_length = len(prompt)
+        config = get_prompt_normalization_config()
+        if config['enabled']:
+            try:
+                normalizer = get_normalizer()
+                if normalizer:
+                    normalized_prompt = normalizer.normalize(prompt)
+            except Exception as e:
+                # Graceful degradation: use original prompt on error
+                logger.warning(f"Prompt normalization failed: {e}")
+                normalized_prompt = prompt
+
         # Reasoning models (GPT-5, o1, o3) require max_completion_tokens
         # Regular models (GPT-4, GPT-3.5) use max_tokens
         is_reasoning = self._is_reasoning_model()
@@ -173,7 +223,7 @@ class OpenAIProvider(LLMProvider):
         api_params = {
             'model': self.model,
             token_param: max_tokens,
-            'messages': [{"role": "user", "content": prompt}]
+            'messages': [{"role": "user", "content": normalized_prompt}]
         }
 
         # Add optional parameters if configured
@@ -229,6 +279,20 @@ class GoogleProvider(LLMProvider):
         if max_tokens is None:
             max_tokens = self.default_max_tokens or get_max_tokens('default')
 
+        # Apply prompt normalization if enabled in config
+        normalized_prompt = prompt
+        original_length = len(prompt)
+        config = get_prompt_normalization_config()
+        if config['enabled']:
+            try:
+                normalizer = get_normalizer()
+                if normalizer:
+                    normalized_prompt = normalizer.normalize(prompt)
+            except Exception as e:
+                # Graceful degradation: use original prompt on error
+                logger.warning(f"Prompt normalization failed: {e}")
+                normalized_prompt = prompt
+
         # Build generation config
         gen_config = {"max_output_tokens": max_tokens}
         if self.temperature is not None:
@@ -238,7 +302,7 @@ class GoogleProvider(LLMProvider):
 
         try:
             response = self.client.generate_content(
-                prompt,
+                normalized_prompt,
                 generation_config=gen_config
             )
             response_text = response.text
@@ -282,6 +346,20 @@ class OllamaProvider(LLMProvider):
         if max_tokens is None:
             max_tokens = self.default_max_tokens or get_max_tokens('default')
 
+        # Apply prompt normalization if enabled in config
+        normalized_prompt = prompt
+        original_length = len(prompt)
+        config = get_prompt_normalization_config()
+        if config['enabled']:
+            try:
+                normalizer = get_normalizer()
+                if normalizer:
+                    normalized_prompt = normalizer.normalize(prompt)
+            except Exception as e:
+                # Graceful degradation: use original prompt on error
+                logger.warning(f"Prompt normalization failed: {e}")
+                normalized_prompt = prompt
+
         import requests
 
         # Build options dict
@@ -293,7 +371,7 @@ class OllamaProvider(LLMProvider):
 
         payload = {
             "model": self.model,
-            "prompt": prompt,
+            "prompt": normalized_prompt,
             "stream": False,
             "options": options
         }

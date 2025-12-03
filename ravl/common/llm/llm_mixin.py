@@ -50,7 +50,7 @@ class LLMMixin:
         Returns:
             LLMProvider instance
         """
-        from llm.llm_providers import LLMProviderFactory
+        from llm_providers import LLMProviderFactory
 
         loop_name = getattr(self, 'loop_name', 'RAVL Loop')
 
@@ -61,6 +61,11 @@ class LLMMixin:
 
         if loop_dir:
             # Use hierarchical resolution
+            import sys
+            from pathlib import Path
+            _common_dir = Path(__file__).parent.parent
+            if str(_common_dir) not in sys.path:
+                sys.path.insert(0, str(_common_dir))
             from ravl_runner import RAVLRunner
             llm_config = RAVLRunner.resolve_llm_config(
                 loop_dir=loop_dir,

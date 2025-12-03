@@ -48,7 +48,7 @@ Project-specific functionality for a family of related agents.
 **Usage:**
 ```python
 from ravl_base import BaseRAVLLoop
-from mixins.llm_mixin import LLMMixin
+from llm.llm_mixin import LLMMixin
 
 class MyLoop(BaseRAVLLoop, LLMMixin):
     def act(self, reflection):
@@ -88,7 +88,7 @@ class MyLoop(BaseRAVLLoop, LLMMixin):
 **Usage:**
 ```python
 from ravl_base import BaseRAVLLoop
-from mixins.google_apis_mixin import GoogleAPIsMixin
+from integrations.google_apis_mixin import GoogleAPIsMixin
 
 class MyLoop(BaseRAVLLoop, GoogleAPIsMixin):
     def act(self, reflection):

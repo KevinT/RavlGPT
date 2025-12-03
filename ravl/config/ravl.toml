@@ -18,6 +18,13 @@ health_check_execution_analysis = 4096
 health_check_domain_analysis = 4096
 default = 8192
 
+[llm.prompt_normalization]
+# Detect repeated blocks and replace them with references to first occurrence
+# Reduces LLM token consumption, with a nett positive benefit in most cases
+enabled = true 
+min_block_size = 200  # Minimum character count for deduplication candidates
+enable_logging = true  # Log reduction percentages and duplicate counts
+
 [allowed_dependencies.pyyaml]
 min_version = "6.0.1"
 max_version = "7.0.0"

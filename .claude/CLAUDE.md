@@ -36,11 +36,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - `learning/` - Model persistence, exponential moving averages, history tracking
   - `error_handling/` - Semantic error analysis, failure pattern detection
   - `verification/` - Schema validation, output verification
-- `common/mixins/` - Reusable integrations:
+- `common/llm/` - LLM integrations and utilities:
+  - `llm_providers.py` - Multi-provider support
+  - `llm_mixin.py` - LLM detection and JSON extraction helpers
+- `common/integrations/` - External system connectors:
   - `google_apis_mixin.py` - Google Workspace/Docs/Sheets access
-  - `llm_mixin.py` - LLM analysis helpers
   - `credential_validator.py` - Token validation and environment extraction
-- `common/integrations/` - External system connectors
 - `common/utils/` - File I/O, constants, logging utilities
 
 **CLI Tools**
@@ -89,6 +90,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - LLM generates Python code from markdown prompts
 - Code execution with error handling and caching
 - Useful for rapid prototyping and exploration
+
+**6. Prompt Normalization (Token Optimization)**
+- Reduces LLM token consumption by 40-70% through deduplication
+- Detects repeated blocks (Google Auth, LLM Provider patterns, etc.)
+- Replaces duplicates with human-readable references
+- Protection rules: never modifies code, JSON, user queries, placeholders
+- Configuration: `config/ravl.toml` under `[llm.prompt_normalization]`
+- Enabled by default (`enabled = true`)
+- Implementation: `common/llm/prompt_normalizer.py`
+- Integrated into all 4 LLM providers (`llm_providers.py`)
+- Tests: `tests/test_prompt_normalizer.py`, `tests/test_prompt_normalizer_integration.py`
 
 ## RAVL Protocol Specification
 
@@ -350,8 +362,8 @@ self.model["success_rate"] = exponential_moving_average(
 ### 3. Enterprise Mixins
 Add organization-specific integrations as mixins:
 ```python
-from common.mixins.google_apis_mixin import GoogleAPISMixin
-from common.mixins.llm_mixin import LLMMixin
+from common.integrations.google_apis_mixin import GoogleAPISMixin
+from common.llm.llm_mixin import LLMMixin
 
 class MyLoop(LLMMixin, GoogleAPISMixin, RAVLBase):
     def reflect(self):
