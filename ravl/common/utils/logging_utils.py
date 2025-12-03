@@ -31,10 +31,18 @@ STATUS_SYMBOLS = {
     'working': '[•]',
 }
 
+# ANSI color codes for visual distinction
+ANSI_DIM = '\033[2m'
+ANSI_RESET = '\033[0m'
+ANSI_CYAN = '\033[36m'
+
 # Global flag for execution detail visibility
 # Controls whether execution learning messages (code generation, DSL, caching) are shown
 # Domain learning messages (validation, insights, patterns) are always shown
-_show_execution: bool = False
+_show_execution: bool = True  # Default: show all logs (beginner-friendly)
+
+# Global flag for verbose mode (disables dimming)
+_verbose_mode: bool = False
 
 
 def set_show_execution(enabled: bool):
@@ -49,6 +57,41 @@ def set_show_execution(enabled: bool):
     """
     global _show_execution
     _show_execution = enabled
+
+
+def set_verbose_mode(enabled: bool):
+    """
+    Set verbose mode (disables dimming of execution logs).
+
+    Call this when --verbose or --debug flags are used to show
+    execution logs in full brightness instead of dimmed.
+
+    Args:
+        enabled: True to disable dimming, False to use dimmed output
+    """
+    global _verbose_mode
+    _verbose_mode = enabled
+
+
+def is_verbose_mode() -> bool:
+    """
+    Check if verbose mode is enabled.
+
+    Returns:
+        True if verbose mode (no dimming), False otherwise
+    """
+    global _verbose_mode
+    return _verbose_mode
+
+
+def _supports_color() -> bool:
+    """
+    Check if terminal supports ANSI color codes.
+
+    Returns:
+        True if stderr is a TTY that supports colors, False otherwise
+    """
+    return hasattr(sys.stderr, 'isatty') and sys.stderr.isatty()
 
 
 def should_show_execution() -> bool:
@@ -69,18 +112,30 @@ def should_show_execution() -> bool:
 
 def log_execution(message: str, indent: int = 2, status: str = 'working'):
     """
-    Log execution-related message (only shown if show_execution enabled).
+    Log execution-related message (dimmed by default, shown unless --hide-execution).
 
     Use for framework plumbing messages like code generation, DSL inference,
-    caching, etc. These are hidden by default unless --show-execution flag is used.
+    caching, etc. These are shown dimmed by default for transparency, but can be
+    hidden with --hide-execution or shown bright with --verbose.
 
     Args:
         message: Message to log
         indent: Number of spaces to indent (default: 2)
         status: Status type ('info', 'success', 'error', 'working')
     """
-    if should_show_execution():
+    if not should_show_execution():
+        return
+
+    # Skip dimming if verbose mode enabled or terminal doesn't support color
+    if is_verbose_mode() or not _supports_color():
         log_message(message, status=status, indent=indent)
+    else:
+        # Apply dimming to execution logs for visual distinction
+        symbol = STATUS_SYMBOLS.get(status, '[i]')
+        indent_str = ' ' * indent
+        for line in message.split('\n'):
+            print(f"{ANSI_DIM}{indent_str}{symbol} {line}{ANSI_RESET}",
+                  file=sys.stderr, flush=True)
 
 
 def log_domain(message: str, indent: int = 2, status: str = 'info'):

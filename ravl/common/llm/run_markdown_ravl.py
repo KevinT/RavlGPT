@@ -217,10 +217,39 @@ class ConfigBasedRAVLRunner:
         else:
             learnings_dir = self.loop_dir / 'learnings'
 
+        # Check for persistent diagnostic state
+        diagnostic_state_file = learnings_dir / "execution_learning" / "auto_diagnostic_mode.json"
+        if diagnostic_state_file.exists():
+            try:
+                import json
+                with open(diagnostic_state_file) as f:
+                    state = json.load(f)
+                    if state.get("enabled", False):
+                        log_message("ℹ️  Auto-diagnostic mode active (persisted from previous failures)", status='info')
+                        from ravl.common.utils.logging_utils import set_show_execution
+                        set_show_execution(True)
+            except Exception:
+                pass  # Ignore errors reading state
+
         # Check for consecutive failures and auto-enable debug mode
         should_show_config, failure_count = self._check_consecutive_failures(learnings_dir)
         if should_show_config:
-            log_message(f"⚠️  Detected {failure_count} consecutive failures - auto-enabling --show-config for diagnostics", status='info')
+            log_message(f"⚠️  Detected {failure_count} consecutive failures - enabling auto-diagnostic mode", status='info')
+
+            # Persist diagnostic state
+            diagnostic_state_file.parent.mkdir(parents=True, exist_ok=True)
+            import json
+            from datetime import datetime
+            with open(diagnostic_state_file, 'w') as f:
+                json.dump({
+                    "enabled": True,
+                    "triggered_at": datetime.now().isoformat(),
+                    "failure_count": failure_count
+                }, f, indent=2)
+
+            # Enable execution logging for this run
+            from ravl.common.utils.logging_utils import set_show_execution
+            set_show_execution(True)
 
             # Display configuration
             from cli.config_display import ConfigDisplay
@@ -571,10 +600,15 @@ class ConfigBasedRAVLRunner:
                 log_message(f"", status='info', indent=0)
                 log_message(f"   Understand config and get diagnostic suggestions:", status='info', indent=0)
                 log_message(f"     ravl {loop_name} --show-config # shows settings", status='info', indent=0)
-                log_message(f"     ravl {loop_name} --show-execution # shows execution steps", status='info', indent=0)
+                log_message(f"     ravl {loop_name} --verbose # shows execution steps in bright", status='info', indent=0)
                 log_message(f"     ravl --loop-health {loop_name} # inspect loop agentic health", status='info', indent=0)
                 log_message(f"     ravl --execution-health {loop_name} # inspect loop execution health", status='info', indent=0)
                 log_message(f"", status='info', indent=0)
+
+            # Clear auto-diagnostic state on success
+            if verification_passed and diagnostic_state_file.exists():
+                diagnostic_state_file.unlink()
+                log_message("✓ Loop succeeded - cleared auto-diagnostic mode", status='success')
 
             # Success/completion summary
             completion_status = "completed successfully" if verification_passed else "completed with errors"

@@ -253,9 +253,22 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         # Initialize execution logging visibility
         # This must be set before any loop execution to control message visibility
-        from ravl.common.utils.logging_utils import set_show_execution
-        if hasattr(args, 'show_execution') and args.show_execution:
+        from ravl.common.utils.logging_utils import set_show_execution, set_verbose_mode
+
+        # Priority: CLI flags > auto-diagnostic state > default (True)
+        if hasattr(args, 'hide_execution') and args.hide_execution:
+            set_show_execution(False)
+        elif hasattr(args, 'quiet') and args.quiet:
+            # Backward compatibility
+            set_show_execution(False)
+            self.print_warning("--quiet is deprecated. Use --hide-execution instead.")
+        elif hasattr(args, 'verbose') and args.verbose:
             set_show_execution(True)
+            set_verbose_mode(True)  # Disables dimming
+            os.environ['RAVL_SHOW_EXECUTION'] = '1'  # For subprocess consistency
+        elif hasattr(args, 'debug') and args.debug:
+            set_show_execution(True)
+            set_verbose_mode(True)
             os.environ['RAVL_SHOW_EXECUTION'] = '1'  # For subprocess consistency
 
         # Detect loop type and route accordingly
@@ -1140,15 +1153,24 @@ def main():
         help=f'Timeout in seconds (default: {DEFAULT_EXECUTION_TIMEOUT})'
     )
     parser.add_argument(
-        '--quiet',
+        '--hide-execution',
         action='store_true',
-        help='Suppress framework status messages and phase banners'
+        help='Hide execution details (code generation, DSL, caching). Only show domain learning.'
     )
     parser.add_argument(
-        '--show-execution',
+        '-v', '--verbose',
         action='store_true',
-        help='Show execution learning details (code generation, DSL, caching). '
-             'Default: only show domain learning progress.'
+        help='Show execution details in full brightness (not dimmed)'
+    )
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Maximum verbosity for debugging (future use)'
+    )
+    parser.add_argument(
+        '--quiet',
+        action='store_true',
+        help='DEPRECATED: Use --hide-execution instead. Minimal output.'
     )
     parser.add_argument(
         '--learning-path',
