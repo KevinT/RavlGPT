@@ -445,22 +445,51 @@ class ExecutionLearningManager:
         """
         Write known unknowns as markdown for user editing.
 
+        Filters out questions that have already been answered (stored in known_knowns.jsonl).
+        Only shows truly unanswered questions.
+
         Args:
             questions: List of question strings from verification
             filepath: Where to save the markdown file
         """
+        from ravl.common.core.learning.known_knowns_manager import KnownKnownsManager
+
+        # Determine category based on filepath
+        category = "execution"  # This is always execution for this manager
+
+        # Load existing known knowns to filter out answered questions
+        try:
+            knowns_manager = KnownKnownsManager(
+                learnings_dir=filepath.parent.parent,
+                category=category
+            )
+            known_questions = set(knowns_manager.get_all_knowns().keys())
+        except Exception:
+            # If loading fails, proceed with all questions
+            known_questions = set()
+
+        # Filter to only unanswered questions
+        unanswered = [q for q in questions if q not in known_questions]
+
+        # Write markdown header with stats
         md_content = f"""# Known Execution Unknowns - Generated {datetime.now(timezone.utc).strftime('%Y-%m-%d')}
 
 These are infrastructure questions the loop identified during verification.
 Answer any/all questions below, then run the loop again.
 
+**Note:** {len(known_questions)} questions have been answered previously and are stored in known_knowns.jsonl
+**New questions:** {len(unanswered)}
+
 """
 
-        for i, question in enumerate(questions, 1):
+        # Write only unanswered questions
+        for i, question in enumerate(unanswered, 1):
             md_content += f"""## Question {i}
 {question}
 
 **Answer**: _[Fill in your answer here, or delete this question if not applicable]_
+
+**Answered by**: _[Your name, team, or loop name - e.g., "Alice", "Data Team", "loop:parent_analyzer"]_
 
 ---
 

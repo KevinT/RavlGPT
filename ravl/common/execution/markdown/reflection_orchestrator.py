@@ -125,9 +125,15 @@ class ReflectionOrchestrator:
                 'infrastructure': answered_execution_unknowns
             }
             if answered_loop_unknowns:
-                log_execution(f"Found {len(answered_loop_unknowns)} answered domain questions", status='info', indent=4)
+                from ravl.common.core.learning.known_knowns_manager import KnownKnownsManager
+                knowns_manager = KnownKnownsManager(self.learnings_dir, "domain")
+                total_knowns = knowns_manager.count_knowns()
+                log_execution(f"Loaded {total_knowns} domain known knowns (accumulated across all runs)", status='info', indent=4)
             if answered_execution_unknowns:
-                log_execution(f"Found {len(answered_execution_unknowns)} answered infrastructure questions", status='info', indent=4)
+                from ravl.common.core.learning.known_knowns_manager import KnownKnownsManager
+                knowns_manager = KnownKnownsManager(self.learnings_dir, "execution")
+                total_knowns = knowns_manager.count_knowns()
+                log_execution(f"Loaded {total_knowns} execution known knowns (accumulated across all runs)", status='info', indent=4)
 
         # Report domain learning status to user
         if has_domain_learnings:
@@ -328,45 +334,89 @@ class ReflectionOrchestrator:
 
     def _parse_answered_unknowns(self, md_file: Path) -> Dict[str, str]:
         """
-        Parse markdown file to extract answered questions.
+        Parse markdown file to extract answered questions, save to known_knowns.jsonl,
+        and return ALL accumulated known knowns (current + historical).
 
         Args:
             md_file: Path to known_unknowns.md file
 
         Returns:
-            Dict mapping questions to answers
+            Dict mapping questions to answers (all accumulated knowns)
         """
-        if not md_file.exists():
-            return {}
+        from ravl.common.core.learning.known_knowns_manager import KnownKnownsManager
 
+        # Determine category based on file path
+        category = "domain" if "loop_learning" in str(md_file) else "execution"
+
+        # Always load existing known knowns first
+        knowns_manager = KnownKnownsManager(self.learnings_dir, category)
+
+        # If file doesn't exist, just return existing knowns
+        if not md_file.exists():
+            return knowns_manager.get_all_knowns()
+
+        # Parse current markdown file for NEW answers
         try:
             content = md_file.read_text(encoding='utf-8')
         except Exception as e:
             log_message(f"Failed to read {md_file.name}: {e}", status='warning')
-            return {}
+            return knowns_manager.get_all_knowns()
 
-        # Parse markdown to extract Q&A pairs
-        answers = {}
+        # Parse markdown to extract Q&A pairs with "Answered by" metadata
+        new_answers = {}  # question -> (answer, answered_by)
         lines = content.split('\n')
         current_question = None
+        current_answer = None
+        current_answered_by = None
 
         for line in lines:
             # Question headers: "## Question N"
             if line.startswith('## Question'):
-                current_question = None  # Reset for new question
+                # Save previous Q&A if complete
+                if current_question and current_answer:
+                    answered_by = current_answered_by if current_answered_by else "human"
+                    new_answers[current_question] = (current_answer, answered_by)
+
+                # Reset for new question
+                current_question = None
+                current_answer = None
+                current_answered_by = None
                 continue
 
             # Question text (non-empty line after "## Question")
-            if current_question is None and line.strip() and not line.startswith('**Answer**') and not line.startswith('---'):
+            if current_question is None and line.strip() and not line.startswith('**') and not line.startswith('---'):
                 current_question = line.strip()
                 continue
 
             # Answer line: "**Answer**: actual answer text"
-            if line.startswith('**Answer**:') and current_question:
+            if line.startswith('**Answer**:'):
                 answer = line.replace('**Answer**:', '').strip()
                 # Only include if answer is not placeholder
-                if answer and not answer.startswith('_[Fill in') and answer != '_[Fill in your answer here, or delete this question if not applicable]_':
-                    answers[current_question] = answer
-                current_question = None  # Reset after processing
+                if answer and not answer.startswith('_[Fill in'):
+                    current_answer = answer
+                continue
 
-        return answers
+            # Answered by line: "**Answered by**: name or identifier"
+            if line.startswith('**Answered by**:'):
+                answered_by_raw = line.replace('**Answered by**:', '').strip()
+                # Skip placeholder text
+                if not answered_by_raw.startswith('_['):
+                    current_answered_by = answered_by_raw
+                continue
+
+        # Don't forget last question
+        if current_question and current_answer:
+            answered_by = current_answered_by if current_answered_by else "human"
+            new_answers[current_question] = (current_answer, answered_by)
+
+        # Save NEW answers to known_knowns.jsonl
+        if new_answers:
+            for question, (answer, answered_by) in new_answers.items():
+                knowns_manager.add_known_known(
+                    question=question,
+                    answer=answer,
+                    answered_by=answered_by
+                )
+
+        # Return ALL accumulated knowns (historical + current)
+        return knowns_manager.get_all_knowns()
