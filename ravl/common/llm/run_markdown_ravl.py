@@ -201,6 +201,41 @@ class ConfigBasedRAVLRunner:
 
         return consecutive >= 3, consecutive
 
+    def _count_unanswered_unknowns(self, md_file: Path) -> int:
+        """
+        Count unanswered questions in an unknowns markdown file.
+
+        Args:
+            md_file: Path to known_unknowns.md file
+
+        Returns:
+            Count of questions with placeholder answers
+        """
+        if not md_file.exists():
+            return 0
+
+        try:
+            content = md_file.read_text(encoding='utf-8')
+        except Exception:
+            return 0
+
+        # Count questions with placeholder answers
+        unanswered = 0
+        lines = content.split('\n')
+        in_question = False
+
+        for line in lines:
+            if line.startswith('## Question'):
+                in_question = True
+            elif line.startswith('**Answer**:') and in_question:
+                answer = line.replace('**Answer**:', '').strip()
+                # Check if placeholder
+                if answer.startswith('_[Fill in'):
+                    unanswered += 1
+                in_question = False
+
+        return unanswered
+
     def run(self, args: argparse.Namespace):
         """
         Execute the RAVL loop
@@ -614,10 +649,28 @@ class ConfigBasedRAVLRunner:
             completion_status = "completed successfully" if verification_passed else "completed with errors"
             RAVLRunner.print_banner(f"{loop_name} {completion_status}", "🏁")
             final_duration = time.time() - start_time
-            log_message(f"   Duration: {final_duration:.1f}s", status='info', indent=0)
+            log_message(f"   Total Duration: {final_duration:.1f}s", status='info', indent=0)
+            # Filter out 'name' since it's already shown in banner
             for var_name, var_value in context_vars.items():
-                log_message(f"   {var_name}: {var_value}", status='info', indent=0)
-            log_message(f"   Output: {action_result.get('output_file', 'N/A')}", status='info', indent=0)
+                if var_name != 'name':
+                    log_message(f"   {var_name}: {var_value}", status='info', indent=0)
+
+            # Count unanswered questions to guide user improvements
+            domain_unknowns_file = learnings_dir / 'loop_learning' / 'current_state' / 'known_loop_unknowns.md'
+            execution_unknowns_file = learnings_dir / 'execution_learning' / 'current_state' / 'known_execution_unknowns.md'
+
+            domain_count = self._count_unanswered_unknowns(domain_unknowns_file)
+            execution_count = self._count_unanswered_unknowns(execution_unknowns_file)
+
+            # Only show tip if there are unanswered questions
+            if domain_count > 0 or execution_count > 0:
+                log_message("💡 Tip: Answer questions to improve future runs:", status='info', indent=0)
+                if domain_count > 0:
+                    log_message(f"   • {domain_count} domain question(s): learnings/loop_learning/current_state/known_loop_unknowns.md",
+                               status='info', indent=0)
+                if execution_count > 0:
+                    log_message(f"   • {execution_count} execution question(s): learnings/execution_learning/current_state/known_execution_unknowns.md",
+                               status='info', indent=0)
             log_message("=" * 80, status='info', indent=0)
 
             # Close logger
