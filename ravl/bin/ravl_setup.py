@@ -80,8 +80,10 @@ class RAVLSetup:
             __version__ = "0.1.0"  # Fallback
 
         current_llm = get_configured_llm_provider()
-        current_apis = get_configured_apis()
-        api_count = len(current_apis)
+        from ravl.common.cli.first_run_detector import get_all_apis_with_status
+        all_apis = get_all_apis_with_status()
+        detected_count = sum(1 for info in all_apis.values() if info['detected'])
+        total_count = len(all_apis)
 
         llm_display = current_llm if current_llm else "none"
         cwd = os.getcwd()
@@ -109,7 +111,11 @@ class RAVLSetup:
         print(top_row)
         print("║    ╔════╬════╦════╣")
         print(f"▓    ▓    ▓    ▓    ║ Default intelligence provider: {llm_display}")
-        print(f"║  ╔═╩╗  ╔╩═╦══╗ ➿ ║ API Integrations: {api_count}")
+        not_detected = total_count - detected_count
+        if not_detected > 0:
+            print(f"║  ╔═╩╗  ╔╩═╦══╗ ➿ ║ API Integrations: {detected_count} detected, {not_detected} not detected")
+        else:
+            print(f"║  ╔═╩╗  ╔╩═╦══╗ ➿ ║ API Integrations: {detected_count}")
         print(f"▒  ▒  ▒  ▒  ▒  ▒    ║ {cwd}")
         print("║ ╔╩╗ ╔═╦╩╗ ║ ╔╩╦═╦═╣")
         print(bottom_row)
