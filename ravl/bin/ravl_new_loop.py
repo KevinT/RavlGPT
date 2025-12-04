@@ -125,7 +125,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
         config_data = args.config if hasattr(args, 'config') and args.config else None
         target_dir = args.target if hasattr(args, 'target') and args.target else None
 
-        # If no content provided, delegate to ravl --clone empty_loop_template
+        # If no content provided, delegate to ravl --clone empty_loop
         if not content:
             self._delegate_to_clone(args)
             return  # _delegate_to_clone exits, but return for clarity

@@ -189,13 +189,11 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 - Relative path resolution with proper normalization
 
 ### Loop Templates & Examples
-- **data_ingress_template**: Self-healing data ingestion with automatic retry
-- **empty_loop_template**: Basic loop scaffold
-- **new_markdown_loop_template**: Markdown-based loop scaffold
-- **strategic_coherence_template**: Content analysis and coherence checking
+- **empty_loop**: Basic loop scaffold
+- **strategic_coherence**: Content analysis and coherence checking
 - **habit_tracker** example: Simple habit tracking demonstration
 - **weekly_reflection** example: Personal reflection loop
-- All templates renamed with `_template` suffix for clarity
+- Templates reorganized for simpler discovery
 
 ### Testing & Quality
 - Comprehensive unit testing infrastructure (pytest)
