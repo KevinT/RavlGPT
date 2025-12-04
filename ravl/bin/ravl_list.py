@@ -364,7 +364,7 @@ class RAVLListCommand(RAVLCLIBase):
         """Print loops and templates in tree view"""
         # Print project loops
         if project_loops:
-            self.print_header("[Project Loops]", "")
+            print("[Project Loops]", file=sys.stderr)
             print(" │", file=sys.stderr)
             # Build hierarchy
             hierarchy = self._build_hierarchy(project_loops)
@@ -377,7 +377,7 @@ class RAVLListCommand(RAVLCLIBase):
         # Combine framework_loops and templates since templates are now just framework loops
         all_framework = framework_loops + templates
         if all_framework:
-            self.print_header("[Framework Loops]", "")
+            print("[RavlGPT]", file=sys.stderr)
             print(" │", file=sys.stderr)
             hierarchy = self._build_hierarchy(all_framework)
             for idx, loop_info in enumerate(hierarchy):
