@@ -233,7 +233,7 @@ class RAVLNewLoopCommand(RAVLCLIBase):
 
     def _delegate_to_clone(self, args: argparse.Namespace):
         """
-        Delegate to ravl --clone empty_loop_template when --content is omitted
+        Delegate to ravl --clone empty_loop when --content is omitted
 
         This provides a simpler workflow for users who just want to create a loop
         with placeholder content rather than writing custom content upfront.
@@ -243,9 +243,9 @@ class RAVLNewLoopCommand(RAVLCLIBase):
         """
         import subprocess
 
-        # The template is nested: templates/child_loops/empty_loop_template
-        # But ravl-clone can find it by searching recursively in template directories
-        source_name = 'empty_loop_template'
+        # The template is at: templates/empty_loop
+        # ravl-clone can find it by searching recursively in template directories
+        source_name = 'empty_loop'
 
         # Build clone command
         framework_root = self.find_framework_root()
@@ -469,7 +469,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
     parser.add_argument('loop_name', help='Name or path for the new loop (use dot notation: parent.child.my_loop)')
-    parser.add_argument('--content', required=False, help='Markdown content for ravl_loop.md (optional - delegates to empty_loop_template if omitted)')
+    parser.add_argument('--content', required=False, help='Markdown content for ravl_loop.md (optional - delegates to empty_loop if omitted)')
     parser.add_argument('--config', help='Configuration as YAML or JSON string')
     parser.add_argument('--target', help='Target directory (default: project_root/ravl_loops/)')
     parser.add_argument(
