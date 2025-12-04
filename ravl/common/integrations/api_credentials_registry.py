@@ -16,7 +16,7 @@ This ensures consistent environment variable naming across:
 """
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 import yaml
 
 
@@ -41,74 +41,32 @@ def _load_registry() -> Dict:
     return _REGISTRY_CACHE
 
 
-def get_api_metadata(api_name: str) -> Dict:
+def get_api_config(api_name: str) -> Dict:
     """
-    Get metadata for an API (case-insensitive).
+    Get the complete configuration for an API (case-insensitive).
 
     Args:
         api_name: Name of the API (e.g., "ClickUp", "github", "Notion")
 
     Returns:
-        Dict with keys: env_var_names, preferred, prompt, documentation, auth_type
+        Dict with all configuration fields for the API
     """
     registry = _load_registry()
     return registry.get(api_name.lower(), {})
 
 
-def get_preferred_env_var(api_name: str) -> str:
+def get_env_var(api_name: str) -> Optional[str]:
     """
-    Get the preferred environment variable name for an API.
+    Get the environment variable name for an API.
 
     Args:
         api_name: Name of the API
 
     Returns:
-        Preferred env var name, or a generated name if not in registry
+        Environment variable name, or None if not in registry
     """
-    metadata = get_api_metadata(api_name)
-    return metadata.get('preferred', f"{api_name.upper().replace(' ', '_')}_API_TOKEN")
-
-
-def get_all_env_var_options(api_name: str) -> List[str]:
-    """
-    Get all possible environment variable names for an API.
-
-    Args:
-        api_name: Name of the API
-
-    Returns:
-        List of env var names (preferred first)
-    """
-    metadata = get_api_metadata(api_name)
-    return metadata.get('env_var_names', [])
-
-
-def get_prompt_text(api_name: str) -> str:
-    """
-    Get the prompt text for requesting the credential.
-
-    Args:
-        api_name: Name of the API
-
-    Returns:
-        User-friendly prompt text
-    """
-    metadata = get_api_metadata(api_name)
-    return metadata.get('prompt', f"{api_name} API token")
-
-
-def get_additional_vars(api_name: str) -> List[Dict]:
-    """
-    Get any additional variables needed for this API.
-
-    Args:
-        api_name: Name of the API
-
-    Returns:
-        List of dicts with keys: name, prompt, required
-    """
-    metadata = get_api_metadata(api_name)
-    return metadata.get('additional_vars', [])
+    config = get_api_config(api_name)
+    return config.get('env_var')
 
 
 def is_api_registered(api_name: str) -> bool:
@@ -121,10 +79,30 @@ def is_api_registered(api_name: str) -> bool:
     Returns:
         True if API is registered
     """
-    return bool(get_api_metadata(api_name))
+    return bool(get_api_config(api_name))
 
 
-def get_all_registered_apis() -> List[str]:
+def is_api_configured(api_name: str) -> bool:
+    """
+    Check if API is registered AND env var exists in environment.
+
+    Args:
+        api_name: Name of the API
+
+    Returns:
+        True if API is registered and credential exists
+    """
+    import os
+
+    config = get_api_config(api_name)
+    if not config:
+        return False
+
+    env_var = config.get('env_var')
+    return env_var and os.environ.get(env_var) is not None
+
+
+def get_all_registered_apis() -> list:
     """
     Get list of all registered API names.
 
@@ -135,46 +113,23 @@ def get_all_registered_apis() -> List[str]:
     return list(registry.keys())
 
 
-def get_available_credentials(api_name: str) -> List[str]:
+def add_api_to_registry(api_name: str, env_var: str, documentation: str = '', **custom_fields):
     """
-    Check which env vars for this API actually exist in environment.
+    Add or update API in registry (saves to YAML).
 
     Args:
         api_name: Name of the API
-
-    Returns:
-        List of found env vars, in order of preference
-    """
-    import os
-
-    metadata = get_api_metadata(api_name)
-    if not metadata:
-        return []
-
-    candidates = metadata.get('env_var_names', [])
-    available = [name for name in candidates if os.environ.get(name)]
-
-    return available
-
-
-def add_api_to_registry(api_name: str, env_vars: List[str], **kwargs):
-    """
-    Add a new API to the registry (saves to YAML).
-
-    Args:
-        api_name: Name of the API
-        env_vars: List of env var names (first is preferred)
-        **kwargs: Additional metadata (prompt, documentation, auth_type, etc.)
+        env_var: Environment variable name
+        documentation: API documentation URL (Context7 preferred)
+        **custom_fields: Any additional metadata (base_url, rate_limit, auth_type, etc.)
     """
     registry = _load_registry()
 
     api_key = api_name.lower()
     registry[api_key] = {
-        'env_var_names': env_vars,
-        'preferred': env_vars[0] if env_vars else f"{api_name.upper()}_API_TOKEN",
-        'prompt': kwargs.get('prompt', f"{api_name} API token"),
-        'documentation': kwargs.get('documentation', ''),
-        'auth_type': kwargs.get('auth_type', 'bearer_token')
+        'env_var': env_var,
+        'documentation': documentation,
+        **custom_fields  # Include any custom fields user provided
     }
 
     # Save back to YAML

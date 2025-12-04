@@ -218,15 +218,19 @@ class RAVLSetup:
         """
         print("\n=== API Integrations ===\n")
 
-        # Show currently configured APIs
-        current_apis = get_configured_apis()
-        if current_apis:
-            print("Currently configured:")
-            for i, (api_name, env_key) in enumerate(current_apis.items(), 1):
-                print(f"{i}) {api_name} ({env_key})")
-            next_option = len(current_apis) + 1
+        # Show all registered APIs with status
+        from ravl.common.cli.first_run_detector import get_all_apis_with_status
+
+        all_apis = get_all_apis_with_status()
+        if all_apis:
+            print("Registered APIs:")
+            for i, (api_name, info) in enumerate(all_apis.items(), 1):
+                status = "✓" if info['detected'] else "✗"
+                status_text = "Detected" if info['detected'] else "Not detected"
+                print(f"{i}) {status} {api_name} ({info['env_var']}) - {status_text}")
+            next_option = len(all_apis) + 1
         else:
-            print("No APIs configured yet.")
+            print("No APIs registered yet.")
             next_option = 1
 
         print(f"{next_option}) Add new API integration")
@@ -241,11 +245,11 @@ class RAVLSetup:
         # Check if user wants to add new API
         if choice == str(next_option):
             from ravl.common.integrations.api_credentials_registry import (
-                get_preferred_env_var, get_prompt_text, is_api_registered,
-                add_api_to_registry, get_additional_vars
+                get_api_config, get_env_var, is_api_registered, add_api_to_registry
             )
+            import yaml
 
-            api_name = input("\nEnter the API name (e.g., \"ClickUp\", \"Stripe\", \"GitHub\"): ").strip()
+            api_name = input("\nEnter the API name (e.g., \"ClickUp\", \"GitHub\"): ").strip()
 
             if not api_name:
                 print("No API name provided.")
@@ -253,27 +257,71 @@ class RAVLSetup:
 
             # Check if API is in registry
             if is_api_registered(api_name):
-                env_key = get_preferred_env_var(api_name)
-                prompt_text = get_prompt_text(api_name)
+                # Show existing config
+                config = get_api_config(api_name)
+                print(f"\nExisting configuration:")
+                print(yaml.dump({api_name: config}, default_flow_style=False))
+                print("\n1) Use existing config")
+                print("2) Edit config")
+                edit_choice = input("Select (1-2): ").strip()
+
+                if edit_choice == '2':
+                    # Interactive config editor
+                    env_key = input(f"Environment variable name [{config['env_var']}]: ").strip() or config['env_var']
+                    documentation = input(f"Documentation URL [{config.get('documentation', '')}]: ").strip() or config.get('documentation', '')
+
+                    # Let user edit other fields
+                    custom_fields = {k: v for k, v in config.items() if k not in ['env_var', 'documentation']}
+                    print("\nExisting custom fields (press Enter to keep, or type new value):")
+                    for key, value in custom_fields.items():
+                        new_value = input(f"  {key} [{value}]: ").strip()
+                        if new_value:
+                            custom_fields[key] = new_value
+
+                    # Add new custom fields
+                    print("\nAdd new custom fields? (e.g., base_url, rate_limit, auth_type)")
+                    while True:
+                        key = input("Field name (or Enter to finish): ").strip()
+                        if not key:
+                            break
+                        value = input(f"Value for {key}: ").strip()
+                        if value:
+                            custom_fields[key] = value
+
+                    # Save updated config
+                    add_api_to_registry(api_name, env_key, documentation, **custom_fields)
+                else:
+                    env_key = config['env_var']
             else:
-                # Not in registry - ask user for env var name
-                print(f"\n{api_name} is not in the registry yet.")
-                print("What environment variable name should be used?")
-                suggested = f"{api_name.upper().replace(' ', '_')}_API_TOKEN"
-                print(f"Suggested: {suggested}")
-                env_key = input("Environment variable name (or press Enter for suggestion): ").strip()
+                # New API - prompt for required fields
+                print(f"\n{api_name} is not registered yet.")
+                print("\nRequired fields:")
+                env_key = input("  Environment variable name (e.g., CLICKUP_API_TOKEN): ").strip()
 
                 if not env_key:
+                    suggested = f"{api_name.upper().replace(' ', '_')}_API_TOKEN"
+                    print(f"  Using suggested: {suggested}")
                     env_key = suggested
 
-                prompt_text = f"{api_name} API token"
+                documentation = input("  API documentation URL (Context7 preferred): ").strip()
 
-                # Add to registry for future use
-                add_api_to_registry(api_name, [env_key], prompt=prompt_text)
+                # Optional: Let user add custom fields
+                print("\nOptional custom fields (e.g., base_url, rate_limit, auth_type):")
+                custom_fields = {}
+                while True:
+                    key = input("Field name (or Enter to finish): ").strip()
+                    if not key:
+                        break
+                    value = input(f"Value for {key}: ").strip()
+                    if value:
+                        custom_fields[key] = value
+
+                # Save to registry
+                add_api_to_registry(api_name, env_key, documentation, **custom_fields)
                 print(f"✓ Added {api_name} to registry with env var: {env_key}")
 
-            # Prompt for the credential
-            api_token = input(f"\nEnter your {prompt_text}: ").strip()
+            # Prompt for the actual credential value
+            api_token = input(f"\nEnter your {env_key} value: ").strip()
 
             if not api_token:
                 print("No token provided.")
@@ -283,51 +331,72 @@ class RAVLSetup:
             self.env_vars[env_key] = api_token
             self._save_env()
 
-            # Check for additional required vars (e.g., HIBOB_SERVICE_USER_ID)
-            additional_vars = get_additional_vars(api_name)
-            for var_info in additional_vars:
-                if var_info.get('required', False):
-                    var_name = var_info['name']
-                    var_prompt = var_info.get('prompt', var_name)
-                    var_value = input(f"\nEnter {var_prompt}: ").strip()
-                    if var_value:
-                        self.env_vars[var_name] = var_value
-                        self._save_env()
-
             print(f"✓ {api_name} configured (saved as {env_key})")
             return True
 
-        # Check if user selected an existing API to reconfigure
+        # Check if user selected an existing API
         try:
             choice_num = int(choice)
-            if 1 <= choice_num <= len(current_apis):
-                api_name = list(current_apis.keys())[choice_num - 1]
-                env_key = current_apis[api_name]
+            if 1 <= choice_num <= len(all_apis):
+                api_name = list(all_apis.keys())[choice_num - 1]
+                info = all_apis[api_name]
 
-                print(f"\n=== Configure {api_name} ===")
-                print(f"Current: {env_key}")
-                print("\n1) Update token")
-                print("2) Remove")
-                print("3) Back")
+                print(f"\n=== {api_name} ===")
 
-                action = input("\nSelect (1-3): ").strip()
+                if info['detected']:
+                    # API detected - show edit/remove options
+                    print(f"Status: ✓ Detected")
+                    print(f"Environment variable: {info['env_var']}")
+                    env_value = os.environ.get(info['env_var'], 'N/A')
+                    if len(env_value) > 20:
+                        print(f"Value: {env_value[:20]}...")
+                    else:
+                        print(f"Value: {env_value}")
 
-                if action == '1':
-                    api_token = input(f"\nEnter new {api_name} API token: ").strip()
-                    if api_token:
-                        self.env_vars[env_key] = api_token
-                        self._save_env()
-                        print(f"✓ {api_name} token updated")
-                        return True
-                elif action == '2':
-                    confirm = input(f"\nRemove {api_name}? (y/n): ").strip().lower()
-                    if confirm in ['y', 'yes']:
-                        del self.env_vars[env_key]
-                        self._save_env()
-                        print(f"✓ {api_name} removed")
-                        return True
-                elif action == '3':
-                    return False
+                    print("\n1) Update token")
+                    print("2) Edit configuration")
+                    print("3) Remove")
+                    print("4) Back")
+
+                    action = input("\nSelect (1-4): ").strip()
+
+                    if action == '1':
+                        api_token = input(f"\nEnter new {info['env_var']} value: ").strip()
+                        if api_token:
+                            self.env_vars[info['env_var']] = api_token
+                            self._save_env()
+                            print(f"✓ {api_name} token updated")
+                            return True
+                    elif action == '2':
+                        # Edit configuration (show YAML and let user edit)
+                        print("\nCurrent configuration:")
+                        print(yaml.dump({api_name.lower(): info['config']}, default_flow_style=False))
+                        print("\n(Configuration editing coming soon)")
+                        return False
+                    elif action == '3':
+                        confirm = input(f"\nRemove {api_name}? (y/n): ").strip().lower()
+                        if confirm in ['y', 'yes']:
+                            del self.env_vars[info['env_var']]
+                            self._save_env()
+                            print(f"✓ {api_name} removed")
+                            return True
+                    elif action == '4':
+                        return False
+                else:
+                    # API not detected - prompt for credential
+                    print(f"Status: ✗ Not detected")
+                    print(f"Environment variable needed: {info['env_var']}")
+                    print("\nConfiguration:")
+                    print(yaml.dump({api_name.lower(): info['config']}, default_flow_style=False))
+
+                    configure = input("\nConfigure this API now? (y/n): ").strip().lower()
+                    if configure in ['y', 'yes']:
+                        token = input(f"\nEnter your {info['env_var']} value: ").strip()
+                        if token:
+                            self.env_vars[info['env_var']] = token
+                            self._save_env()
+                            print(f"✓ {api_name} credential saved")
+                            return True
         except (ValueError, IndexError):
             pass
 

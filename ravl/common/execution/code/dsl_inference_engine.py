@@ -566,28 +566,27 @@ class DSLInferenceEngine:
                 guidance_lines.append("- Explicit paths: Honor user requests (e.g., 'save to desktop' → ~/Desktop/)")
                 guidance_lines.append("- Keep outputs organized within learnings directory")
 
-        # API guidance - use registry for specific env var names
+        # API guidance - include full config in LLM prompt
         act_req = dsl['act_requirements']
         api_types = act_req.get('api_types', [])
         if api_types:
-            from ravl.common.integrations.api_credentials_registry import (
-                get_available_credentials, get_preferred_env_var
-            )
+            from ravl.common.integrations.api_credentials_registry import get_api_config
+            import yaml
 
             for api_type in api_types:
-                available_vars = get_available_credentials(api_type)
+                config = get_api_config(api_type)
 
-                if available_vars:
-                    # Tell LLM which env vars are actually available
-                    if len(available_vars) == 1:
-                        guidance_lines.append(f"- {api_type.upper()}: Use environment variable {available_vars[0]}")
-                    else:
-                        var_list = ', '.join(available_vars)
-                        guidance_lines.append(f"- {api_type.upper()}: Use one of these environment variables: {var_list}")
+                if config:
+                    # Include ENTIRE config in LLM prompt
+                    guidance_lines.append(f"\n## {api_type.upper()} API Configuration:")
+                    config_yaml = yaml.dump({api_type: config}, default_flow_style=False)
+                    guidance_lines.append(config_yaml.rstrip())
+                    guidance_lines.append(f"- Environment variable: {config['env_var']}")
+                    if config.get('documentation'):
+                        guidance_lines.append(f"- Documentation: {config['documentation']}")
                 else:
-                    # Not found in environment - suggest the preferred name
-                    preferred = get_preferred_env_var(api_type)
-                    guidance_lines.append(f"- {api_type.upper()}: Expected environment variable {preferred} (NOT FOUND)")
+                    # Not registered
+                    guidance_lines.append(f"- {api_type.upper()}: Not registered (run ravl --config to add)")
 
         # Link following guidance (API-aware)
         if act_req.get('needs_link_following'):

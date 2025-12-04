@@ -54,27 +54,63 @@ def get_configured_llm_provider() -> Optional[str]:
 
 def get_configured_apis() -> Dict[str, str]:
     """
-    Get all configured API integrations by checking registry.
+    Get all configured API integrations.
 
     Returns dict mapping API names to their environment variable names.
     Example: {'ClickUp': 'CLICKUP_API_TOKEN', 'GitHub': 'GITHUB_TOKEN'}
     """
     from ravl.common.integrations.api_credentials_registry import (
-        get_all_registered_apis, get_all_env_var_options
+        get_all_registered_apis, get_env_var
     )
 
     apis = {}
 
     # Check each registered API
     for api_name in get_all_registered_apis():
-        env_var_options = get_all_env_var_options(api_name)
+        env_var = get_env_var(api_name)
 
-        # Check if any of the expected env vars exist
-        for var_name in env_var_options:
-            if os.environ.get(var_name):
-                # Use title case for display
-                display_name = api_name.title()
-                apis[display_name] = var_name
-                break  # Found credentials for this API
+        if env_var and os.environ.get(env_var):
+            # Use title case for display
+            display_name = api_name.title()
+            apis[display_name] = env_var
+
+    return apis
+
+
+def get_all_apis_with_status() -> Dict[str, Dict[str, any]]:
+    """
+    Get all registered APIs with their detection status.
+
+    Returns dict mapping API names to their metadata:
+    {
+        'ClickUp': {
+            'env_var': 'CLICKUP_API_TOKEN',
+            'detected': True,
+            'config': {...full config...}
+        },
+        'GitHub': {
+            'env_var': 'GITHUB_TOKEN',
+            'detected': False,
+            'config': {...full config...}
+        },
+        ...
+    }
+    """
+    from ravl.common.integrations.api_credentials_registry import (
+        get_all_registered_apis, get_api_config, get_env_var
+    )
+
+    apis = {}
+
+    for api_name in get_all_registered_apis():
+        config = get_api_config(api_name)
+        env_var = get_env_var(api_name)
+
+        display_name = api_name.title()
+        apis[display_name] = {
+            'env_var': env_var,
+            'detected': bool(env_var and os.environ.get(env_var)),
+            'config': config
+        }
 
     return apis
