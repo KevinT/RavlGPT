@@ -240,24 +240,59 @@ class RAVLSetup:
 
         # Check if user wants to add new API
         if choice == str(next_option):
+            from ravl.common.integrations.api_credentials_registry import (
+                get_preferred_env_var, get_prompt_text, is_api_registered,
+                add_api_to_registry, get_additional_vars
+            )
+
             api_name = input("\nEnter the API name (e.g., \"ClickUp\", \"Stripe\", \"GitHub\"): ").strip()
 
             if not api_name:
                 print("No API name provided.")
                 return False
 
-            # Convert to env var format: ClickUp -> CLICKUP_API_TOKEN
-            env_key = f"{api_name.upper().replace(' ', '_')}_API_TOKEN"
+            # Check if API is in registry
+            if is_api_registered(api_name):
+                env_key = get_preferred_env_var(api_name)
+                prompt_text = get_prompt_text(api_name)
+            else:
+                # Not in registry - ask user for env var name
+                print(f"\n{api_name} is not in the registry yet.")
+                print("What environment variable name should be used?")
+                suggested = f"{api_name.upper().replace(' ', '_')}_API_TOKEN"
+                print(f"Suggested: {suggested}")
+                env_key = input("Environment variable name (or press Enter for suggestion): ").strip()
 
-            api_token = input(f"\nEnter your {api_name} API token: ").strip()
+                if not env_key:
+                    env_key = suggested
+
+                prompt_text = f"{api_name} API token"
+
+                # Add to registry for future use
+                add_api_to_registry(api_name, [env_key], prompt=prompt_text)
+                print(f"✓ Added {api_name} to registry with env var: {env_key}")
+
+            # Prompt for the credential
+            api_token = input(f"\nEnter your {prompt_text}: ").strip()
 
             if not api_token:
-                print("No API token provided.")
+                print("No token provided.")
                 return False
 
-            # Save
+            # Save to .env
             self.env_vars[env_key] = api_token
             self._save_env()
+
+            # Check for additional required vars (e.g., HIBOB_SERVICE_USER_ID)
+            additional_vars = get_additional_vars(api_name)
+            for var_info in additional_vars:
+                if var_info.get('required', False):
+                    var_name = var_info['name']
+                    var_prompt = var_info.get('prompt', var_name)
+                    var_value = input(f"\nEnter {var_prompt}: ").strip()
+                    if var_value:
+                        self.env_vars[var_name] = var_value
+                        self._save_env()
 
             print(f"✓ {api_name} configured (saved as {env_key})")
             return True

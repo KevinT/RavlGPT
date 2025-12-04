@@ -566,15 +566,28 @@ class DSLInferenceEngine:
                 guidance_lines.append("- Explicit paths: Honor user requests (e.g., 'save to desktop' → ~/Desktop/)")
                 guidance_lines.append("- Keep outputs organized within learnings directory")
 
-        # API guidance
+        # API guidance - use registry for specific env var names
         act_req = dsl['act_requirements']
         api_types = act_req.get('api_types', [])
         if api_types:
-            if len(api_types) == 1:
-                guidance_lines.append(f"- Use {api_types[0].upper()} API authentication from environment")
-            else:
-                api_names = ', '.join([api.upper() for api in api_types])
-                guidance_lines.append(f"- Use appropriate API authentication from environment for: {api_names}")
+            from ravl.common.integrations.api_credentials_registry import (
+                get_available_credentials, get_preferred_env_var
+            )
+
+            for api_type in api_types:
+                available_vars = get_available_credentials(api_type)
+
+                if available_vars:
+                    # Tell LLM which env vars are actually available
+                    if len(available_vars) == 1:
+                        guidance_lines.append(f"- {api_type.upper()}: Use environment variable {available_vars[0]}")
+                    else:
+                        var_list = ', '.join(available_vars)
+                        guidance_lines.append(f"- {api_type.upper()}: Use one of these environment variables: {var_list}")
+                else:
+                    # Not found in environment - suggest the preferred name
+                    preferred = get_preferred_env_var(api_type)
+                    guidance_lines.append(f"- {api_type.upper()}: Expected environment variable {preferred} (NOT FOUND)")
 
         # Link following guidance (API-aware)
         if act_req.get('needs_link_following'):

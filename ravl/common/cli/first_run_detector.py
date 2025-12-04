@@ -54,17 +54,27 @@ def get_configured_llm_provider() -> Optional[str]:
 
 def get_configured_apis() -> Dict[str, str]:
     """
-    Get all configured API integrations.
+    Get all configured API integrations by checking registry.
 
     Returns dict mapping API names to their environment variable names.
-    Example: {'ClickUp': 'CLICKUP_API_TOKEN', 'GitHub': 'GITHUB_API_TOKEN'}
+    Example: {'ClickUp': 'CLICKUP_API_TOKEN', 'GitHub': 'GITHUB_TOKEN'}
     """
+    from ravl.common.integrations.api_credentials_registry import (
+        get_all_registered_apis, get_all_env_var_options
+    )
+
     apis = {}
 
-    for key, value in os.environ.items():
-        if key.endswith('_API_TOKEN') and value:
-            # Convert CLICKUP_API_TOKEN -> ClickUp
-            api_name = key.replace('_API_TOKEN', '').replace('_', ' ').title().replace(' ', '')
-            apis[api_name] = key
+    # Check each registered API
+    for api_name in get_all_registered_apis():
+        env_var_options = get_all_env_var_options(api_name)
+
+        # Check if any of the expected env vars exist
+        for var_name in env_var_options:
+            if os.environ.get(var_name):
+                # Use title case for display
+                display_name = api_name.title()
+                apis[display_name] = var_name
+                break  # Found credentials for this API
 
     return apis
