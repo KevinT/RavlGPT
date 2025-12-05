@@ -29,19 +29,19 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
-from ravl_base import BaseRAVLLoop
-from ravl_protocol import RAVLLoop
-from cli.ravl_cli_base import RAVLCLIBase
+from ravl.common.ravl_base import BaseRAVLLoop
+from ravl.common.ravl_protocol import RAVLLoop
+from ravl.common.cli.ravl_cli_base import RAVLCLIBase
 
 # Import learning manager for domain learning (loop_learning)
-from core.learning.loop_learning_manager import LoopLearningManager
+from ravl.common.core.learning.loop_learning_manager import LoopLearningManager
 
-# Import framework integrations using proper path resolution
-_framework_root = RAVLCLIBase.find_project_root(Path(__file__).parent) / '.ravl'
-sys.path.insert(0, str(_framework_root / 'ravl' / 'common' / 'integrations'))
-from google_apis_mixin import GoogleAPIsMixin
-from google_docs_exporter import GoogleDocsExporter
-from google_docs_revision_tracker import GoogleDocsRevisionTracker
+# Import framework integrations using absolute imports
+from ravl.common.integrations import (
+    GoogleAPIsMixin,
+    GoogleDocsExporter,
+    GoogleDocsRevisionTracker
+)
 
 
 class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
@@ -248,12 +248,12 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
 
                 # Detect URL type and use appropriate exporter
                 if '/presentation/d/' in url:
-                    from integrations.google_slides_exporter import GoogleSlidesExporter
+                    from ravl.common.integrations import GoogleSlidesExporter
                     exporter = GoogleSlidesExporter(self)
                 elif '/document/d/' in url:
                     exporter = GoogleDocsExporter(self)
                 elif '/spreadsheets/d/' in url:
-                    from integrations.google_sheets_analyzer import GoogleSheetsAnalyzer
+                    from ravl.common.integrations import GoogleSheetsAnalyzer
                     exporter = GoogleSheetsAnalyzer(self)
                 else:
                     raise ValueError(f"Unsupported Google URL type: {url}")
