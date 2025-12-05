@@ -567,23 +567,102 @@ class DSLInferenceEngine:
                 guidance_lines.append("- Keep outputs organized within learnings directory")
 
         # API guidance - include full config in LLM prompt
+        # CRITICAL: If both REST API and MCP server are available, provide BOTH options
         act_req = dsl['act_requirements']
         api_types = act_req.get('api_types', [])
         if api_types:
-            from ravl.common.integrations.api_credentials_registry import get_api_config
+            from ravl.common.integrations.api_credentials_registry import get_api_config, is_api_registered
+            from ravl.common.integrations.mcp_registry import get_mcp_server_config, is_mcp_server_registered
             import yaml
 
             for api_type in api_types:
-                config = get_api_config(api_type)
+                has_rest_api = is_api_registered(api_type)
+                has_mcp_server = is_mcp_server_registered(api_type)
 
-                if config:
-                    # Include ENTIRE config in LLM prompt
+                if has_rest_api and has_mcp_server:
+                    # BOTH options available - provide both with decision guidance
+                    guidance_lines.append(f"\n## {api_type.upper()} INTEGRATION OPTIONS:")
+                    guidance_lines.append("")
+                    guidance_lines.append("**You have TWO integration options. Choose based on your specific needs:**")
+                    guidance_lines.append("")
+
+                    # Option 1: REST API
+                    api_config = get_api_config(api_type)
+                    guidance_lines.append("### Option 1: REST API")
+                    config_yaml = yaml.dump({api_type: api_config}, default_flow_style=False)
+                    guidance_lines.append(config_yaml.rstrip())
+                    guidance_lines.append("")
+                    guidance_lines.append("To use REST API:")
+                    guidance_lines.append("```python")
+                    guidance_lines.append("import requests")
+                    guidance_lines.append("import os")
+                    guidance_lines.append(f"token = os.environ.get('{api_config['env_var']}')")
+                    if api_config.get('base_url'):
+                        guidance_lines.append(f"response = requests.get('{api_config['base_url']}/endpoint',")
+                    else:
+                        guidance_lines.append(f"response = requests.get('https://api.{api_type.lower()}.com/endpoint',")
+                    guidance_lines.append(f"    headers={{'Authorization': f'Bearer {{token}}' }})")
+                    guidance_lines.append("```")
+                    guidance_lines.append("")
+
+                    # Option 2: MCP Server
+                    mcp_config = get_mcp_server_config(api_type)
+                    guidance_lines.append("### Option 2: MCP Server (Recommended for structured operations)")
+                    config_yaml = yaml.dump({api_type: mcp_config}, default_flow_style=False)
+                    guidance_lines.append(config_yaml.rstrip())
+                    guidance_lines.append("")
+                    guidance_lines.append("To use MCP server:")
+                    guidance_lines.append("```python")
+                    guidance_lines.append("from ravl.common.integrations.mcp_client_manager import MCPClientManager")
+                    guidance_lines.append("from ravl.common.integrations.mcp_registry import get_mcp_server_config")
+                    guidance_lines.append("")
+                    guidance_lines.append("# Initialize MCP client")
+                    guidance_lines.append("mcp_manager = MCPClientManager()")
+                    guidance_lines.append(f"config = get_mcp_server_config('{api_type.lower()}')")
+                    guidance_lines.append(f"if mcp_manager.connect('{api_type.lower()}', config):")
+                    guidance_lines.append(f"    result = mcp_manager.call_tool('{api_type.lower()}', 'tool_name', {{")
+                    guidance_lines.append("        'param1': 'value1',")
+                    guidance_lines.append("        'param2': 'value2'")
+                    guidance_lines.append("    })")
+                    guidance_lines.append(f"    mcp_manager.disconnect('{api_type.lower()}')")
+                    guidance_lines.append("```")
+                    guidance_lines.append("")
+
+                    # Decision guidance
+                    guidance_lines.append("**Decision guidance:**")
+                    guidance_lines.append("- Use MCP server when: structured tool calls, well-defined operations, server is running and detected")
+                    guidance_lines.append("- Use REST API when: MCP server not available, custom API endpoints needed, specific REST operations required")
+                    guidance_lines.append("")
+
+                elif has_rest_api:
+                    # Only REST API available
+                    config = get_api_config(api_type)
                     guidance_lines.append(f"\n## {api_type.upper()} API Configuration:")
                     config_yaml = yaml.dump({api_type: config}, default_flow_style=False)
                     guidance_lines.append(config_yaml.rstrip())
                     guidance_lines.append(f"- Environment variable: {config['env_var']}")
                     if config.get('documentation'):
                         guidance_lines.append(f"- Documentation: {config['documentation']}")
+
+                elif has_mcp_server:
+                    # Only MCP server available
+                    config = get_mcp_server_config(api_type)
+                    guidance_lines.append(f"\n## {api_type.upper()} MCP Server Configuration:")
+                    config_yaml = yaml.dump({api_type: config}, default_flow_style=False)
+                    guidance_lines.append(config_yaml.rstrip())
+                    guidance_lines.append("")
+                    guidance_lines.append("To use MCP server:")
+                    guidance_lines.append("```python")
+                    guidance_lines.append("from ravl.common.integrations.mcp_client_manager import MCPClientManager")
+                    guidance_lines.append("from ravl.common.integrations.mcp_registry import get_mcp_server_config")
+                    guidance_lines.append("")
+                    guidance_lines.append("mcp_manager = MCPClientManager()")
+                    guidance_lines.append(f"config = get_mcp_server_config('{api_type.lower()}')")
+                    guidance_lines.append(f"if mcp_manager.connect('{api_type.lower()}', config):")
+                    guidance_lines.append(f"    result = mcp_manager.call_tool('{api_type.lower()}', 'tool_name', arguments)")
+                    guidance_lines.append(f"    mcp_manager.disconnect('{api_type.lower()}')")
+                    guidance_lines.append("```")
+
                 else:
                     # Not registered
                     guidance_lines.append(f"- {api_type.upper()}: Not registered (run ravl --config to add)")

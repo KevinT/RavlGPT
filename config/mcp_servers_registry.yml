@@ -1,0 +1,102 @@
+# MCP Servers Registry
+# Configuration for Model Context Protocol servers accessible to RAVL loops
+#
+# ⚠️  IMPORTANT: MCP SERVERS ARE SELF-HOSTED ⚠️
+# ================================================
+# MCP servers are NOT vendor-hosted endpoints like REST APIs.
+# You must download, install, and run them yourself BEFORE loops can connect.
+#
+# Setup Process (for each server you want to use):
+# 1. Download/clone the MCP server code (see documentation URLs below)
+# 2. Install dependencies (npm install, pip install, etc.)
+# 3. Start the server process on your machine
+# 4. Configure connection details below (localhost URL or stdio command)
+# 5. THEN RAVL loops can connect and use the server
+#
+# Example: Setting up a ClickUp MCP Server
+#   git clone https://github.com/modelcontextprotocol/servers
+#   cd servers/src/clickup
+#   npm install
+#   export CLICKUP_API_TOKEN="your_clickup_token"
+#   npm start  # Starts server on http://localhost:3000
+#
+# Transport Types:
+#   • sse (Server-Sent Events): Server runs separately, connect via HTTP URL
+#     - Use for: Servers you start manually or run as services
+#     - Example: url: "http://localhost:3000"
+#
+#   • stdio (Standard Input/Output): Server runs as subprocess of your loop
+#     - Use for: Local executables, npx commands
+#     - Example: command: "npx", args: ["-y", "@modelcontextprotocol/server-filesystem"]
+#
+#   • http (Direct HTTP): Not yet implemented
+#
+# Note: Add servers via: ravl --config (option 4: MCP Servers)
+# Full setup guide: .ravl/docs/MCP_SETUP_GUIDE.md
+#
+# ⚠️  Common Confusion: URLs like https://mcp.clickup.com are NOT MCP servers!
+# That's ClickUp's OAuth infrastructure. MCP servers run on YOUR infrastructure.
+
+# ========================================
+# VERIFIED WORKING SERVERS
+# ========================================
+# These servers are confirmed to exist in the official MCP servers repository
+
+filesystem:
+  name: "Filesystem MCP Server"
+  transport: "stdio"
+  command: "npx"
+  args: ["-y", "@modelcontextprotocol/server-filesystem", "/Users/username/Documents"]
+  env_var: null  # No authentication needed
+  documentation: "https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem"
+  description: "Read and write local files (npx auto-downloads on first use)"
+  setup_required: false  # npx handles installation automatically
+
+# ========================================
+# EXAMPLE TEMPLATE FOR CUSTOM SERVERS
+# ========================================
+# Uncomment and customize this template when you want to add your own MCP server.
+# Replace the placeholder values with your actual server details.
+#
+# my_custom_server:
+#   name: "My Custom MCP Server"
+#   transport: "sse"  # Use 'sse' for separate process, 'stdio' for subprocess
+#   url: "http://localhost:3000"  # Only needed for 'sse' transport
+#   # command: "/path/to/executable"  # Only needed for 'stdio' transport
+#   # args: ["--arg1", "value1"]  # Only needed for 'stdio' transport
+#   env_var: "MY_SERVER_TOKEN"  # Optional: environment variable for authentication
+#   documentation: "https://github.com/myorg/my-mcp-server"
+#   description: "Description of what your MCP server does"
+#   setup_required: true
+
+# ========================================
+# COMMUNITY/THIRD-PARTY SERVERS
+# ========================================
+# Example servers that may require manual setup:
+#
+# clickup:
+#   name: "ClickUp MCP Server"
+#   transport: "sse"
+#   url: "http://localhost:3000"  # YOU must start this server first!
+#   env_var: "CLICKUP_API_TOKEN"
+#   documentation: "https://github.com/taazkareem/clickup-mcp-server"
+#   description: "Access ClickUp tasks via MCP (requires manual setup)"
+#   setup_required: true
+#
+# github:
+#   name: "GitHub MCP Server"
+#   transport: "sse"
+#   url: "http://localhost:3001"
+#   env_var: "GITHUB_TOKEN"
+#   documentation: "https://github.com/modelcontextprotocol/servers/tree/main/src/github"
+#   description: "GitHub operations via MCP"
+#   setup_required: true
+#
+# slack:
+#   name: "Slack MCP Server"
+#   transport: "sse"
+#   url: "http://localhost:3002"
+#   env_var: "SLACK_BOT_TOKEN"
+#   documentation: "https://github.com/modelcontextprotocol/servers/tree/main/src/slack"
+#   description: "Slack workspace operations via MCP"
+#   setup_required: true

@@ -36,3 +36,7 @@ max_version = "3.0.0"
 [allowed_dependencies.openpyxl]
 min_version = "3.0.0"
 max_version = "4.0.0"
+
+[allowed_dependencies.mcp]
+min_version = "0.1.0"
+max_version = "1.0.0"

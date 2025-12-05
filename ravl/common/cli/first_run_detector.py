@@ -114,3 +114,49 @@ def get_all_apis_with_status() -> Dict[str, Dict[str, any]]:
         }
 
     return apis
+
+
+def get_all_mcp_servers_with_status() -> Dict[str, Dict[str, any]]:
+    """
+    Get all registered MCP servers with their detection status.
+
+    Returns dict mapping server names to their metadata:
+    {
+        'Clickup': {
+            'transport': 'sse',
+            'url': 'http://localhost:3000',
+            'env_var': 'CLICKUP_API_TOKEN',
+            'detected': True,
+            'config': {...full config...}
+        },
+        ...
+    }
+    """
+    from ravl.common.integrations.mcp_registry import (
+        get_all_registered_servers, get_mcp_server_config, get_env_var
+    )
+
+    servers = {}
+
+    for server_name in get_all_registered_servers():
+        config = get_mcp_server_config(server_name)
+        env_var = get_env_var(server_name)
+
+        # Use display name from config, or title case the server name
+        display_name = config.get('name', server_name.title())
+
+        # Check if credentials are available (if needed)
+        detected = True
+        if env_var:
+            detected = bool(os.environ.get(env_var))
+
+        servers[display_name] = {
+            'transport': config.get('transport'),
+            'url': config.get('url'),
+            'command': config.get('command'),
+            'env_var': env_var,
+            'detected': detected,
+            'config': config
+        }
+
+    return servers

@@ -226,6 +226,115 @@ class CustomProvider(BaseLLMProvider):
         return credentials_valid
 ```
 
+## MCP Server Integration
+
+### What Are MCP Servers?
+
+MCP (Model Context Protocol) servers provide **self-hosted, standardized tool access** to external services. Unlike direct REST API calls, MCP servers:
+- Run on your local machine or infrastructure
+- Provide structured, discoverable tools
+- Follow a standardized protocol for tool invocation
+
+### Architecture
+
+```
+┌─────────────────────────────────────┐
+│  RAVL Loop (Generated Code)        │
+└─────────────────────────────────────┘
+              ↓
+   Uses MCPClientManager
+              ↓
+┌─────────────────────────────────────┐
+│  MCP Server (Your Machine)          │
+│  - Self-hosted process              │
+│  - localhost:3000 or stdio          │
+└─────────────────────────────────────┘
+              ↓
+   Calls Vendor REST API
+              ↓
+┌─────────────────────────────────────┐
+│  Vendor API (ClickUp, GitHub, etc)  │
+└─────────────────────────────────────┘
+```
+
+### Key Concepts
+
+**MCP vs REST APIs:**
+| Aspect | REST API | MCP Server |
+|--------|----------|------------|
+| Hosting | Vendor-hosted | Self-hosted |
+| Setup | Get API token | Download, install, start server |
+| Connection | Direct HTTP calls | Connect to local server |
+| Discovery | Read API docs | Query available tools |
+
+**Transport Types:**
+- **SSE (Server-Sent Events)**: Separate process, connect via URL
+- **stdio**: Subprocess, spawned automatically
+
+### Configuration
+
+**Registry:** `.ravl/config/mcp_servers_registry.yml`
+```yaml
+my_server:
+  name: "My MCP Server"
+  transport: "sse"
+  url: "http://localhost:3000"
+  env_var: "MY_API_TOKEN"
+  documentation: "https://github.com/org/my-mcp-server"
+  description: "What this server does"
+```
+
+**Setup Wizard:**
+```bash
+ravl --config
+# Select: 4) MCP Servers
+```
+
+### Usage in Generated Code
+
+When loops mention MCP-supported services, the DSL inference engine provides MCP guidance:
+
+```python
+from ravl.common.integrations.mcp_client_manager import MCPClientManager
+from ravl.common.integrations.mcp_registry import get_mcp_server_config
+
+# Initialize and connect
+mcp_manager = MCPClientManager()
+config = get_mcp_server_config('clickup')
+
+if mcp_manager.connect('clickup', config):
+    # Call tools
+    result = mcp_manager.call_tool('clickup', 'list_tasks', {
+        'space_name': 'Strategic Initiatives'
+    })
+
+    # Disconnect when done
+    mcp_manager.disconnect('clickup')
+```
+
+### Setup Requirements
+
+**Critical:** MCP servers must be running before loops can connect:
+
+1. Download MCP server code
+2. Install dependencies
+3. Set environment variables
+4. Start server process
+5. Then configure in RAVL
+
+**Full Guide:** `.ravl/docs/MCP_SETUP_GUIDE.md`
+
+### Common Misconceptions
+
+❌ **"MCP servers are hosted by vendors"**
+- No, they're self-hosted
+
+❌ **"https://mcp.clickup.com is an MCP endpoint"**
+- No, that's OAuth infrastructure
+
+❌ **"RAVL can auto-start MCP servers"**
+- Only for stdio transport; SSE servers must be started manually
+
 ## Testing Strategy
 
 The framework uses a two-layer testing approach:

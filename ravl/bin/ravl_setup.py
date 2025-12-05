@@ -18,7 +18,9 @@ sys.path.insert(0, str(_current))
 from ravl.common.cli.first_run_detector import (
     needs_setup,
     get_configured_llm_provider,
-    get_configured_apis
+    get_configured_apis,
+    get_all_apis_with_status,
+    get_all_mcp_servers_with_status
 )
 
 
@@ -80,10 +82,13 @@ class RAVLSetup:
             __version__ = "0.1.0"  # Fallback
 
         current_llm = get_configured_llm_provider()
-        from ravl.common.cli.first_run_detector import get_all_apis_with_status
         all_apis = get_all_apis_with_status()
-        detected_count = sum(1 for info in all_apis.values() if info['detected'])
-        total_count = len(all_apis)
+        api_detected_count = sum(1 for info in all_apis.values() if info['detected'])
+        api_total_count = len(all_apis)
+
+        all_mcp_servers = get_all_mcp_servers_with_status()
+        mcp_detected_count = sum(1 for info in all_mcp_servers.values() if info['detected'])
+        mcp_total_count = len(all_mcp_servers)
 
         llm_display = current_llm if current_llm else "none"
         cwd = os.getcwd()
@@ -111,13 +116,17 @@ class RAVLSetup:
         print(top_row)
         print("║    ╔════╬════╦════╣")
         print(f"▓    ▓    ▓    ▓    ║ Default intelligence provider: {llm_display}")
-        not_detected = total_count - detected_count
-        if not_detected > 0:
-            print(f"║  ╔═╩╗  ╔╩═╦══╗ ➿ ║ API Integrations: {detected_count} detected, {not_detected} not detected")
+        api_not_detected = api_total_count - api_detected_count
+        if api_not_detected > 0:
+            print(f"║  ╔═╩╗  ╔╩═╦══╗ ➿ ║ API Integrations: {api_detected_count} detected, {api_not_detected} not detected")
         else:
-            print(f"║  ╔═╩╗  ╔╩═╦══╗ ➿ ║ API Integrations: {detected_count}")
-        print(f"▒  ▒  ▒  ▒  ▒  ▒    ║ {cwd}")
-        print("║ ╔╩╗ ╔═╦╩╗ ║ ╔╩╦═╦═╣")
+            print(f"║  ╔═╩╗  ╔╩═╦══╗ ➿ ║ API Integrations: {api_detected_count} detected")
+        mcp_not_detected = mcp_total_count - mcp_detected_count
+        if mcp_not_detected > 0:
+            print(f"▒  ▒  ▒  ▒  ▒  ▒    ║ MCP Servers: {mcp_detected_count} detected, {mcp_not_detected} not detected")
+        else:
+            print(f"▒  ▒  ▒  ▒  ▒  ▒    ║ MCP Servers: {mcp_detected_count} detected")
+        print(f"║ ╔╩╗ ╔═╦╩╗ ║ ╔╩╦═╦═╣ {cwd}")
         print(bottom_row)
         print()
 
@@ -648,6 +657,272 @@ class RAVLSetup:
                 print(f"\n✗ Invalid choice. Please select 1-{len(max_tokens_keys) + 3}.")
                 input("\nPress Enter to continue...")
 
+    def setup_mcp_servers(self) -> bool:
+        """
+        Interactive MCP server setup.
+
+        Returns True if an MCP server was configured.
+        """
+        print("\n=== MCP Servers ===\n")
+
+        # IMPORTANT WARNING about MCP server prerequisites
+        print("⚠️  IMPORTANT: MCP servers must be running before you can connect")
+        print("   MCP servers are self-hosted processes (not vendor endpoints)")
+        print("   See: .ravl/docs/MCP_SETUP_GUIDE.md for setup instructions")
+        print("   Only add servers you've already downloaded and started.\n")
+
+        # Show all registered MCP servers with status
+        all_servers = get_all_mcp_servers_with_status()
+        if all_servers:
+            print("Registered MCP Servers:")
+            for i, (server_name, info) in enumerate(all_servers.items(), 1):
+                status = "✓" if info['detected'] else "✗"
+                status_text = "Detected" if info['detected'] else "Not detected"
+                transport = info.get('transport', 'unknown')
+                print(f"{i}) {status} {server_name} ({transport}) - {status_text}")
+            next_option = len(all_servers) + 1
+        else:
+            print("No MCP servers registered yet.")
+            next_option = 1
+
+        print(f"{next_option}) Add new MCP server")
+        print(f"{next_option + 1}) Test connections")
+        print(f"{next_option + 2}) Back to main menu")
+
+        choice = input(f"\nSelect (1-{next_option + 2}): ").strip()
+
+        # Check if user wants to go back
+        if choice == str(next_option + 2):
+            return False
+
+        # Check if user wants to test connections
+        if choice == str(next_option + 1):
+            print("\n=== Testing MCP Server Connections ===\n")
+            from ravl.common.integrations.mcp_client_manager import MCPClientManager
+            from ravl.common.integrations.mcp_registry import get_mcp_server_config
+
+            manager = MCPClientManager()
+            for server_name, info in all_servers.items():
+                if not info['detected']:
+                    print(f"✗ {server_name}: Skipping (credentials not detected)")
+                    continue
+
+                print(f"Testing {server_name}...")
+                config = get_mcp_server_config(server_name.lower())
+                if manager.connect(server_name.lower(), config):
+                    capabilities = manager.get_capabilities(server_name.lower())
+                    print(f"✓ {server_name}: Connected ({len(capabilities)} tools available)")
+                    if capabilities:
+                        print(f"  Tools: {', '.join(capabilities[:5])}")
+                        if len(capabilities) > 5:
+                            print(f"  ... and {len(capabilities) - 5} more")
+                    manager.disconnect(server_name.lower())
+                else:
+                    print(f"✗ {server_name}: Connection failed")
+
+            input("\nPress Enter to continue...")
+            return False
+
+        # Check if user wants to add new MCP server
+        if choice == str(next_option):
+            from ravl.common.integrations.mcp_registry import (
+                get_mcp_server_config, is_mcp_server_registered, add_mcp_server_to_registry
+            )
+            import yaml
+
+            server_name = input("\nEnter the MCP server name (e.g., \"ClickUp\", \"GitHub\"): ").strip()
+
+            if not server_name:
+                print("No server name provided.")
+                return False
+
+            # Check if server is in registry
+            if is_mcp_server_registered(server_name):
+                # Show existing config
+                config = get_mcp_server_config(server_name)
+                print(f"\nExisting configuration:")
+                print(yaml.dump({server_name: config}, default_flow_style=False))
+                print("\n1) Use existing config")
+                print("2) Edit config")
+                edit_choice = input("Select (1-2): ").strip()
+
+                if edit_choice == '2':
+                    # Interactive config editor
+                    transport = input(f"Transport type (sse/stdio/http) [{config.get('transport', 'sse')}]: ").strip() or config.get('transport', 'sse')
+
+                    if transport == 'sse':
+                        url = input(f"Server URL [{config.get('url', '')}]: ").strip() or config.get('url', '')
+                        env_var = input(f"Environment variable for auth token [{config.get('env_var', '')}]: ").strip() or config.get('env_var', '')
+                        add_mcp_server_to_registry(server_name, transport, url=url, env_var=env_var,
+                                                  name=config.get('name', server_name),
+                                                  documentation=config.get('documentation', ''),
+                                                  description=config.get('description', ''))
+                    elif transport == 'stdio':
+                        command = input(f"Command path [{config.get('command', '')}]: ").strip() or config.get('command', '')
+                        args_str = input(f"Command arguments (space-separated) [{' '.join(config.get('args', []))}]: ").strip()
+                        args = args_str.split() if args_str else config.get('args', [])
+                        env_var = input(f"Environment variable for auth token (optional) [{config.get('env_var', '')}]: ").strip() or config.get('env_var', None)
+                        add_mcp_server_to_registry(server_name, transport, command=command, args=args, env_var=env_var,
+                                                  name=config.get('name', server_name),
+                                                  documentation=config.get('documentation', ''),
+                                                  description=config.get('description', ''))
+                else:
+                    env_var = config.get('env_var')
+            else:
+                # New MCP server - prompt for required fields
+                print(f"\n{server_name} is not registered yet.")
+                print("\nTransport type:")
+                print("1) SSE (Server-Sent Events) - HTTP connection")
+                print("2) stdio - Local process")
+                print("3) HTTP - REST API")
+
+                transport_choice = input("Select (1-3): ").strip()
+                transport_map = {'1': 'sse', '2': 'stdio', '3': 'http'}
+                transport = transport_map.get(transport_choice, 'sse')
+
+                if transport == 'sse':
+                    url = input("Server URL (e.g., http://localhost:3000): ").strip()
+                    env_var = input("Environment variable for auth token (e.g., CLICKUP_API_TOKEN): ").strip()
+                    documentation = input("Documentation URL (optional): ").strip()
+                    description = input("Description (optional): ").strip()
+
+                    add_mcp_server_to_registry(server_name, transport, url=url, env_var=env_var,
+                                              name=server_name, documentation=documentation, description=description)
+                elif transport == 'stdio':
+                    command = input("Command path (e.g., /usr/local/bin/mcp-server-filesystem): ").strip()
+                    args_str = input("Command arguments (space-separated, optional): ").strip()
+                    args = args_str.split() if args_str else []
+                    env_var = input("Environment variable for auth token (optional): ").strip() or None
+                    documentation = input("Documentation URL (optional): ").strip()
+                    description = input("Description (optional): ").strip()
+
+                    add_mcp_server_to_registry(server_name, transport, command=command, args=args, env_var=env_var,
+                                              name=server_name, documentation=documentation, description=description)
+                else:
+                    print("HTTP transport not yet implemented.")
+                    return False
+
+                print(f"✓ Added {server_name} to registry")
+
+            # Prompt for the actual credential value if needed
+            if env_var:
+                token = input(f"\nEnter your {env_var} value: ").strip()
+
+                if not token:
+                    print("No token provided.")
+                    return False
+
+                # Save to .env
+                self.env_vars[env_var] = token
+                self._save_env()
+
+                print(f"✓ {server_name} configured (saved as {env_var})")
+            else:
+                print(f"✓ {server_name} configured (no authentication required)")
+
+            return True
+
+        # Check if user selected an existing server
+        try:
+            choice_num = int(choice)
+            if 1 <= choice_num <= len(all_servers):
+                server_name = list(all_servers.keys())[choice_num - 1]
+                info = all_servers[server_name]
+
+                print(f"\n=== {server_name} ===")
+
+                if info['detected']:
+                    # Server detected - show test/edit/remove options
+                    print(f"Status: ✓ Detected")
+                    print(f"Transport: {info.get('transport', 'unknown')}")
+                    if info.get('url'):
+                        print(f"URL: {info['url']}")
+                    if info.get('command'):
+                        print(f"Command: {info['command']}")
+                    if info.get('env_var'):
+                        print(f"Environment variable: {info['env_var']}")
+
+                    print("\n1) Test connection")
+                    print("2) Update credentials")
+                    print("3) Edit configuration")
+                    print("4) Remove")
+                    print("5) Back")
+
+                    action = input("\nSelect (1-5): ").strip()
+
+                    if action == '1':
+                        # Test connection
+                        from ravl.common.integrations.mcp_client_manager import MCPClientManager
+                        from ravl.common.integrations.mcp_registry import get_mcp_server_config
+
+                        print(f"\nTesting connection to {server_name}...")
+                        manager = MCPClientManager()
+                        config = get_mcp_server_config(server_name.lower())
+                        if manager.connect(server_name.lower(), config):
+                            capabilities = manager.get_capabilities(server_name.lower())
+                            print(f"✓ Connected successfully")
+                            print(f"Available tools: {len(capabilities)}")
+                            if capabilities:
+                                print(f"\nTools:")
+                                for tool in capabilities[:10]:
+                                    print(f"  - {tool}")
+                                if len(capabilities) > 10:
+                                    print(f"  ... and {len(capabilities) - 10} more")
+                            manager.disconnect(server_name.lower())
+                        else:
+                            print(f"✗ Connection failed")
+
+                        input("\nPress Enter to continue...")
+
+                    elif action == '2':
+                        # Update credentials
+                        if info.get('env_var'):
+                            token = input(f"\nEnter new value for {info['env_var']}: ").strip()
+                            if token:
+                                self.env_vars[info['env_var']] = token
+                                self._save_env()
+                                print(f"✓ Updated {info['env_var']}")
+                        else:
+                            print("This server does not require credentials.")
+
+                    elif action == '3':
+                        # Edit configuration - similar to add new flow
+                        print("Configuration editing not yet implemented. Please edit .ravl/config/mcp_servers_registry.yml manually.")
+                        input("\nPress Enter to continue...")
+
+                    elif action == '4':
+                        # Remove
+                        confirm = input(f"Remove {server_name}? (y/n): ").strip().lower()
+                        if confirm == 'y':
+                            # Note: We don't have a remove function yet, user must edit YAML manually
+                            print("Please remove the entry from .ravl/config/mcp_servers_registry.yml manually.")
+                            if info.get('env_var') and info['env_var'] in self.env_vars:
+                                del self.env_vars[info['env_var']]
+                                self._save_env()
+                                print(f"✓ Removed {info['env_var']} from .env")
+                        input("\nPress Enter to continue...")
+
+                else:
+                    # Server not detected - prompt to configure credentials
+                    print(f"Status: ✗ Not detected")
+                    print(f"Transport: {info.get('transport', 'unknown')}")
+                    if info.get('env_var'):
+                        print(f"Missing: {info['env_var']}")
+
+                        token = input(f"\nEnter your {info['env_var']} value: ").strip()
+                        if token:
+                            self.env_vars[info['env_var']] = token
+                            self._save_env()
+                            print(f"✓ Configured {server_name}")
+                    else:
+                        print("No credentials required.")
+
+            return False
+
+        except ValueError:
+            print("Invalid choice.")
+            return False
+
     def main_menu(self):
         """Main setup menu."""
         self._print_header()
@@ -664,9 +939,10 @@ class RAVLSetup:
         print("1) LLM Provider" + (f" (✓ {current_llm.title()})" if current_llm else " (required - RAVL uses this to generate code)"))
         print("2) API Integrations (optional - add APIs your loops need)")
         print("3) LLM Defaults (token limits, optimization)")
-        print("4) Exit")
+        print("4) MCP Servers (optional - connect to Model Context Protocol servers)")
+        print("5) Exit")
 
-        choice = input("\nSelect (1-4): ").strip()
+        choice = input("\nSelect (1-5): ").strip()
 
         if choice == '1':
             self.setup_llm_provider()
@@ -684,6 +960,11 @@ class RAVLSetup:
             self.main_menu()
 
         elif choice == '4':
+            self.setup_mcp_servers()
+            # Return to main menu
+            self.main_menu()
+
+        elif choice == '5':
             return
 
         else:
