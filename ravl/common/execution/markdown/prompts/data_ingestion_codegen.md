@@ -287,12 +287,12 @@ output_path.write_text(result_content)
 state_dir = Path(os.environ['RAVL_LEARNINGS_DIR']) / 'state'
 state_dir.mkdir(parents=True, exist_ok=True)
 status_path = state_dir / 'status.json'
-status_path.write_text(json.dumps({{
+status_path.write_text(json.dumps({{{{
     'timestamp': datetime.now().isoformat(),
     'record_count': len(results),
     'data_changed': True,
     'hash': content_hash
-}}))
+}}}}))
 ```
 
 **Rule of thumb:** If it's for change detection or tracking state between runs, use the learning directory. If it's a final deliverable, use the specified output path.
