@@ -70,12 +70,27 @@ filesystem:
 #   setup_required: true
 
 # ========================================
+# PROJECT-SPECIFIC SERVERS
+# ========================================
+# Custom MCP servers built for this project
+
+clickup:
+  name: "ClickUp MCP Server (Custom)"
+  transport: "sse"
+  url: "http://localhost:3100"
+  env_var: "CLICKUP_API_TOKEN"
+  documentation: "mcps/clickup_mcp/README.md"
+  description: "Custom ClickUp MCP server with 12 tools: core data fetching, analytics, employee stats, infrastructure"
+  setup_required: true
+  setup_command: "cd mcps/clickup_mcp && python3 server.py"
+
+# ========================================
 # COMMUNITY/THIRD-PARTY SERVERS
 # ========================================
 # Example servers that may require manual setup:
 #
-# clickup:
-#   name: "ClickUp MCP Server"
+# clickup_community:
+#   name: "ClickUp MCP Server (Community)"
 #   transport: "sse"
 #   url: "http://localhost:3000"  # YOU must start this server first!
 #   env_var: "CLICKUP_API_TOKEN"

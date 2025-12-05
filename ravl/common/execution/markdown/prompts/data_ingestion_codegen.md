@@ -83,6 +83,122 @@ service = build('docs', 'v1', credentials=creds)
 
 **This is the ONLY acceptable authentication method. If previous attempts used file-based credentials, ignore them and use this pattern.**
 
+## CRITICAL: ClickUp MCP Server Integration
+
+**WHEN YOUR TASK INVOLVES CLICKUP DATA:**
+
+**YOU MUST USE THE CUSTOM CLICKUP MCP SERVER - DO NOT MAKE DIRECT REST API CALLS**
+
+The project has a custom ClickUp MCP server at `mcps/clickup_mcp/` with 12 tools for accessing ClickUp data. Using the MCP server provides smart caching, request batching, and standardized error handling.
+
+**Available MCP Tools (12 Total):**
+
+**Priority 1 (Core Data Fetching):**
+- `get_workspaces` - List all accessible workspaces
+- `get_team_members` - Get team member details
+- `fetch_tasks` - Fetch tasks with filters (statuses, assignees, date ranges)
+- `get_task_details` - Full task details with history and subtasks
+
+**Priority 2 (Analytics):**
+- `calculate_velocity_metrics` - Team velocity, cycle time, bottleneck detection
+- `get_team_workload` - Workload distribution across team members
+- `detect_bottlenecks` - Identify workflow bottlenecks by status duration
+- `analyze_dependencies` - Build dependency graph and identify critical path
+
+**Priority 3 (Employee-Specific):**
+- `get_employee_activity` - User activity in date range (tasks, comments, time tracked)
+- `get_member_stats` - Aggregated member statistics with contribution scores
+
+**Priority 4 (Infrastructure):**
+- `fetch_all_workspaces_data` - Comprehensive bulk export (teams, spaces, lists, tasks)
+- `cache_api_response` - Manual cache management with custom TTL
+
+**CORRECT method (YOU MUST USE THIS):**
+
+```python
+from ravl.common.integrations.mcp_client_manager import MCPClientManager
+from ravl.common.integrations.mcp_registry import get_mcp_server_config
+
+# Initialize MCP client
+mcp_manager = MCPClientManager()
+config = get_mcp_server_config('clickup')
+
+# Check if MCP server is configured
+if not config:
+    raise Exception("ClickUp MCP server not configured. Run: ravl --config (option 4: MCP Servers)")
+
+# Connect to MCP server
+if not mcp_manager.connect('clickup', config):
+    raise Exception("Failed to connect to ClickUp MCP server. Ensure server is running: cd mcps/clickup_mcp && python3 server.py")
+
+try:
+    # Example 1: Fetch workspaces
+    workspaces_result = mcp_manager.call_tool('clickup', 'get_workspaces', {})
+    workspaces = workspaces_result.get('workspaces', [])
+
+    # Example 2: Fetch tasks with filters
+    tasks_result = mcp_manager.call_tool('clickup', 'fetch_tasks', {
+        'list_id': '12345',
+        'statuses': ['In Progress', 'In Review'],
+        'include_closed': False
+    })
+    tasks = tasks_result.get('tasks', [])
+
+    # Example 3: Get team members
+    members_result = mcp_manager.call_tool('clickup', 'get_team_members', {
+        'team_id': '67890'
+    })
+    members = members_result.get('members', [])
+
+    # Example 4: Calculate velocity metrics
+    velocity_result = mcp_manager.call_tool('clickup', 'calculate_velocity_metrics', {
+        'tasks': tasks,
+        'sprint_duration_days': 14,
+        'exclude_statuses': ['Backlog']
+    })
+    velocity = velocity_result.get('velocity', {})
+
+finally:
+    # Always disconnect when done
+    mcp_manager.disconnect('clickup')
+```
+
+**WRONG methods (DO NOT USE):**
+
+```python
+# ❌ WRONG - Direct ClickUp REST API call bypasses MCP benefits
+import requests
+headers = {'Authorization': os.environ.get('CLICKUP_API_TOKEN')}
+response = requests.get('https://api.clickup.com/api/v2/team', headers=headers)
+
+# ❌ WRONG - Manual API client implementation duplicates MCP functionality
+class ClickUpClient:
+    def fetch_tasks(self, list_id):
+        # Don't reinvent what MCP already provides
+```
+
+**Why MCP is REQUIRED for ClickUp:**
+- Smart caching (1-24 hour TTL) reduces API calls and rate limit issues
+- Request batching for parallel operations (40% fewer API calls)
+- Standardized error handling with exponential backoff retry
+- Analytics tools (velocity, workload, bottlenecks) built-in
+- Consistent authentication (reads CLICKUP_API_TOKEN automatically)
+- All 10+ existing ClickUp loops benefit from shared cache
+
+**MCP Server Setup (if not running):**
+```bash
+# Start the MCP server (in separate terminal)
+cd mcps/clickup_mcp
+export CLICKUP_API_TOKEN="your_token"
+python3 server.py
+# Server runs on http://localhost:3100
+```
+
+**Authentication:**
+- MCP server automatically reads `CLICKUP_API_TOKEN` from environment
+- No need to pass token in your code
+- Token is cached per MCP server instance
+
 ## CRITICAL: Making LLM API Calls
 
 **IF YOUR CODE NEEDS TO CALL AN LLM (Claude, GPT, Gemini, etc.):**
