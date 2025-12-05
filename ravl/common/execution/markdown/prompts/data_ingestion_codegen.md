@@ -133,30 +133,30 @@ if not mcp_manager.connect('clickup', config):
 
 try:
     # Example 1: Fetch workspaces
-    workspaces_result = mcp_manager.call_tool('clickup', 'get_workspaces', {})
+    workspaces_result = mcp_manager.call_tool('clickup', 'get_workspaces', {{}})
     workspaces = workspaces_result.get('workspaces', [])
 
     # Example 2: Fetch tasks with filters
-    tasks_result = mcp_manager.call_tool('clickup', 'fetch_tasks', {
+    tasks_result = mcp_manager.call_tool('clickup', 'fetch_tasks', {{
         'list_id': '12345',
         'statuses': ['In Progress', 'In Review'],
         'include_closed': False
-    })
+    }})
     tasks = tasks_result.get('tasks', [])
 
     # Example 3: Get team members
-    members_result = mcp_manager.call_tool('clickup', 'get_team_members', {
+    members_result = mcp_manager.call_tool('clickup', 'get_team_members', {{
         'team_id': '67890'
-    })
+    }})
     members = members_result.get('members', [])
 
     # Example 4: Calculate velocity metrics
-    velocity_result = mcp_manager.call_tool('clickup', 'calculate_velocity_metrics', {
+    velocity_result = mcp_manager.call_tool('clickup', 'calculate_velocity_metrics', {{
         'tasks': tasks,
         'sprint_duration_days': 14,
         'exclude_statuses': ['Backlog']
-    })
-    velocity = velocity_result.get('velocity', {})
+    }})
+    velocity = velocity_result.get('velocity', {{}})
 
 finally:
     # Always disconnect when done
@@ -168,7 +168,7 @@ finally:
 ```python
 # ❌ WRONG - Direct ClickUp REST API call bypasses MCP benefits
 import requests
-headers = {'Authorization': os.environ.get('CLICKUP_API_TOKEN')}
+headers = {{'Authorization': os.environ.get('CLICKUP_API_TOKEN')}}
 response = requests.get('https://api.clickup.com/api/v2/team', headers=headers)
 
 # ❌ WRONG - Manual API client implementation duplicates MCP functionality
