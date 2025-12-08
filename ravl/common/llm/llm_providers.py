@@ -101,7 +101,7 @@ class AnthropicProvider(LLMProvider):
         try:
             import anthropic
         except ImportError:
-            raise ImportError("anthropic package not installed. Run: pip install anthropic")
+            raise ImportError("anthropic package not installed. Run: uv pip install anthropic")
 
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not self.api_key:
@@ -174,7 +174,7 @@ class OpenAIProvider(LLMProvider):
         try:
             import openai
         except ImportError:
-            raise ImportError("openai package not installed. Run: pip install openai")
+            raise ImportError("openai package not installed. Run: uv pip install openai")
 
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         if not self.api_key:
@@ -261,7 +261,7 @@ class GoogleProvider(LLMProvider):
         try:
             import google.generativeai as genai
         except ImportError:
-            raise ImportError("google-generativeai package not installed. Run: pip install google-generativeai")
+            raise ImportError("google-generativeai package not installed. Run: uv pip install google-generativeai")
 
         self.api_key = api_key or os.environ.get("GOOGLE_API_KEY")
         if not self.api_key:
@@ -332,7 +332,7 @@ class OllamaProvider(LLMProvider):
         try:
             import requests
         except ImportError:
-            raise ImportError("requests package not installed. Run: pip install requests")
+            raise ImportError("requests package not installed. Run: uv pip install requests")
 
         self.model = model
         self.base_url = base_url

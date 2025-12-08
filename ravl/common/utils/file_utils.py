@@ -78,7 +78,7 @@ def load_toml_file(file_path: Path) -> Optional[Dict[str, Any]]:
         return None
 
     if tomllib is None:
-        raise IOError("TOML support not available. Install tomli: pip install tomli")
+        raise IOError("TOML support not available. Install tomli: uv pip install tomli")
 
     try:
         with open(file_path, 'rb') as f:  # Note: TOML requires binary mode
@@ -100,7 +100,7 @@ def save_toml_file(file_path: Path, data: Dict[str, Any], create_dirs: bool = Tr
         IOError: If TOML writing support is not available (tomli-w not installed)
     """
     if tomli_w is None:
-        raise IOError("TOML writing support not available. Install tomli-w: pip install tomli-w")
+        raise IOError("TOML writing support not available. Install tomli-w: uv pip install tomli-w")
 
     if create_dirs:
         file_path.parent.mkdir(parents=True, exist_ok=True)

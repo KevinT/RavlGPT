@@ -69,7 +69,7 @@ class MCPClientManager:
     def __init__(self):
         if not MCP_AVAILABLE:
             raise ImportError(
-                "MCP package not installed. Install with: pip install mcp\n"
+                "MCP package not installed. Install with: uv pip install mcp\n"
                 "Or add 'mcp' to your loop's requirements.txt"
             )
 

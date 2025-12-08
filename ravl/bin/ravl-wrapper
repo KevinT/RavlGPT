@@ -11,5 +11,16 @@ while [ -h "$SOURCE" ]; do
 done
 SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-# Call ravl.py with python3
-exec python3 "${SCRIPT_DIR}/ravl.py" "$@"
+# Find framework root (.ravl directory)
+# ravl-wrapper is at .ravl/ravl/bin/ravl-wrapper
+# SCRIPT_DIR is .ravl/ravl/bin, so go up 2 levels to get .ravl
+FRAMEWORK_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Check if venv exists and use its Python, otherwise fall back to system python3
+VENV_PYTHON="$FRAMEWORK_ROOT/venv/bin/python"
+if [ -x "$VENV_PYTHON" ]; then
+  exec "$VENV_PYTHON" "${SCRIPT_DIR}/ravl.py" "$@"
+else
+  # Fallback to system python3 if venv doesn't exist
+  exec python3 "${SCRIPT_DIR}/ravl.py" "$@"
+fi

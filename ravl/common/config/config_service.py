@@ -343,7 +343,7 @@ class ConfigService:
             (success, error_message)
         """
         if tomli_w is None:
-            return (False, "tomli-w package not installed. Install with: pip install tomli-w")
+            return (False, "tomli-w package not installed. Install with: uv pip install tomli-w")
 
         framework_config_path = self.project_root / '.ravl' / 'config.toml'
 
