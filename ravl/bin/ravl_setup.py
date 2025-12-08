@@ -218,7 +218,14 @@ class RAVLSetup:
         if not current or current != provider_id:
             set_default = input(f"\nSet {provider_name} as your default LLM provider? (y/n): ").strip().lower()
             if set_default in ['y', 'yes']:
-                self.env_vars['RAVL_DEFAULT_LLM_PROVIDER'] = provider_id
+                # Save to framework config file instead of .env
+                from ravl.common.config.config_service import save_framework_llm_provider
+                success, error = save_framework_llm_provider(provider_id, self.project_root)
+                if success:
+                    print(f"✓ Saved default provider: {provider_id}")
+                    print(f"   Location: .ravl/config.toml")
+                else:
+                    print(f"✗ Failed to save provider preference: {error}")
 
         self._save_env()
 

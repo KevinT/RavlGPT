@@ -393,8 +393,9 @@ class RAVLRunner:
         1. Loop config (llm_provider in ravl.toml)
         2. Parent config (parent's config/ravl.toml llm_provider)
         3. Project config (ravl_loops/config/ravl.toml llm_provider)
-        4. Project .env file (RAVL_DEFAULT_LLM_PROVIDER)
-        5. Auto-detect from API keys (anthropic > openai > google > ollama)
+        4. Framework config (.ravl/config.toml llm.default_provider)
+        5. Project .env file (RAVL_DEFAULT_LLM_PROVIDER)
+        6. Auto-detect from API keys (anthropic > openai > google > ollama)
 
         Configuration formats supported:
         - Simple string: llm_provider: anthropic
@@ -440,7 +441,13 @@ class RAVLRunner:
                 except Exception:
                     pass  # If project config is malformed, fall through to next priority
 
-        # Priority 4: Project .env file
+        # Priority 4: Framework config (.ravl/config.toml)
+        from ravl.common.config.config_service import get_llm_provider_from_framework_config
+        framework_provider = get_llm_provider_from_framework_config(project_root)
+        if framework_provider:
+            return RAVLRunner._normalize_llm_config(framework_provider)
+
+        # Priority 5: Project .env file
         if project_root:
             env_vars = RAVLRunner.load_env_file(project_root)
             if 'RAVL_DEFAULT_LLM_PROVIDER' in env_vars:
@@ -456,7 +463,7 @@ class RAVLRunner:
                 # Otherwise treat as simple string
                 return RAVLRunner._normalize_llm_config(env_value)
 
-        # Priority 5: Auto-detect from API keys (lowest)
+        # Priority 6: Auto-detect from API keys (lowest)
         return RAVLRunner._autodetect_llm_provider()
 
     @staticmethod

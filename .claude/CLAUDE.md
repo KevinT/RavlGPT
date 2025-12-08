@@ -516,6 +516,43 @@ def validate_custom_token(token: str) -> bool:
 - Version tracking in model artifacts
 - CI/CD should test against multiple loop patterns
 
+### Project Root Detection
+
+**CRITICAL**: Always use library code for finding the project root. Never write custom traversal logic.
+
+**Correct Approach:**
+```python
+from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+
+# Find project root (returns None if not found)
+project_root = RAVLCLIBase.find_project_root(required=False)
+
+# Or require project root (raises error if not found)
+project_root = RAVLCLIBase.find_project_root(required=True)
+```
+
+**Why This Matters:**
+- **Reliability**: Library code handles edge cases (symlinks, nested projects, etc.)
+- **Consistency**: Single source of truth for project detection
+- **Maintainability**: Changes to detection logic happen in one place
+- **Testability**: Library code is tested; custom traversal is not
+
+**Anti-Pattern (DO NOT DO THIS):**
+```python
+# WRONG: Custom traversal is brittle and error-prone
+current = Path.cwd()
+while current != current.parent:
+    if (current / '.ravl').exists():
+        return current
+    current = current.parent
+```
+
+**Common Use Cases:**
+- Loading framework config: `project_root / '.ravl' / 'config.toml'`
+- Finding venv path: `project_root / '.ravl' / 'venv'`
+- Accessing project-level config: `project_root / 'ravl_loops' / 'config' / 'ravl.toml'`
+- Loading .env file: `project_root / '.env'`
+
 ### Problem Space vs Solution Space Learning Separation
 
 **CRITICAL DESIGN PRINCIPLE**: RAVL loops learn about TWO completely distinct domains that must NEVER be mixed:

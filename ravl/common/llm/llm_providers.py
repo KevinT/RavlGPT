@@ -395,6 +395,41 @@ class LLMProviderFactory:
     """Factory for creating LLM providers"""
 
     @staticmethod
+    def validate_provider_credentials(provider_type: str) -> tuple[bool, Optional[str]]:
+        """
+        Validate that required credentials exist for the provider.
+
+        Args:
+            provider_type: Provider name (anthropic, openai, google, ollama)
+
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        provider_type = provider_type.lower()
+
+        if provider_type == "anthropic":
+            if not os.environ.get('ANTHROPIC_API_KEY'):
+                return (False, "ANTHROPIC_API_KEY environment variable not found")
+            return (True, None)
+
+        elif provider_type == "openai":
+            if not os.environ.get('OPENAI_API_KEY'):
+                return (False, "OPENAI_API_KEY environment variable not found")
+            return (True, None)
+
+        elif provider_type == "google":
+            if not os.environ.get('GOOGLE_API_KEY'):
+                return (False, "GOOGLE_API_KEY environment variable not found")
+            return (True, None)
+
+        elif provider_type == "ollama":
+            # Ollama doesn't require API key, just endpoint
+            return (True, None)
+
+        else:
+            return (False, f"Unknown provider: {provider_type}")
+
+    @staticmethod
     def create_provider(
         provider_type: str = "anthropic",
         api_key: Optional[str] = None,
@@ -420,6 +455,18 @@ class LLMProviderFactory:
             LLMProvider instance
         """
         provider_type = provider_type.lower()
+
+        # Validate credentials before creating provider (skip if api_key is explicitly provided)
+        if not api_key:
+            is_valid, error_msg = LLMProviderFactory.validate_provider_credentials(provider_type)
+            if not is_valid:
+                raise ValueError(
+                    f"Cannot use provider '{provider_type}': {error_msg}\n\n"
+                    f"To fix:\n"
+                    f"  1. Set the required API key environment variable\n"
+                    f"  2. Or choose a different provider with: ravl --config\n"
+                    f"  3. Or check available providers with: ravl --config"
+                )
 
         if provider_type == "anthropic":
             return AnthropicProvider(

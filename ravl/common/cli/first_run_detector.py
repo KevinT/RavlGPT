@@ -32,14 +32,25 @@ def get_configured_llm_provider() -> Optional[str]:
     """
     Get the currently configured default LLM provider.
 
+    Priority:
+    1. Framework config file (.ravl/config.toml)
+    2. Environment variable (RAVL_DEFAULT_LLM_PROVIDER)
+    3. Auto-detect from API keys
+
     Returns the provider name or None if no default is set.
     """
-    default = os.environ.get('RAVL_DEFAULT_LLM_PROVIDER', '').lower()
+    # Check framework config first
+    from ravl.common.config.config_service import get_llm_provider_from_framework_config
+    config_provider = get_llm_provider_from_framework_config()
+    if config_provider:
+        return config_provider
 
-    if default:
-        return default
+    # Check environment variable
+    env_provider = os.environ.get('RAVL_DEFAULT_LLM_PROVIDER', '').lower()
+    if env_provider:
+        return env_provider
 
-    # Auto-detect based on what keys are available
+    # Auto-detect based on what keys are available (fallback only)
     if os.environ.get('ANTHROPIC_API_KEY'):
         return 'anthropic'
     elif os.environ.get('OPENAI_API_KEY'):

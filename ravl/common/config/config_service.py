@@ -13,8 +13,12 @@ try:
     import tomllib
 except ImportError:
     import tomli as tomllib
+try:
+    import tomli_w
+except ImportError:
+    tomli_w = None
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from functools import lru_cache
 
 
@@ -305,3 +309,145 @@ class ConfigService:
 
         # Relative path - resolve against base_dir
         return base_dir / path
+
+    def get_llm_provider(self) -> Optional[str]:
+        """
+        Get configured LLM provider from config hierarchy
+
+        Priority:
+        1. Loop config (llm.default_provider)
+        2. Parent config
+        3. Project config
+        4. Framework config (.ravl/config.toml)
+        5. None (not configured)
+
+        Returns:
+            Provider name ("anthropic", "google", etc.) or None
+        """
+        # Check loop/parent/project configs first
+        llm_config = self.get('llm', {}, scope='all')
+        if isinstance(llm_config, dict) and 'default_provider' in llm_config:
+            provider = llm_config['default_provider']
+            return str(provider).lower() if provider else None
+
+        return None
+
+    def set_framework_llm_provider(self, provider: str) -> Tuple[bool, Optional[str]]:
+        """
+        Save LLM provider choice to framework config
+
+        Args:
+            provider: Provider name ("anthropic", "google", "openai", "ollama")
+
+        Returns:
+            (success, error_message)
+        """
+        if tomli_w is None:
+            return (False, "tomli-w package not installed. Install with: pip install tomli-w")
+
+        framework_config_path = self.project_root / '.ravl' / 'config.toml'
+
+        # Load existing framework config
+        existing_config = self._load_config(framework_config_path) or {}
+
+        # Update LLM provider
+        if 'llm' not in existing_config:
+            existing_config['llm'] = {}
+        existing_config['llm']['default_provider'] = provider.lower()
+
+        # Write back to file
+        try:
+            framework_config_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(framework_config_path, 'wb') as f:
+                tomli_w.dump(existing_config, f)
+
+            # Clear cache for this config
+            self._load_config.cache_clear()
+            self._config_cache.clear()
+
+            return (True, None)
+        except Exception as e:
+            return (False, f"Failed to save config: {str(e)}")
+
+
+# Standalone helper functions for easy importing
+
+def get_llm_provider_from_framework_config(project_root: Optional[Path] = None) -> Optional[str]:
+    """
+    Get LLM provider from framework config only (not hierarchy)
+
+    Args:
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Provider name or None
+    """
+    if project_root is None:
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        project_root = RAVLCLIBase.find_project_root(required=False)
+        if project_root is None:
+            return None
+
+    framework_config_path = project_root / '.ravl' / 'config.toml'
+
+    if not framework_config_path.exists():
+        return None
+
+    try:
+        with open(framework_config_path, 'rb') as f:
+            config = tomllib.load(f)
+
+        if 'llm' in config and 'default_provider' in config['llm']:
+            provider = config['llm']['default_provider']
+            return str(provider).lower() if provider else None
+
+    except Exception:
+        pass
+
+    return None
+
+
+def save_framework_llm_provider(provider: str, project_root: Optional[Path] = None) -> Tuple[bool, Optional[str]]:
+    """
+    Save LLM provider to framework config (standalone function)
+
+    Args:
+        provider: Provider name
+        project_root: Project root (auto-detected if not provided)
+
+    Returns:
+        (success, error_message)
+    """
+    if tomli_w is None:
+        return (False, "tomli-w not installed")
+
+    if project_root is None:
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        project_root = RAVLCLIBase.find_project_root(required=False)
+        if project_root is None:
+            return (False, "Could not find project root")
+
+    framework_config_path = project_root / '.ravl' / 'config.toml'
+
+    # Load existing config
+    config = {}
+    if framework_config_path.exists():
+        try:
+            with open(framework_config_path, 'rb') as f:
+                config = tomllib.load(f)
+        except Exception:
+            pass
+
+    # Update provider
+    if 'llm' not in config:
+        config['llm'] = {}
+    config['llm']['default_provider'] = provider.lower()
+
+    # Save
+    try:
+        framework_config_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(framework_config_path, 'wb') as f:
+            tomli_w.dump(config, f)
+        return (True, None)
+    except Exception as e:
+        return (False, str(e))
