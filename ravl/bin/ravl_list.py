@@ -609,7 +609,8 @@ class RAVLListCommand(RAVLCLIBase):
 
         # Use appropriate tree character
         branch = " └──" if is_last else " ├──"
-        print(f"{branch} {emoji} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
+        lock_indicator = self._get_lock_indicator(loop_info['path'])
+        print(f"{branch} {emoji}{lock_indicator} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
 
         # Print children with proper indentation
         children = loop_info.get('children', [])
@@ -647,7 +648,8 @@ class RAVLListCommand(RAVLCLIBase):
             last_run = loop_info.get('last_run') or 'Never'
 
         branch = "└──" if is_last else "├──"
-        print(f"{prefix}{branch} {emoji} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
+        lock_indicator = self._get_lock_indicator(loop_info['path'])
+        print(f"{prefix}{branch} {emoji}{lock_indicator} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
 
         # Print grandchildren with proper prefix continuation
         child_prefix = prefix + ("    " if is_last else "│   ")
@@ -659,6 +661,32 @@ class RAVLListCommand(RAVLCLIBase):
     def _format_loop_name(self, name: str) -> str:
         """Format loop name for display (snake_case to Title Case)"""
         return ' '.join(word.capitalize() for word in name.split('_'))
+
+    def _get_lock_indicator(self, loop_path: Path) -> str:
+        """
+        Get lock indicator for a loop
+
+        Args:
+            loop_path: Path to loop directory
+
+        Returns:
+            " 🔒" if locked, "" otherwise
+        """
+        try:
+            config_path = loop_path / 'config' / 'ravl.toml'
+            if config_path.exists():
+                try:
+                    import tomllib
+                except ImportError:
+                    import tomli as tomllib
+
+                with open(config_path, 'rb') as f:
+                    config = tomllib.load(f)
+                    if config.get('loop_locked'):
+                        return " 🔒"
+        except:
+            pass
+        return ""
 
 
 def main():

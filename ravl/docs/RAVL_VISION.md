@@ -178,7 +178,44 @@ RAVL is built for a world where:
 
 ---
 
-### 9. **Problem Space and Solution Space Learning Separation**
+### 9. **Production Stability Through Selective Locking**
+
+**The Principle**: Users can "lock" loops to specific verified code for production stability, bypassing continuous learning when consistency is more valuable than adaptation.
+
+**What This Means**:
+- **Development Mode** (unlocked): Full RAVL cycle runs, loop learns and adapts
+- **Production Mode** (locked): Locked code executes directly, no regeneration or learning
+- **Selective Control**: Users choose when stability beats adaptation
+- **Verification Required**: Only verified code can be locked (unless forced)
+
+**When to Lock**:
+- Production deployments requiring consistent behavior
+- Loops that have reached optimal performance
+- Regulatory/compliance scenarios requiring frozen code
+- Debugging scenarios where consistent execution helps isolate issues
+
+**When to Unlock**:
+- Development and experimentation
+- Adapting to API changes
+- Improving loop performance based on new patterns
+- After resolving bugs (unlock, fix, verify, re-lock)
+
+**Implementation**:
+- `ravl --lock LOOP_NAME` locks to most recent successful execution
+- `ravl --lock LOOP_NAME --attempt N` locks to specific historical attempt
+- `ravl --unlock LOOP_NAME` returns to normal RAVL execution
+- Lock status visible in `ravl --list` (🔒) and `ravl --show-config`
+
+**Why This Matters**:
+- Balances learning with stability
+- Users control when to freeze behavior
+- Supports production use cases without abandoning learning
+- Transparent: lock status always visible
+- Reversible: unlock anytime to resume learning
+
+---
+
+### 10. **Problem Space and Solution Space Learning Separation**
 
 **The Principle**: RAVL loops learn about TWO distinct domains that must NEVER be mixed:
 1. **Problem Space (Domain Learning)**: WHAT the loop learns about its domain—the business problem it's solving
@@ -252,7 +289,7 @@ These are completely different kinds of knowledge, use different synthesis appro
 
 ---
 
-### 10. **Failure Analysis and Cross-Run Triangulation**
+### 11. **Failure Analysis and Cross-Run Triangulation**
 
 **The Principle**: Failures are data that improves future attempts through LLM-powered synthesis.
 

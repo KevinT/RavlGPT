@@ -241,21 +241,52 @@ response = client.chat.completions.create(...)
 - Enables framework cost tracking and rate limiting features
 - Required for execution health diagnostics
 
-## Dependency Installation Pattern
+## Dependency Management
 
-If your code needs to import a library that might not be available, wrap it in a try/except:
+**How Dependencies Work in RAVL:**
 
+The framework automatically handles all dependencies through a scan-and-validate approach:
+
+1. **Write normal imports** - Just import what you need at the top of your code
+2. **Framework scans imports** - After code generation, RAVL scans all import statements
+3. **Generates requirements.txt** - Creates a requirements file with detected packages
+4. **Validates whitelist** - Checks all packages against `allowed_dependencies` in `config/ravl.toml`
+5. **Installs with UV** - If approved, installs packages via UV (10-100x faster than pip)
+
+**Example - Correct Approach:**
 ```python
-try:
-    from google.oauth2 import service_account
-except ImportError:
-    import subprocess
-    import sys
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'google-auth==2.30.0'])
-    from google.oauth2 import service_account
+# Just write normal imports - framework handles the rest
+from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+import pandas as pd
+import requests
 ```
 
-**IMPORTANT**: Only install packages that are on the approved whitelist in `config/ravl.toml` (allowed_dependencies section). If a package is not approved, the framework will reject the code. The loop owner can approve packages by editing the `allowed_dependencies` section in their `config/ravl.toml`.
+**DO NOT use try/except with pip install** - This pattern is deprecated and will be rejected by the framework.
+
+**If Your Code Fails with "Dependency validation failed":**
+
+This means one or more packages need approval. The error message will show:
+1. Which packages need approval
+2. Exact file path to edit (`config/ravl.toml`)
+3. Example configuration to add
+
+**Whitelist Configuration Example:**
+```toml
+[allowed_dependencies.pandas]
+min_version = "2.0.0"
+max_version = "3.0.0"
+
+[allowed_dependencies.requests]
+min_version = "2.31.0"
+max_version = "3.0.0"
+```
+
+**Why This Approach?**
+- **Security**: All packages must be explicitly approved
+- **Transparency**: Clear audit trail in git history
+- **User Control**: Loop owners decide what gets installed
+- **Speed**: UV-based installation is 10-100x faster than pip
 
 ## File Output Guidelines
 

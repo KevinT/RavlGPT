@@ -252,6 +252,72 @@ class ConfigBasedRAVLRunner:
         else:
             learnings_dir = self.loop_dir / 'learnings'
 
+        # Check if loop is locked (EXECUTE LOCKED CODE DIRECTLY)
+        from core.loop_lock_manager import LoopLockManager
+        lock_mgr = LoopLockManager(self.loop_dir, learnings_dir, self.config)
+        is_locked, locked_code_path = lock_mgr.is_locked()
+
+        if is_locked:
+            # Execute locked code directly
+            # Show relative path from loop dir
+            try:
+                relative_path = locked_code_path.relative_to(self.loop_dir)
+                display_path = f"./{relative_path}"
+            except ValueError:
+                display_path = str(locked_code_path)
+
+            log_message(f"🔒 Loop is locked to: {display_path}", status='info')
+            log_message(f"   See config/ravl.toml to change or unlock", status='info')
+            log_message(f"   Bypassing RAVL cycle, executing locked code...", status='info')
+
+            # Resolve venv path
+            from cli.ravl_cli_base import RAVLCLIBase
+            project_root = RAVLCLIBase.find_project_root(required=False)
+            venv_path = RAVLRunner.resolve_venv_path(
+                loop_dir=self.loop_dir,
+                loop_config=self.config,
+                cli_venv_path=None,
+                project_root=project_root
+            )
+
+            result = lock_mgr.execute_locked_code(venv_path)
+
+            # Save result
+            duration = time.time()
+            action_results = {
+                'locked': True,
+                'locked_code_path': str(locked_code_path),
+                'success': result.get('success', False),
+                'output': result.get('output', ''),
+                'error': result.get('error', '')
+            }
+
+            # Save to latest_run.json
+            findings_file = learnings_dir / 'latest_run.json'
+            findings_file.parent.mkdir(parents=True, exist_ok=True)
+            import json
+            from datetime import datetime, timezone
+            findings = {
+                **action_results,
+                'metadata': {
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'duration_seconds': round(duration, 1),
+                    'run_type': args.mode,
+                    'locked': True
+                }
+            }
+            with open(findings_file, 'w') as f:
+                json.dump(findings, f, indent=2, ensure_ascii=False)
+
+            if result.get('success'):
+                log_message(f"\n✅ Locked code executed successfully", status='success')
+                sys.exit(0)
+            else:
+                log_message(f"\n❌ Locked code execution failed", status='error')
+                if result.get('error'):
+                    log_message(f"   Error: {result.get('error')}", status='error')
+                sys.exit(1)
+
         # Check for persistent diagnostic state
         diagnostic_state_file = learnings_dir / "execution_learning" / "auto_diagnostic_mode.json"
         if diagnostic_state_file.exists():

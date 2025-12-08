@@ -35,6 +35,8 @@ Management Commands:
     --new <name>            Create a new loop from scratch
     --init                  Initialize a new RAVL project
     --config                Configure LLM provider settings
+    --lock <loop>           Lock loop to verified code (skip RAVL cycle)
+    --unlock <loop>         Unlock loop (resume normal RAVL execution)
 
 Diagnostic Commands:
     --health <loop>             AI-powered loop diagnostics
@@ -373,6 +375,58 @@ class RAVLUniversalRunner(RAVLCLIBase):
             cli_learning_path=Path(args.learning_path) if args.learning_path else None,
             project_root=self.project_root
         )
+
+        # Check if loop is locked (EXECUTE LOCKED CODE DIRECTLY)
+        from ravl.common.core.loop_lock_manager import LoopLockManager
+        lock_mgr = LoopLockManager(loop_dir, learning_path, config)
+        is_locked, locked_code_path = lock_mgr.is_locked()
+
+        if is_locked:
+            # Execute locked code directly
+            if not args.quiet:
+                # Show relative path from loop dir
+                try:
+                    relative_path = locked_code_path.relative_to(loop_dir)
+                    display_path = f"./{relative_path}"
+                except ValueError:
+                    display_path = str(locked_code_path)
+
+                print(f"🔒 Loop is locked to: {display_path}", file=sys.stderr)
+                print(f"   See config/ravl.toml to change or unlock", file=sys.stderr)
+                print(f"   Bypassing RAVL cycle, executing locked code...", file=sys.stderr)
+
+            venv_path = RAVLRunner.resolve_venv_path(
+                loop_dir=loop_dir,
+                loop_config=config,
+                cli_venv_path=Path(args.venv_path) if hasattr(args, 'venv_path') and args.venv_path else None,
+                project_root=self.project_root
+            )
+
+            result = lock_mgr.execute_locked_code(venv_path)
+
+            # Save result
+            duration = time.time() - start_time
+            action_results = {
+                'locked': True,
+                'locked_code_path': str(locked_code_path),
+                'success': result.get('success', False),
+                'output': result.get('output', ''),
+                'error': result.get('error', '')
+            }
+            self._save_results(learning_path, action_results, args.mode, duration)
+
+            if not args.quiet:
+                if result.get('success'):
+                    print(f"\n✅ Locked code executed successfully", file=sys.stderr)
+                else:
+                    print(f"\n❌ Locked code execution failed", file=sys.stderr)
+                    if result.get('error'):
+                        print(f"   Error: {result.get('error')}", file=sys.stderr)
+
+                duration = time.time() - start_time
+                print(f"\n⏱️  Total time: {duration:.1f}s", file=sys.stderr)
+
+            sys.exit(0 if result.get('success') else 1)
 
         try:
             # Import loop class - catch import/discovery failures
@@ -1110,6 +1164,92 @@ def main():
         elif cmd == '--sync-docs':
             from ravl.bin.ravl_sync_docs import main as sync_docs_main
             return sync_docs_main()
+
+        elif cmd == '--lock':
+            # Handle loop locking
+            if len(sys.argv) < 3:
+                print("Error: --lock requires a loop name", file=sys.stderr)
+                print("Usage: ravl --lock LOOP_NAME [--attempt N] [--force]", file=sys.stderr)
+                sys.exit(1)
+            # Parse remaining args for --attempt and --force
+            lock_parser = argparse.ArgumentParser()
+            lock_parser.add_argument('loop_name')
+            lock_parser.add_argument('--attempt', type=int, default=None)
+            lock_parser.add_argument('--force', action='store_true')
+            lock_args = lock_parser.parse_args(sys.argv[2:])
+
+            # Import and run lock handler
+            from ravl.common.core.loop_lock_manager import LoopLockManager
+            from ravl.common.cli.loop_discovery import LoopDiscovery
+            from ravl.common.ravl_runner import RAVLRunner
+
+            project_root = Path(__file__).resolve().parent.parent.parent.parent
+            discovery = LoopDiscovery(project_root)
+
+            try:
+                loop_dir = discovery.find_loop(lock_args.loop_name)
+                config = discovery.load_config(loop_dir)
+                learning_path = RAVLRunner.resolve_learning_path(
+                    loop_dir=loop_dir,
+                    loop_config=config,
+                    cli_learning_path=None,
+                    project_root=project_root
+                )
+
+                lock_mgr = LoopLockManager(loop_dir, learning_path, config)
+                success, message = lock_mgr.lock_loop(lock_args.attempt, lock_args.force)
+
+                if success:
+                    print(f"✅ {message}", file=sys.stderr)
+                    sys.exit(0)
+                else:
+                    print(f"❌ {message}", file=sys.stderr)
+                    sys.exit(1)
+
+            except Exception as e:
+                print(f"❌ Error: {e}", file=sys.stderr)
+                sys.exit(1)
+
+        elif cmd == '--unlock':
+            # Handle loop unlocking
+            if len(sys.argv) < 3:
+                print("Error: --unlock requires a loop name", file=sys.stderr)
+                print("Usage: ravl --unlock LOOP_NAME", file=sys.stderr)
+                sys.exit(1)
+
+            loop_name = sys.argv[2]
+
+            # Import and run unlock handler
+            from ravl.common.core.loop_lock_manager import LoopLockManager
+            from ravl.common.cli.loop_discovery import LoopDiscovery
+            from ravl.common.ravl_runner import RAVLRunner
+
+            project_root = Path(__file__).resolve().parent.parent.parent.parent
+            discovery = LoopDiscovery(project_root)
+
+            try:
+                loop_dir = discovery.find_loop(loop_name)
+                config = discovery.load_config(loop_dir)
+                learning_path = RAVLRunner.resolve_learning_path(
+                    loop_dir=loop_dir,
+                    loop_config=config,
+                    cli_learning_path=None,
+                    project_root=project_root
+                )
+
+                lock_mgr = LoopLockManager(loop_dir, learning_path, config)
+                success, message = lock_mgr.unlock_loop()
+
+                if success:
+                    print(f"✅ {message}", file=sys.stderr)
+                    sys.exit(0)
+                else:
+                    print(f"❌ {message}", file=sys.stderr)
+                    sys.exit(1)
+
+            except Exception as e:
+                print(f"❌ Error: {e}", file=sys.stderr)
+                sys.exit(1)
 
     # Check if setup is needed (no LLM provider configured)
     from ravl.common.cli.first_run_detector import needs_setup

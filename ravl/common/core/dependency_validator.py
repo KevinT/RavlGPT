@@ -77,6 +77,59 @@ class DependencyValidator:
         # All packages validated successfully
         return (True, None)
 
+    def validate_requirements_file(self, requirements_path: Path) -> Tuple[bool, Optional[str]]:
+        """
+        Validate that requirements.txt only contains whitelisted packages
+
+        Args:
+            requirements_path: Path to generated requirements.txt
+
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        if not requirements_path.exists():
+            return (True, None)
+
+        # Read requirements file
+        with open(requirements_path, 'r') as f:
+            lines = f.readlines()
+
+        # Load whitelist
+        whitelist = self._resolve_whitelist()
+        if whitelist is None:
+            return (False, self._error_no_whitelist())
+
+        # Parse each requirement line
+        unapproved_packages = []
+        for line in lines:
+            line = line.strip()
+
+            # Skip comments and empty lines
+            if not line or line.startswith('#'):
+                continue
+
+            # Parse package name and version
+            # Format: "package==version" or "package"
+            if '==' in line:
+                package_name, version = line.split('==', 1)
+            else:
+                package_name = line
+                version = "latest"
+
+            # Validate against whitelist
+            is_approved, error_msg = self._validate_package(
+                package_name.strip(), version.strip(), whitelist
+            )
+
+            if not is_approved:
+                unapproved_packages.append((package_name, version))
+
+        # Return results
+        if unapproved_packages:
+            return (False, self._error_requirements_not_approved(unapproved_packages))
+
+        return (True, None)
+
     def _extract_pip_installs(self, code: str) -> List[Tuple[str, str]]:
         """
         Extract pip install commands from code
@@ -352,6 +405,28 @@ HOW TO FIX:
 WHAT HAPPENED?
 Different versions of the same package can have different features or bugs.
 The approved version range prevents problems from old or new versions.
+"""
+
+    def _error_requirements_not_approved(self, packages: List[Tuple[str, str]]) -> str:
+        """Generate helpful error for unapproved packages in requirements.txt"""
+        config_path = self.loop_dir / 'config' / 'ravl.toml'
+
+        package_list = "\n".join([f"  - {name} (version: {ver})" for name, ver in packages])
+
+        return f"""❌ Generated code requires packages that are not approved:
+
+{package_list}
+
+To approve these packages, add them to the whitelist in:
+  {config_path}
+
+Example configuration:
+
+[allowed_dependencies.{packages[0][0]}]
+min_version = "{packages[0][1]}"
+max_version = "999.0.0"  # Adjust as needed
+
+After adding to whitelist, run the loop again.
 """
 
     def _find_whitelist_path(self) -> Path:

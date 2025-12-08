@@ -25,15 +25,19 @@ except ImportError:
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-# Add utils to path
+# Add utils and core to path
 _script_dir = Path(__file__).parent
 _utils_dir = _script_dir.parent.parent / 'utils'
+_core_dir = _script_dir.parent.parent / 'core'
 if str(_utils_dir) not in sys.path:
     sys.path.insert(0, str(_utils_dir))
+if str(_core_dir) not in sys.path:
+    sys.path.insert(0, str(_core_dir))
 
 from logging_utils import log_execution
 from venv_manager import VenvManager
 from requirements_generator import RequirementsGenerator
+from dependency_validator import DependencyValidator
 
 
 class SimpleCodeExecutor:
@@ -137,7 +141,17 @@ class SimpleCodeExecutor:
             requirements_path = execution_learning_dir / 'generated_requirements.txt'
             RequirementsGenerator.save_requirements(code_clean, requirements_path)
 
-            # Install requirements into venv
+            # Validate requirements against whitelist
+            validator = DependencyValidator(self.loop_dir, self.project_root)
+            is_valid, error_msg = validator.validate_requirements_file(requirements_path)
+            if not is_valid:
+                return {
+                    'success': False,
+                    'error': f'Dependency validation failed:\n{error_msg}',
+                    'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
+                }
+
+            # Install requirements into venv (only if validation passed)
             success, error = venv_manager.install_requirements(requirements_path, quiet=True)
             if not success:
                 return {

@@ -46,7 +46,6 @@ class VenvManager:
         """
         self.venv_path = Path(venv_path).resolve()
         self.python_executable = self._get_python_executable()
-        self.pip_executable = self._get_pip_executable()
         self.has_uv = self._detect_uv()
 
     @staticmethod
@@ -115,7 +114,7 @@ class VenvManager:
             cmd = ["uv", "pip", "install", "-r", str(requirements_path)]
 
             if quiet:
-                cmd.append("--hide-execution")
+                cmd.append("--quiet")
 
             # Set VIRTUAL_ENV to tell UV which venv to use
             env = os.environ.copy()
@@ -146,12 +145,6 @@ class VenvManager:
         else:
             return self.venv_path / "bin" / "python"
 
-    def _get_pip_executable(self) -> Path:
-        """Get path to pip executable in venv"""
-        if sys.platform == "win32":
-            return self.venv_path / "Scripts" / "pip.exe"
-        else:
-            return self.venv_path / "bin" / "pip"
 
     def exists(self) -> bool:
         """Check if venv already exists at this path"""
@@ -273,32 +266,24 @@ class VenvManager:
             setup_py = framework_root / "setup.py"
 
             if pyproject_toml.exists() or setup_py.exists():
-                # Source installation (submodule) - use editable mode
-                # Prefer UV if available (much faster)
-                if self.has_uv:
-                    # UV pip install with editable mode
-                    cmd = ["uv", "pip", "install", "-e", str(framework_root), "--quiet"]
+                # Source installation (submodule) - use editable mode with UV
+                if not self.has_uv:
+                    return (False, "UV is required but not installed. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh")
 
-                    # Set VIRTUAL_ENV to tell UV which venv to use
-                    env = os.environ.copy()
-                    env["VIRTUAL_ENV"] = str(self.venv_path)
+                # UV pip install with editable mode
+                cmd = ["uv", "pip", "install", "-e", str(framework_root), "--quiet"]
 
-                    subprocess.run(
-                        cmd,
-                        check=True,
-                        capture_output=True,
-                        env=env,
-                        timeout=120,
-                    )
-                else:
-                    # Fallback to pip
-                    cmd = [str(self.pip_executable), "install", "-e", str(framework_root), "-q"]
-                    subprocess.run(
-                        cmd,
-                        check=True,
-                        capture_output=True,
-                        timeout=120,
-                    )
+                # Set VIRTUAL_ENV to tell UV which venv to use
+                env = os.environ.copy()
+                env["VIRTUAL_ENV"] = str(self.venv_path)
+
+                subprocess.run(
+                    cmd,
+                    check=True,
+                    capture_output=True,
+                    env=env,
+                    timeout=120,
+                )
             else:
                 # UV tool installation - framework is already installed, use .pth file
                 # Find site-packages directory in this venv
@@ -335,7 +320,7 @@ class VenvManager:
         self, requirements_path: Path, quiet: bool = True
     ) -> Tuple[bool, Optional[str]]:
         """
-        Install requirements into venv using UV (preferred) or pip (fallback)
+        Install requirements into venv using UV
 
         Args:
             requirements_path: Path to requirements.txt file
@@ -348,42 +333,19 @@ class VenvManager:
             # No requirements to install
             return (True, None)
 
-        # Prefer UV if available (10-100x faster)
-        if self.has_uv:
-            if not quiet:
-                print(f"📦 Installing dependencies with UV...")
-            success, error = self._install_with_uv(requirements_path, quiet=quiet)
-            if success:
-                return (True, None)
-            else:
-                if not quiet:
-                    print(f"⚠️  UV install failed, falling back to pip: {error}")
+        # UV is required for RAVL
+        if not self.has_uv:
+            return (False, "UV is required but not installed. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh")
 
-        # Fallback to pip
         if not quiet:
-            print(f"📦 Installing dependencies with pip...")
+            print(f"📦 Installing dependencies with UV...")
 
-        try:
-            cmd = [str(self.pip_executable), "install", "-r", str(requirements_path)]
+        success, error = self._install_with_uv(requirements_path, quiet=quiet)
 
-            if quiet:
-                cmd.append("-q")
-
-            subprocess.run(
-                cmd,
-                check=True,
-                capture_output=True,
-                timeout=300,  # 5 minutes for large installs
-            )
-
+        if success:
             return (True, None)
-
-        except subprocess.CalledProcessError as e:
-            error_msg = f"Failed to install requirements: {e.stderr.decode()}"
-            return (False, error_msg)
-        except Exception as e:
-            error_msg = f"Error installing requirements: {str(e)}"
-            return (False, error_msg)
+        else:
+            return (False, f"Failed to install requirements with UV: {error}")
 
     def get_activation_command(self) -> str:
         """
@@ -400,10 +362,6 @@ class VenvManager:
     def get_python_executable(self) -> str:
         """Get path to python executable (as string for subprocess calls)"""
         return str(self.python_executable)
-
-    def get_pip_executable(self) -> str:
-        """Get path to pip executable (as string for subprocess calls)"""
-        return str(self.pip_executable)
 
     def get_environment_vars(self) -> dict:
         """

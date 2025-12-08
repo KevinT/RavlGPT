@@ -66,7 +66,10 @@ class ConfigDisplay:
         # Section 1: Loop Metadata & Execution Parameters
         ConfigDisplay._show_loop_metadata_and_parameters(loop_dir, loop_config, args)
 
-        # Section 2: Configuration Resolution
+        # Section 2: Lock Status
+        ConfigDisplay._show_lock_status(loop_dir, learning_path, loop_config)
+
+        # Section 3: Configuration Resolution
         ConfigDisplay._show_configuration_resolution(
             loop_dir, learning_path, venv_path,
             loop_dir_source, learning_path_source, venv_path_source
@@ -161,7 +164,6 @@ class ConfigDisplay:
         _log(f"    Mode:                {args.mode}", indent=0)
         _log(f"    Timeout:             {args.timeout} seconds", indent=0)
         _log(f"    Deep Learning:       {'[disabled]' if args.no_deep_learning else '[enabled], use --no-deep-learning to skip VERIFY and LEARN steps'}", indent=0)
-        _log(f"    Quiet Mode:          {'[enabled]' if args.quiet else '[disabled], use --quiet to suppress framework messages'}", indent=0)
 
         # Show execution details flag
         show_exec = getattr(args, 'show_execution', False)
@@ -186,6 +188,29 @@ class ConfigDisplay:
         else:
             _log(f"    Venv Path:           will use resolved value, use --venv-path flag to override", indent=0)
 
+
+        _log("", indent=0)
+
+    @staticmethod
+    def _show_lock_status(loop_dir: Path, learning_path: Path, loop_config: Dict[str, Any]):
+        """Display loop lock status"""
+        _log("Lock Status", indent=0)
+        _log(f"{'─'*80}", indent=0)
+
+        # Check if locked
+        from core.loop_lock_manager import LoopLockManager
+        lock_mgr = LoopLockManager(loop_dir, learning_path, loop_config)
+        is_locked, locked_code_path = lock_mgr.is_locked()
+
+        if is_locked:
+            _log(f"\n  Status:                🔒 LOCKED", indent=0)
+            _log(f"  Locked to:             {locked_code_path}", indent=0)
+            _log(f"  Behavior:              Bypasses RAVL cycle, executes locked code directly", indent=0)
+            _log(f"  To unlock:             ravl --unlock {loop_dir.name}", indent=0)
+        else:
+            _log(f"\n  Status:                Unlocked (normal RAVL execution)", indent=0)
+            _log(f"  Behavior:              Full RAVL cycle: REFLECT → ACT → VERIFY → LEARN", indent=0)
+            _log(f"  To lock:               ravl --lock {loop_dir.name}", indent=0)
 
         _log("", indent=0)
 

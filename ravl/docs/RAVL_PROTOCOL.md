@@ -344,6 +344,79 @@ An executor interprets these and maintains state between phases.
 
 ---
 
+## Loop Locking (Production Stability)
+
+### Overview
+Loops can be "locked" to execute specific verified code, bypassing the full RAVL cycle. This supports production deployments where consistency is prioritized over continuous learning.
+
+### Locked Execution Behavior
+When a loop is locked:
+- **Reflect/Act/Verify/Learn phases are skipped entirely**
+- **Locked code executes directly** in the loop's venv
+- **No learning occurs** - models remain unchanged
+- **No code generation** - cached code runs as-is
+- **Faster execution** - no LLM calls or interpretation
+
+### Lock Management
+
+**Locking a Loop**:
+```bash
+# Lock to most recent successful execution
+ravl --lock my_loop
+
+# Lock to specific attempt
+ravl --lock my_loop --attempt 3
+
+# Force lock (even if verification failed)
+ravl --lock my_loop --force
+```
+
+**Unlocking a Loop**:
+```bash
+ravl --unlock my_loop
+```
+
+**Checking Lock Status**:
+```bash
+# View lock status in config
+ravl my_loop --show-config
+
+# See locked loops in list
+ravl --list  # Shows 🔒 next to locked loops
+```
+
+### Lock Configuration
+Lock status is stored in `config/ravl.toml`:
+```toml
+loop_locked = "./learnings/execution_learning/recent_attempts/attempt_3/generated_code.py"
+```
+
+### Validation
+By default, only successful attempts can be locked:
+- Attempt must exist
+- `execution_result.json` must show `"passed": true`
+- Use `--force` to bypass verification check
+
+**Security**: Locked code path MUST be within the loop's learnings directory:
+- Prevents executing arbitrary code from elsewhere on filesystem
+- Validation cannot be bypassed (even with `--force`)
+- Manual config edits pointing outside learnings will cause execution to fail with security error
+
+### Use Cases
+- **Production Deployments**: Lock loops for consistent behavior
+- **Compliance**: Freeze code for auditing
+- **Debugging**: Lock to isolate issues
+- **Performance**: Skip code generation overhead
+
+### Philosophy
+Loop locking is opt-in infrastructure control that balances:
+- **Continuous Learning** (default): Loops adapt and improve
+- **Production Stability** (locked): Behavior remains consistent
+
+Users choose the balance for each loop based on their needs.
+
+---
+
 ## Version History
 
 - **v1.0** (2025-10-04): Initial protocol specification
