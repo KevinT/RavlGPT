@@ -524,7 +524,7 @@ class ConfigBasedRAVLRunner:
                     'output_file': None
                 }
                 verification = {
-                    'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
+                    'timestamp': reflection.get('timestamp', dt_init.now(tz_init.utc).isoformat()),
                     'error': str(initialization_error),
                     'error_type': type(initialization_error).__name__,
                     'phase': 'initialization',
@@ -596,9 +596,8 @@ class ConfigBasedRAVLRunner:
 
                     # REFLECT failed, but record the failure so loop can learn from it
                     log_message(f"REFLECT phase failed: {reflect_error}", status='error', indent=3)
-                    from datetime import datetime as dt, timezone as tz
                     reflection = {
-                        'timestamp': dt.now(tz.utc).isoformat(),
+                        'timestamp': datetime.now(timezone.utc).isoformat(),
                         'error': str(reflect_error),
                         'error_type': type(reflect_error).__name__,
                         'phase': 'reflect',
