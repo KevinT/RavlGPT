@@ -298,8 +298,6 @@ class ConfigBasedRAVLRunner:
             # Save to latest_run.json
             findings_file = learnings_dir / 'latest_run.json'
             findings_file.parent.mkdir(parents=True, exist_ok=True)
-            import json
-            from datetime import datetime, timezone
             findings = {
                 **action_results,
                 'metadata': {
@@ -560,10 +558,43 @@ class ConfigBasedRAVLRunner:
                     duration = time.time() - start_time
                     log_message(f"Completed at {duration:.1f}s", status='success', indent=3)
                 except Exception as reflect_error:
+                    # Check for specific error types with helpful messages
+                    error_str = str(reflect_error)
+
+                    # Check for LLM API billing/quota errors (any provider)
+                    billing_indicators = [
+                        'credit balance is too low',
+                        'insufficient_quota',
+                        'quota exceeded',
+                        'billing',
+                        'payment required',
+                        'credits'
+                    ]
+                    if any(indicator in error_str.lower() for indicator in billing_indicators):
+                        log_message("", status='error', indent=3)
+                        log_message("💳 LLM API Credits/Quota Issue", status='error', indent=3)
+                        log_message("", status='error', indent=3)
+                        log_message("Your LLM provider API has insufficient credits or quota.", status='error', indent=3)
+                        log_message("", status='error', indent=3)
+                        log_message("To resolve:", status='error', indent=3)
+                        log_message("  1. Check your current LLM configuration:", status='error', indent=3)
+                        log_message("     Run: ravl --config", status='error', indent=3)
+                        log_message("", status='error', indent=3)
+                        log_message("  2. Visit your provider's billing/quota page:", status='error', indent=3)
+                        log_message("     - Anthropic: https://console.anthropic.com/settings/billing", status='error', indent=3)
+                        log_message("     - OpenAI: https://platform.openai.com/account/billing", status='error', indent=3)
+                        log_message("     - Google: https://console.cloud.google.com/billing", status='error', indent=3)
+                        log_message("", status='error', indent=3)
+                        log_message("  3. Add credits/increase quota or switch providers", status='error', indent=3)
+                        log_message("  4. Re-run this loop", status='error', indent=3)
+                        log_message("", status='error', indent=3)
+                        sys.exit(1)
+
                     # REFLECT failed, but record the failure so loop can learn from it
                     log_message(f"REFLECT phase failed: {reflect_error}", status='error', indent=3)
+                    from datetime import datetime as dt, timezone as tz
                     reflection = {
-                        'timestamp': datetime.now(timezone.utc).isoformat(),
+                        'timestamp': dt.now(tz.utc).isoformat(),
                         'error': str(reflect_error),
                         'error_type': type(reflect_error).__name__,
                         'phase': 'reflect',
