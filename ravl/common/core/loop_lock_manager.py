@@ -203,58 +203,6 @@ class LoopLockManager:
 
         return (True, code_path)
 
-    def execute_locked_code(self, venv_path: Path) -> Dict[str, Any]:
-        """
-        Execute locked code in venv
-
-        Args:
-            venv_path: Path to virtual environment
-
-        Returns:
-            Execution result dict
-        """
-        is_locked, code_path = self.is_locked()
-        if not is_locked or code_path is None:
-            return {
-                'success': False,
-                'error': 'Loop is not locked or locked code is invalid'
-            }
-
-        # Final security validation before execution
-        valid, error_msg = self._validate_locked_path(code_path)
-        if not valid:
-            return {
-                'success': False,
-                'error': error_msg
-            }
-
-        # Execute code
-        try:
-            from execution.code.simple_code_executor import SimpleCodeExecutor
-
-            executor = SimpleCodeExecutor(
-                venv_path=venv_path,
-                execution_timeout=300  # 5 minutes default
-            )
-
-            with open(code_path, 'r') as f:
-                code = f.read()
-
-            result = executor.execute(code)
-
-            return {
-                'success': result.get('success', False),
-                'output': result.get('output', ''),
-                'error': result.get('error', ''),
-                'execution_time': result.get('execution_time', 0)
-            }
-
-        except Exception as e:
-            return {
-                'success': False,
-                'error': f"Failed to execute locked code: {str(e)}"
-            }
-
     def get_lockable_attempts(self) -> List[Dict[str, Any]]:
         """
         Get list of lockable attempts (successful executions)

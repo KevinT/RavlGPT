@@ -270,17 +270,20 @@ class ConfigBasedRAVLRunner:
             log_message(f"   See config/ravl.toml to change or unlock", status='info')
             log_message(f"   Bypassing RAVL cycle, executing locked code...", status='info')
 
-            # Resolve venv path
+            # Execute locked code using SimpleCodeExecutor
+            from execution.code.simple_code_executor import SimpleCodeExecutor
             from cli.ravl_cli_base import RAVLCLIBase
+
             project_root = RAVLCLIBase.find_project_root(required=False)
-            venv_path = RAVLRunner.resolve_venv_path(
+            executor = SimpleCodeExecutor(
                 loop_dir=self.loop_dir,
-                loop_config=self.config,
-                cli_venv_path=None,
                 project_root=project_root
             )
 
-            result = lock_mgr.execute_locked_code(venv_path)
+            with open(locked_code_path, 'r') as f:
+                code = f.read()
+
+            result = executor.execute_code(code)
 
             # Save result
             duration = time.time()

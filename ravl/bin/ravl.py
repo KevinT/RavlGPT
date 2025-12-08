@@ -395,14 +395,18 @@ class RAVLUniversalRunner(RAVLCLIBase):
                 print(f"   See config/ravl.toml to change or unlock", file=sys.stderr)
                 print(f"   Bypassing RAVL cycle, executing locked code...", file=sys.stderr)
 
-            venv_path = RAVLRunner.resolve_venv_path(
+            # Execute locked code using SimpleCodeExecutor
+            from ravl.common.execution.code.simple_code_executor import SimpleCodeExecutor
+
+            executor = SimpleCodeExecutor(
                 loop_dir=loop_dir,
-                loop_config=config,
-                cli_venv_path=Path(args.venv_path) if hasattr(args, 'venv_path') and args.venv_path else None,
                 project_root=self.project_root
             )
 
-            result = lock_mgr.execute_locked_code(venv_path)
+            with open(locked_code_path, 'r') as f:
+                code = f.read()
+
+            result = executor.execute_code(code)
 
             # Save result
             duration = time.time() - start_time
