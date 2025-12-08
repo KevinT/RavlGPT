@@ -283,7 +283,7 @@ class LoopLockManager:
                 with open(result_file, 'r') as f:
                     result = json.load(f)
 
-                passed = result.get('execution', {}).get('passed', False)
+                passed = result.get('passed', False)
                 timestamp = result.get('timestamp', 'unknown')
 
                 attempts.append({
@@ -328,7 +328,7 @@ class LoopLockManager:
                 with open(result_file, 'r') as f:
                     result = json.load(f)
 
-                passed = result.get('execution', {}).get('passed', False)
+                passed = result.get('passed', False)
                 if not passed:
                     return (False,
                             f"Attempt {attempt_num} did not pass verification.\n"
