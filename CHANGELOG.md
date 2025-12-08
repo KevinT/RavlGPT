@@ -8,6 +8,21 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 
 ## November 2025
 
+### Problem Space Learning & Domain Knowledge
+- **Known Knowns System**: Loops can now retain answers to questions they've already figured out, preventing redundant LLM calls and improving execution speed
+- **Value**: When a loop documents a "Known Known" (e.g., "API rate limit is 100/hour"), it's cached and reused across runs instead of re-asking the LLM each time
+- **Implementation**: Answer retention system in execution learning, accessible via loop context
+
+### API Integration & Discovery
+- **API Credentials Registry**: Centralized registry (`config/api_credentials_registry.yml`) for consistent environment variable naming across all API integrations
+- **Multi-API Detection Summary**: Enhanced `ravl --setup` to show all registered APIs with their detection status (configured/not configured)
+- **Value**: Makes it clear which services are available and properly configured at a glance
+
+### Loop Organization & Navigation
+- **Namespace Organizer**: Hierarchical loop display with dot-notation namespaces (e.g., `ravl.health_checks.loop_health`)
+- **Framework Loops Namespace**: All framework-provided loops moved to `ravl.*` namespace, clearly separating them from project loops
+- **Value**: Easier to browse and understand loop relationships, clear distinction between framework and project loops
+
 ### LLM Provider Configuration System
 - **Problem**: Teams needed flexibility to choose different LLM providers (Anthropic, OpenAI, Google, Ollama) for different loops based on cost, performance, or availability requirements
 - **Solution**: Hierarchical LLM provider configuration system with 5-level precedence (loop config → parent config → project config → .env → auto-detect)
