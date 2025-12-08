@@ -1,8 +1,2 @@
-# RAVL Framework Configuration
-# This file stores framework-level settings that apply to all loops
-
 [llm]
-# default_provider: Specify which LLM provider to use
-# Options: "anthropic", "openai", "google", "ollama"
-# If not specified, auto-detects based on available API keys
-# default_provider = "anthropic"
+default_provider = "google"
