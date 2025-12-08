@@ -164,11 +164,17 @@ class CodeGenerator:
 
         else:
             # Use standard act_phase prompt for non-API loops
+            # Get configured provider name and model for prompt template
+            provider_name = self.llm.get_provider_name().lower()  # "google", "anthropic", etc.
+            provider_model = getattr(self.llm, 'model', 'default')
+
             prompt = load_prompt_fn(
                 'act_phase',
                 act_instructions=act_spec,
                 context_summary=context_summary,
-                verify_instructions=verify_spec
+                verify_instructions=verify_spec,
+                configured_provider=provider_name,
+                configured_model=provider_model
             )
 
         # Add DSL guidance to prompt

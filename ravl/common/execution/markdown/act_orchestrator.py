@@ -212,12 +212,18 @@ class ActOrchestrator:
                 context_summary += f"\n### {child_name}\n"
                 context_summary += f"```json\n{json.dumps(result, indent=2)}\n```\n"
 
+        # Get configured provider name and model for prompt template
+        provider_name = self.llm.get_provider_name().lower()  # "google", "anthropic", etc.
+        provider_model = getattr(self.llm, 'model', 'default')
+
         # Load and format prompt
         prompt = self.llm_helper.load_prompt(
             'act_phase',
             act_instructions=act_instructions,
             context_summary=context_summary,
-            verify_instructions=verify_instructions
+            verify_instructions=verify_instructions,
+            configured_provider=provider_name,
+            configured_model=provider_model
         )
 
         llm_response = self.llm.complete(prompt, max_tokens=get_max_tokens('act_phase_code_generation', 16384))

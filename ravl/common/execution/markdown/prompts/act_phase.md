@@ -155,8 +155,9 @@ The framework provides `LLMProvider` utilities that handle API calls AND logging
 ```python
 from ravl.common.llm.llm_providers import LLMProviderFactory
 
-# Auto-detects available provider from API keys (ANTHROPIC_API_KEY, OPENAI_API_KEY, etc.)
-provider = LLMProviderFactory.create_provider("anthropic")  # or "openai", "google", "ollama"
+# Use the framework's configured LLM provider
+# Current configuration uses: {configured_provider} provider with {configured_model} model
+provider = LLMProviderFactory.create_provider("{configured_provider}")
 
 # Make LLM call - logging happens automatically
 # Adjust max_tokens based on your needs: 4096 for analysis, 8192+ for generation

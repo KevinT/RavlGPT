@@ -441,7 +441,7 @@ class ConfigBasedRAVLRunner:
             if not success:
                 raise RuntimeError(f"Failed to initialize virtual environment: {error}")
 
-            log_message(f"Using venv: {venv_path}", status='info', indent=3)
+            log_message(f"   venv: {venv_path}", status='info', indent=0)
 
             # Initialize executor (with initialization failure handling)
             executor = None
@@ -464,7 +464,7 @@ class ConfigBasedRAVLRunner:
                     llm_config = RAVLRunner.resolve_llm_config(self.loop_dir, self.config, project_root)
                     source = llm_config.get('_source', 'config')
 
-                    log_message(f"Using LLM: {provider_name} ({model_name}) from {source}", status='info', indent=3)
+                    log_message(f"   LLM: {provider_name} ({model_name}) from {source}", status='info', indent=0)
 
             except Exception as init_error:
                 # Executor initialization failed (e.g., missing API key, invalid config)
