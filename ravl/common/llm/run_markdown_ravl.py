@@ -506,15 +506,16 @@ class ConfigBasedRAVLRunner:
             # If initialization failed, create stub responses and jump to LEARN
             if initialization_error:
                 # Create stub responses that indicate initialization failure
+                from datetime import datetime as dt_init, timezone as tz_init
                 reflection = {
-                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'timestamp': dt_init.now(tz_init.utc).isoformat(),
                     'error': f"Executor initialization failed: {initialization_error}",
                     'error_type': type(initialization_error).__name__,
                     'phase': 'initialization',
                     'success': False
                 }
                 action_result = {
-                    'timestamp': reflection.get('timestamp', datetime.now(timezone.utc).isoformat()),
+                    'timestamp': reflection.get('timestamp', dt_init.now(tz_init.utc).isoformat()),
                     'context_vars': context_vars,
                     'error': str(initialization_error),
                     'error_type': type(initialization_error).__name__,
