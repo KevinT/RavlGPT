@@ -115,7 +115,7 @@ class VenvManager:
             cmd = ["uv", "pip", "install", "-r", str(requirements_path)]
 
             if quiet:
-                cmd.append("--quiet")
+                cmd.append("--hide-execution")
 
             # Set VIRTUAL_ENV to tell UV which venv to use
             env = os.environ.copy()

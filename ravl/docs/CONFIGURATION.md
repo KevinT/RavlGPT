@@ -10,7 +10,7 @@ Complete reference for configuring RAVL loops at every level: CLI flags, configu
 | Virtual environment | `--venv-path PATH` | `venv_path:` | `RAVL_DEFAULT_VENV_DIRECTORY` | `.ravl/venv` |
 | Loop directory | `--loop-dir PATH` | N/A | `RAVL_DEFAULT_LOOP_DIRECTORY` | `ravl_loops/` |
 | Execution mode | `--mode {fast,full}` | N/A | N/A | `full` |
-| Quiet output | `--quiet` | N/A | N/A | `false` |
+| Suppress framework output | `--hide-execution` | N/A | N/A | `false` |
 | Timeout | `--timeout SECONDS` | N/A | N/A | `300` |
 | Deep learning | `--no-deep-learning` | N/A | N/A | `true` |
 | Learning discovery | N/A | `[learning]` section | N/A | All enabled |
@@ -34,7 +34,7 @@ Complete reference for configuring RAVL loops at every level: CLI flags, configu
 Command-line flags override all other configuration:
 
 ```bash
-ravl my_loop --learning-path /custom/path --quiet --mode fast
+ravl my_loop --learning-path /custom/path --hide-execution --mode fast
 ```
 
 Use CLI flags for:
@@ -52,7 +52,7 @@ Options:
   --learning-path PATH      Override learning directory
   --venv-path PATH          Override venv directory
   --loop-dir PATH           Override loop base directory
-  --quiet                   Suppress framework output
+  --hide-execution          Suppress framework output
   --timeout SECONDS         Execution timeout (default: 300)
   --no-deep-learning        Disable deep learning features
 ```
@@ -434,7 +434,7 @@ Learning disable settings follow the standard config hierarchy (loop → parent 
 **Quiet mode** (suppress framework output):
 
 ```bash
-ravl my_loop --quiet
+ravl my_loop --hide-execution
 ```
 
 Useful for cron jobs or when piping output.
@@ -498,7 +498,7 @@ Generated code automatically reads `GOOGLE_CREDENTIALS` from environment and cre
 
 ```bash
 # Example: Test with isolated learning path
-ravl my_loop --learning-path /tmp/test_learning --quiet
+ravl my_loop --learning-path /tmp/test_learning --hide-execution
 ```
 
 ### Use Configuration Files (ravl.toml) When:
@@ -595,7 +595,7 @@ learning_path = "/mnt/team_share/learning/my_loop"
     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     RAVL_DEFAULT_VENV_DIRECTORY: /tmp/ci_venv_${{ github.run_id }}
   run: |
-    ravl my_loop --learning-path /tmp/ci_learning_${{ github.run_id }} --mode fast --timeout 300 --quiet
+    ravl my_loop --learning-path /tmp/ci_learning_${{ github.run_id }} --mode fast --timeout 300 --hide-execution
 ```
 
 **Result:**

@@ -108,7 +108,7 @@ ravl_wrapper = project_root / "ravl"
 ravl_cmd = [
     str(ravl_wrapper),
     "ravl.framework.health_checks.execution_health_check",
-    "--quiet"  # Suppress framework banners, show only health diagnostics
+    "--hide-execution"  # Suppress framework banners, show only health diagnostics
 ]
 
 # Run the health check through RAVL runner with target loop and focus in environment

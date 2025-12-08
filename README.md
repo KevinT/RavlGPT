@@ -178,7 +178,7 @@ The **health check loop** provides intelligent diagnostics:
 ### Quiet Mode
 Suppress framework output for cleaner logs:
 ```bash
-ravl my_loop --quiet
+ravl my_loop --hide-execution
 ```
 
 ### Dependency Management

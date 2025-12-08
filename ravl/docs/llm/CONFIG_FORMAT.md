@@ -116,7 +116,7 @@ Runtime options are configured via CLI flags only (not in `ravl.toml`):
 
 **Quiet Mode** (suppress framework output):
 ```bash
-./ravl my_loop --quiet
+./ravl my_loop --hide-execution
 ```
 
 **Execution Mode** (fast vs full analysis):

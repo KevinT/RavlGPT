@@ -307,9 +307,6 @@ class ConfigDisplay:
         if args.timeout != 300:  # Non-default timeout
             cmd_parts.append(f'--timeout {args.timeout}')
 
-        if args.quiet:
-            cmd_parts.append('--quiet')
-
         if args.learning_path:
             cmd_parts.append(f'--learning-path {args.learning_path}')
 

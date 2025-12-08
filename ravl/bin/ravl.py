@@ -277,10 +277,6 @@ class RAVLUniversalRunner(RAVLCLIBase):
         # Priority: CLI flags > auto-diagnostic state > default (True)
         if hasattr(args, 'hide_execution') and args.hide_execution:
             set_show_execution(False)
-        elif hasattr(args, 'quiet') and args.quiet:
-            # Backward compatibility
-            set_show_execution(False)
-            self.print_warning("--quiet is deprecated. Use --hide-execution instead.")
         elif hasattr(args, 'verbose') and args.verbose:
             set_show_execution(True)
             set_verbose_mode(True)  # Disables dimming
@@ -1185,11 +1181,6 @@ def main():
         '--debug',
         action='store_true',
         help='Maximum verbosity for debugging (future use)'
-    )
-    parser.add_argument(
-        '--quiet',
-        action='store_true',
-        help='DEPRECATED: Use --hide-execution instead. Minimal output.'
     )
     parser.add_argument(
         '--learning-path',
