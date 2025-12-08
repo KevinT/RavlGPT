@@ -394,7 +394,8 @@ class ConfigBasedRAVLRunner:
         context_vars = self.extract_template_vars(args)
 
         # Display startup info
-        log_message(f"➿ {self.config.get('description', loop_name)} starting...", status='info', indent=0)
+        emoji = self.config.get('emoji', '➿')
+        log_message(f"{emoji} {loop_name} starting...", status='info', indent=0)
         for var_name, var_value in context_vars.items():
             log_message(f"   {var_name}: {var_value}", status='info', indent=0)
         log_message(f"   Mode: {args.mode}", status='info', indent=0)
