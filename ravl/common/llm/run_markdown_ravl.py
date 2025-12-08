@@ -323,7 +323,7 @@ class ConfigBasedRAVLRunner:
         diagnostic_state_file = learnings_dir / "execution_learning" / "auto_diagnostic_mode.json"
         if diagnostic_state_file.exists():
             try:
-                import json
+                # Note: json imported at module level (line 23)
                 with open(diagnostic_state_file) as f:
                     state = json.load(f)
                     if state.get("enabled", False):
@@ -340,8 +340,7 @@ class ConfigBasedRAVLRunner:
 
             # Persist diagnostic state
             diagnostic_state_file.parent.mkdir(parents=True, exist_ok=True)
-            import json
-            from datetime import datetime
+            # Note: json and datetime imported at module level (lines 23, 29)
             with open(diagnostic_state_file, 'w') as f:
                 json.dump({
                     "enabled": True,
@@ -465,7 +464,7 @@ class ConfigBasedRAVLRunner:
                     llm_config = RAVLRunner.resolve_llm_config(self.loop_dir, self.config, project_root)
                     source = llm_config.get('_source', 'config')
 
-                    log_message(f"   LLM: {provider_name} ({model_name}) from {source}", status='info', indent=0)
+                    log_message(f"   LLM: {provider_name} ({model_name}) as set in {source}", status='info', indent=0)
 
             except Exception as init_error:
                 # Executor initialization failed (e.g., missing API key, invalid config)
