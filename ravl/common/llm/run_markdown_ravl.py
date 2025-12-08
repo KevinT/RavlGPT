@@ -454,6 +454,18 @@ class ConfigBasedRAVLRunner:
                     context_vars=context_vars,
                     force_code_regeneration=force_code_regeneration
                 )
+
+                # Log LLM provider and model being used
+                if hasattr(executor, 'llm') and executor.llm:
+                    provider_name = executor.llm.get_provider_name()
+                    model_name = getattr(executor.llm, 'model', 'default')
+
+                    # Get config source from resolution
+                    llm_config = RAVLRunner.resolve_llm_config(self.loop_dir, self.config, project_root)
+                    source = llm_config.get('_source', 'config')
+
+                    log_message(f"Using LLM: {provider_name} ({model_name}) from {source}", status='info', indent=3)
+
             except Exception as init_error:
                 # Executor initialization failed (e.g., missing API key, invalid config)
                 # We still want to run LEARN phase to record this failure in the model

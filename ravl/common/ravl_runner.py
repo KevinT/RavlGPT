@@ -412,7 +412,9 @@ class RAVLRunner:
         """
         # Priority 1: Loop config
         if loop_config and 'llm_provider' in loop_config:
-            return RAVLRunner._normalize_llm_config(loop_config['llm_provider'])
+            config = RAVLRunner._normalize_llm_config(loop_config['llm_provider'])
+            config['_source'] = 'loop config'
+            return config
 
         # Priority 2: Parent configs (walk full parent chain from immediate to root)
         all_parents = RAVLRunner._find_all_parent_loops(loop_dir)
@@ -424,7 +426,9 @@ class RAVLRunner:
                     with open(parent_config_file, 'rb') as f:
                         parent_config = tomllib.load(f) or {}
                         if 'llm_provider' in parent_config:
-                            return RAVLRunner._normalize_llm_config(parent_config['llm_provider'])
+                            config = RAVLRunner._normalize_llm_config(parent_config['llm_provider'])
+                            config['_source'] = 'parent config'
+                            return config
                 except Exception:
                     pass  # If parent config is malformed, try next parent
 
@@ -437,7 +441,9 @@ class RAVLRunner:
                     with open(project_config_file, 'rb') as f:
                         project_config = tomllib.load(f) or {}
                         if 'llm_provider' in project_config:
-                            return RAVLRunner._normalize_llm_config(project_config['llm_provider'])
+                            config = RAVLRunner._normalize_llm_config(project_config['llm_provider'])
+                            config['_source'] = 'project config'
+                            return config
                 except Exception:
                     pass  # If project config is malformed, fall through to next priority
 
@@ -445,7 +451,9 @@ class RAVLRunner:
         from ravl.common.config.config_service import get_llm_provider_from_framework_config
         framework_provider = get_llm_provider_from_framework_config(project_root)
         if framework_provider:
-            return RAVLRunner._normalize_llm_config(framework_provider)
+            config = RAVLRunner._normalize_llm_config(framework_provider)
+            config['_source'] = 'framework config'
+            return config
 
         # Priority 5: Project .env file
         if project_root:
@@ -457,14 +465,18 @@ class RAVLRunner:
                     import json
                     parsed = json.loads(env_value)
                     if isinstance(parsed, dict):
-                        return RAVLRunner._normalize_llm_config(parsed)
+                        config = RAVLRunner._normalize_llm_config(parsed)
+                        config['_source'] = '.env file'
+                        return config
                 except (json.JSONDecodeError, ValueError):
                     pass
                 # Otherwise treat as simple string
-                return RAVLRunner._normalize_llm_config(env_value)
+                config = RAVLRunner._normalize_llm_config(env_value)
+                config['_source'] = '.env file'
+                return config
 
         # Priority 6: Auto-detect from API keys (lowest)
-        return RAVLRunner._autodetect_llm_provider()
+        return RAVLRunner._autodetect_llm_provider(project_root)
 
     @staticmethod
     def _normalize_llm_config(config: Any) -> Dict[str, Any]:
@@ -492,28 +504,53 @@ class RAVLRunner:
             raise ValueError(f"Invalid llm_provider format: {type(config).__name__}. Must be string or dict.")
 
     @staticmethod
-    def _autodetect_llm_provider() -> Dict[str, Any]:
+    def _autodetect_llm_provider(project_root: Optional[Path] = None) -> Dict[str, Any]:
         """
         Auto-detect LLM provider from available API keys
 
+        First checks framework config, then falls back to API key priority order.
+
         Checks in priority order:
-        1. ANTHROPIC_API_KEY
-        2. OPENAI_API_KEY
-        3. GOOGLE_API_KEY
-        4. Falls back to ollama (local, no key needed)
+        1. Framework config default (if credentials exist for that provider)
+        2. ANTHROPIC_API_KEY
+        3. OPENAI_API_KEY
+        4. GOOGLE_API_KEY
+        5. Falls back to ollama (local, no key needed)
+
+        Args:
+            project_root: Project root for reading framework config
 
         Returns:
             Dict with 'provider' key
         """
         import os
+
+        # Check framework config first - if it specifies a default and has credentials, use it
+        if project_root:
+            from ravl.common.config.config_service import get_llm_provider_from_framework_config
+            framework_provider = get_llm_provider_from_framework_config(project_root)
+
+            if framework_provider:
+                # Framework specifies a default - use it if credentials exist
+                if framework_provider == 'anthropic' and os.environ.get("ANTHROPIC_API_KEY"):
+                    return {'provider': 'anthropic', '_source': 'framework config + auto-detect'}
+                elif framework_provider == 'openai' and os.environ.get("OPENAI_API_KEY"):
+                    return {'provider': 'openai', '_source': 'framework config + auto-detect'}
+                elif framework_provider == 'google' and os.environ.get("GOOGLE_API_KEY"):
+                    return {'provider': 'google', '_source': 'framework config + auto-detect'}
+                elif framework_provider == 'ollama':
+                    return {'provider': 'ollama', '_source': 'framework config'}
+                # Fall through to auto-detect if framework provider has no credentials
+
+        # Auto-detect from API keys (only if framework config doesn't specify or lacks credentials)
         if os.environ.get("ANTHROPIC_API_KEY"):
-            return {'provider': 'anthropic'}
+            return {'provider': 'anthropic', '_source': 'auto-detected'}
         elif os.environ.get("OPENAI_API_KEY"):
-            return {'provider': 'openai'}
+            return {'provider': 'openai', '_source': 'auto-detected'}
         elif os.environ.get("GOOGLE_API_KEY"):
-            return {'provider': 'google'}
+            return {'provider': 'google', '_source': 'auto-detected'}
         else:
-            return {'provider': 'ollama'}
+            return {'provider': 'ollama', '_source': 'auto-detected'}
 
     @staticmethod
     def find_project_root(start_path: Path) -> Path:
