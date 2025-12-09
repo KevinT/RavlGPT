@@ -618,8 +618,12 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
             try:
                 # Initialize loop with wrapper's learning path and merged config
-                loop_instance = self._initialize_loop_with_merged_config(
-                    LoopClass, final_loop_dir, merged_config, learning_path, temp_config_file
+                loop_instance = self._initialize_loop(
+                    LoopClass,
+                    final_loop_dir,
+                    merged_config,
+                    learning_path,
+                    param_overrides={'config_path': str(temp_config_file)}
                 )
             finally:
                 # Clean up temporary config file
@@ -769,73 +773,14 @@ class RAVLUniversalRunner(RAVLCLIBase):
         result = subprocess.run(cmd)
         sys.exit(result.returncode)
 
-    def _initialize_loop_with_merged_config(
+    def _initialize_loop(
         self,
         LoopClass,
         loop_dir: Path,
         config: Dict[str, Any],
-        learning_path: Optional[Path],
-        merged_config_file: Path
+        learning_path: Optional[Path] = None,
+        param_overrides: Optional[Dict[str, Any]] = None
     ):
-        """
-        Initialize loop with merged config from delegation
-
-        Args:
-            LoopClass: Loop class to initialize
-            loop_dir: Path to loop directory
-            config: Merged configuration
-            learning_path: Resolved learning path
-            merged_config_file: Path to temporary merged config file
-
-        Returns:
-            Initialized loop instance
-        """
-        # Get constructor signature
-        sig = inspect.signature(LoopClass.__init__)
-        params = {}
-
-        # Auto-resolve parameters, using merged_config_file for config_path
-        for param_name, param in sig.parameters.items():
-            if param_name == 'self':
-                continue
-
-            # Special handling for config_path - use merged config file
-            if param_name == 'config_path':
-                params[param_name] = str(merged_config_file)
-            else:
-                # Try to resolve parameter normally
-                resolved = self._resolve_parameter(param_name, loop_dir, config, learning_path)
-
-                if resolved is not None:
-                    params[param_name] = resolved
-                elif param.default == inspect.Parameter.empty:
-                    # Required parameter without default
-                    self.print_warning(
-                        f"Could not resolve required parameter: {param_name}\n"
-                        f"  Add to ravl.toml under 'init_params' or implement auto-resolution"
-                    )
-
-        # Add parameters from config
-        config_params = config.get('init_params', {})
-        for key, value in config_params.items():
-            if key not in params:
-                # Resolve special values
-                if value == 'auto' and key == 'handbook_root':
-                    params[key] = str(self.project_root)
-                elif isinstance(value, str) and not Path(value).is_absolute():
-                    # Resolve relative paths
-                    params[key] = str(loop_dir / value)
-                else:
-                    params[key] = value
-
-        try:
-            return LoopClass(**params)
-        except TypeError as e:
-            self.print_error(f"Failed to initialize {LoopClass.__name__}: {e}")
-            self.print_info(f"Resolved parameters: {list(params.keys())}")
-            raise
-
-    def _initialize_loop(self, LoopClass, loop_dir: Path, config: Dict[str, Any], learning_path: Optional[Path] = None):
         """
         Initialize loop with smart parameter resolution
 
@@ -844,6 +789,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
             loop_dir: Path to loop directory
             config: Loop configuration
             learning_path: Optional resolved learning path
+            param_overrides: Optional parameter overrides (e.g., {'config_path': '/tmp/merged.toml'})
 
         Returns:
             Initialized loop instance
@@ -857,17 +803,21 @@ class RAVLUniversalRunner(RAVLCLIBase):
             if param_name == 'self':
                 continue
 
-            # Try to resolve parameter
-            resolved = self._resolve_parameter(param_name, loop_dir, config, learning_path)
+            # Check for override first
+            if param_overrides and param_name in param_overrides:
+                params[param_name] = param_overrides[param_name]
+            else:
+                # Try to resolve parameter
+                resolved = self._resolve_parameter(param_name, loop_dir, config, learning_path)
 
-            if resolved is not None:
-                params[param_name] = resolved
-            elif param.default == inspect.Parameter.empty:
-                # Required parameter without default
-                self.print_warning(
-                    f"Could not resolve required parameter: {param_name}\n"
-                    f"  Add to ravl.toml under 'init_params' or implement auto-resolution"
-                )
+                if resolved is not None:
+                    params[param_name] = resolved
+                elif param.default == inspect.Parameter.empty:
+                    # Required parameter without default
+                    self.print_warning(
+                        f"Could not resolve required parameter: {param_name}\n"
+                        f"  Add to ravl.toml under 'init_params' or implement auto-resolution"
+                    )
 
         # Add parameters from config
         config_params = config.get('init_params', {})
@@ -1170,90 +1120,14 @@ def main():
             return sync_docs_main()
 
         elif cmd == '--lock':
-            # Handle loop locking
-            if len(sys.argv) < 3:
-                print("Error: --lock requires a loop name", file=sys.stderr)
-                print("Usage: ravl --lock LOOP_NAME [--attempt N] [--force]", file=sys.stderr)
-                sys.exit(1)
-            # Parse remaining args for --attempt and --force
-            lock_parser = argparse.ArgumentParser()
-            lock_parser.add_argument('loop_name')
-            lock_parser.add_argument('--attempt', type=int, default=None)
-            lock_parser.add_argument('--force', action='store_true')
-            lock_args = lock_parser.parse_args(sys.argv[2:])
-
-            # Import and run lock handler
-            from ravl.common.core.loop_lock_manager import LoopLockManager
-            from ravl.common.cli.loop_discovery import LoopDiscovery
-            from ravl.common.ravl_runner import RAVLRunner
-
-            project_root = Path(__file__).resolve().parent.parent.parent.parent
-            discovery = LoopDiscovery(project_root)
-
-            try:
-                loop_dir = discovery.find_loop(lock_args.loop_name)
-                config = discovery.load_config(loop_dir)
-                learning_path = RAVLRunner.resolve_learning_path(
-                    loop_dir=loop_dir,
-                    loop_config=config,
-                    cli_learning_path=None,
-                    project_root=project_root
-                )
-
-                lock_mgr = LoopLockManager(loop_dir, learning_path, config)
-                success, message = lock_mgr.lock_loop(lock_args.attempt, lock_args.force)
-
-                if success:
-                    print(f"✅ {message}", file=sys.stderr)
-                    sys.exit(0)
-                else:
-                    print(f"❌ {message}", file=sys.stderr)
-                    sys.exit(1)
-
-            except Exception as e:
-                print(f"❌ Error: {e}", file=sys.stderr)
-                sys.exit(1)
+            from ravl.bin.ravl_lock import main as lock_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return lock_main()
 
         elif cmd == '--unlock':
-            # Handle loop unlocking
-            if len(sys.argv) < 3:
-                print("Error: --unlock requires a loop name", file=sys.stderr)
-                print("Usage: ravl --unlock LOOP_NAME", file=sys.stderr)
-                sys.exit(1)
-
-            loop_name = sys.argv[2]
-
-            # Import and run unlock handler
-            from ravl.common.core.loop_lock_manager import LoopLockManager
-            from ravl.common.cli.loop_discovery import LoopDiscovery
-            from ravl.common.ravl_runner import RAVLRunner
-
-            project_root = Path(__file__).resolve().parent.parent.parent.parent
-            discovery = LoopDiscovery(project_root)
-
-            try:
-                loop_dir = discovery.find_loop(loop_name)
-                config = discovery.load_config(loop_dir)
-                learning_path = RAVLRunner.resolve_learning_path(
-                    loop_dir=loop_dir,
-                    loop_config=config,
-                    cli_learning_path=None,
-                    project_root=project_root
-                )
-
-                lock_mgr = LoopLockManager(loop_dir, learning_path, config)
-                success, message = lock_mgr.unlock_loop()
-
-                if success:
-                    print(f"✅ {message}", file=sys.stderr)
-                    sys.exit(0)
-                else:
-                    print(f"❌ {message}", file=sys.stderr)
-                    sys.exit(1)
-
-            except Exception as e:
-                print(f"❌ Error: {e}", file=sys.stderr)
-                sys.exit(1)
+            from ravl.bin.ravl_unlock import main as unlock_main
+            sys.argv = [sys.argv[0]] + sys.argv[2:]
+            return unlock_main()
 
     # Check if setup is needed (no LLM provider configured)
     from ravl.common.cli.first_run_detector import needs_setup
