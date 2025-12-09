@@ -46,6 +46,42 @@ def get_normalizer():
     return _normalizer
 
 
+def _get_install_instructions(package_name: str) -> str:
+    """
+    Generate context-aware install instructions for missing packages.
+
+    Args:
+        package_name: Name of the package that's missing
+
+    Returns:
+        Helpful error message with working install instructions
+    """
+    # Try to find the framework venv
+    venv_path = os.environ.get('RAVL_VENV_PATH')
+    if not venv_path:
+        # Try to detect framework venv relative to this file
+        framework_root = Path(__file__).parent.parent.parent.parent
+        venv_path = framework_root / 'venv'
+
+    if Path(venv_path).exists():
+        return (
+            f"{package_name} package not installed.\n\n"
+            f"Install it with:\n"
+            f"  {venv_path}/bin/pip install {package_name}\n\n"
+            f"Or activate the framework venv first:\n"
+            f"  source {venv_path}/bin/activate\n"
+            f"  pip install {package_name}"
+        )
+    else:
+        return (
+            f"{package_name} package not installed.\n\n"
+            f"The framework venv hasn't been created yet.\n"
+            f"This should have been done automatically on first run.\n\n"
+            f"Try running your loop again - the venv will be created automatically.\n"
+            f"If the problem persists, you may need to manually create the venv."
+        )
+
+
 class LLMProvider(ABC):
     """Abstract base class for LLM providers"""
 
@@ -101,7 +137,7 @@ class AnthropicProvider(LLMProvider):
         try:
             import anthropic
         except ImportError:
-            raise ImportError("anthropic package not installed. Run: uv pip install anthropic")
+            raise ImportError(_get_install_instructions('anthropic'))
 
         self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
         if not self.api_key:
@@ -174,7 +210,7 @@ class OpenAIProvider(LLMProvider):
         try:
             import openai
         except ImportError:
-            raise ImportError("openai package not installed. Run: uv pip install openai")
+            raise ImportError(_get_install_instructions('openai'))
 
         self.api_key = api_key or os.environ.get("OPENAI_API_KEY")
         if not self.api_key:
@@ -261,7 +297,7 @@ class GoogleProvider(LLMProvider):
         try:
             import google.generativeai as genai
         except ImportError:
-            raise ImportError("google-generativeai package not installed. Run: uv pip install google-generativeai")
+            raise ImportError(_get_install_instructions('google-generativeai'))
 
         self.api_key = api_key or os.environ.get("GOOGLE_API_KEY")
         if not self.api_key:
@@ -332,7 +368,7 @@ class OllamaProvider(LLMProvider):
         try:
             import requests
         except ImportError:
-            raise ImportError("requests package not installed. Run: uv pip install requests")
+            raise ImportError(_get_install_instructions('requests'))
 
         self.model = model
         self.base_url = base_url
