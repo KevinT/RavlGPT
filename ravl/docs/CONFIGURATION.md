@@ -95,7 +95,7 @@ template_variables:
 RAVL resolves configuration using inheritance:
 
 ```
-Framework config (.ravl/config/ravl.toml)
+Framework defaults (.ravl/config/framework_defaults.toml)
     ↓ inherits
 Project config (ravl_loops/config/ravl.toml)
     ↓ inherits
@@ -182,7 +182,7 @@ Child loops automatically inherit parent's `learning_path`:
 1. **Loop config**: `allowed_dependencies:` in loop's `config/ravl.toml`
 2. **Parent config**: Inherited from parent loop
 3. **Project config**: `ravl_loops/config/ravl.toml`
-4. **Framework defaults**: `.ravl/config/ravl.toml`
+4. **Framework defaults**: `.ravl/config/framework_defaults.toml`
 
 Whitelists are **additive**: child loops inherit parent approvals and can add more.
 

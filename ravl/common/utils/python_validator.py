@@ -19,7 +19,7 @@ from typing import Optional, Tuple, Dict, Any
 
 def _load_framework_config() -> Dict[str, Any]:
     """
-    Load framework configuration from .ravl/config/ravl.toml
+    Load framework configuration from .ravl/config/framework_defaults.toml
 
     Returns:
         Dict with framework configuration, including min/max Python versions
@@ -27,7 +27,7 @@ def _load_framework_config() -> Dict[str, Any]:
     # Find .ravl directory (should be parent of this file's grandparent)
     script_dir = Path(__file__).parent  # .ravl/common/utils
     ravl_dir = script_dir.parent.parent  # .ravl
-    config_file = ravl_dir / 'config' / 'ravl.toml'
+    config_file = ravl_dir / 'config' / 'framework_defaults.toml'
 
     if not config_file.exists():
         # Fallback to hardcoded defaults if config not found
@@ -89,7 +89,7 @@ def find_required_python(required_version: str = "3.14") -> Tuple[Optional[str],
     error_msg = (
         f"Python {required_version} not found.\n"
         f"  Install: {install_cmd}\n"
-        f"  Or update .ravl/config/ravl.toml to specify an available Python version."
+        f"  Or update .ravl/config/framework_defaults.toml to specify an available Python version."
     )
 
     return (None, error_msg)
@@ -135,7 +135,7 @@ def check_python_compatibility(python_path: str) -> Tuple[bool, str]:
     """
     Check if a Python version is compatible with RAVL's dependencies.
 
-    Reads min/max Python versions from framework config (.ravl/config/ravl.toml).
+    Reads min/max Python versions from framework config (.ravl/config/framework_defaults.toml).
     This ensures configuration is the single source of truth for version requirements.
 
     Args:

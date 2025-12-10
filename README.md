@@ -212,7 +212,7 @@ ravl --config
 # Then: 1) Prompt Normalization
 ```
 
-**Or edit `ravl/config/ravl.toml` directly:**
+**Or edit `.ravl/config/framework_defaults.toml` directly:**
 ```toml
 [llm.prompt_normalization]
 enabled = true  # Enabled by default (set to false to disable)
@@ -246,7 +246,7 @@ Reduction: 25.9% (saves ~571 tokens per call)
 - User queries
 - Small blocks (<200 chars)
 
-See `ravl/config/ravl.toml` for full configuration options.
+See `.ravl/config/framework_defaults.toml` for full configuration options.
 
 ## 📚 Documentation
 

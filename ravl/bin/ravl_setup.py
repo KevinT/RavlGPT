@@ -394,7 +394,7 @@ class RAVLSetup:
                 success, error = save_framework_llm_provider(provider_id, self.project_root)
                 if success:
                     print(f"✓ Saved default provider: {provider_id}")
-                    print(f"   Location: .ravl/config.toml")
+                    print(f"   Location: .ravl/config/llm.toml")
                 else:
                     print(f"✗ Failed to save provider preference: {error}")
 

@@ -51,3 +51,6 @@ learnings/state/
 venv/
 ENV/
 env/
+
+# User LLM configuration (each project has its own)
+config/llm.toml

@@ -163,7 +163,7 @@ class DependencyValidator:
         1. Loop-level config/ravl.toml (allowed_dependencies section)
         2. Parent loop config/ravl.toml (if nested)
         3. Project loops config ravl_loops/config/ravl.toml (project defaults)
-        4. Framework config .ravl/config/ravl.toml (framework defaults)
+        4. Framework config .ravl/config/framework_defaults.toml (framework defaults)
 
         Returns:
             Whitelist dict or None if not found anywhere
@@ -191,8 +191,8 @@ class DependencyValidator:
             if whitelist:
                 return whitelist
 
-        # Try framework defaults (.ravl/config/ravl.toml)
-        framework_config = self.project_root / '.ravl' / 'config' / 'ravl.toml'
+        # Try framework defaults (.ravl/config/framework_defaults.toml)
+        framework_config = self.project_root / '.ravl' / 'config' / 'framework_defaults.toml'
         if framework_config.exists():
             whitelist = self._extract_allowed_dependencies(framework_config)
             if whitelist:

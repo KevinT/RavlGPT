@@ -2,7 +2,7 @@
 """
 Configuration Loader for RAVL Framework
 
-Loads and caches framework configuration from .ravl/config/ravl.toml
+Loads and caches framework configuration from .ravl/config/framework_defaults.toml
 """
 
 import os
@@ -61,7 +61,7 @@ def save_config_file(config_dir: Path, data: Dict[str, Any], base_name: str = 'r
 
 def load_framework_config() -> Dict[str, Any]:
     """
-    Load and cache framework configuration from .ravl/config/ravl.toml
+    Load and cache framework configuration from .ravl/config/framework_defaults.toml
 
     Returns:
         Dict containing framework configuration
@@ -70,7 +70,7 @@ def load_framework_config() -> Dict[str, Any]:
 
     if _config_cache is None:
         config_dir = Path(__file__).parent.parent.parent / 'config'
-        _config_cache = load_config_file(config_dir, 'ravl')
+        _config_cache = load_config_file(config_dir, 'framework_defaults')
 
     return _config_cache
 

@@ -371,7 +371,7 @@ class ConfigService:
         if tomli_w is None:
             return (False, "tomli-w package not installed. Install with: uv pip install tomli-w")
 
-        framework_config_path = self.project_root / '.ravl' / 'config.toml'
+        framework_config_path = self.project_root / '.ravl' / 'config' / 'llm.toml'
 
         # Load existing framework config
         existing_config = self._load_config(framework_config_path) or {}
@@ -414,7 +414,7 @@ def get_llm_provider_from_framework_config(project_root: Optional[Path] = None) 
         if project_root is None:
             return None
 
-    framework_config_path = project_root / '.ravl' / 'config.toml'
+    framework_config_path = project_root / '.ravl' / 'config' / 'llm.toml'
 
     if not framework_config_path.exists():
         return None
@@ -437,7 +437,7 @@ def get_llm_model_from_framework_config(project_root: Optional[Path] = None) -> 
     """
     Get default LLM model from framework config only (not hierarchy)
 
-    Reads llm.default_model from .ravl/config.toml
+    Reads llm.default_model from .ravl/config/llm.toml
 
     Args:
         project_root: Project root path (auto-detected if not provided)
@@ -451,7 +451,7 @@ def get_llm_model_from_framework_config(project_root: Optional[Path] = None) -> 
         if project_root is None:
             return None
 
-    framework_config_path = project_root / '.ravl' / 'config.toml'
+    framework_config_path = project_root / '.ravl' / 'config' / 'llm.toml'
 
     if not framework_config_path.exists():
         return None
@@ -490,7 +490,7 @@ def save_framework_llm_provider(provider: str, project_root: Optional[Path] = No
         if project_root is None:
             return (False, "Could not find project root")
 
-    framework_config_path = project_root / '.ravl' / 'config.toml'
+    framework_config_path = project_root / '.ravl' / 'config' / 'llm.toml'
 
     # Load existing config
     config = {}

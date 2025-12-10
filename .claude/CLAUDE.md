@@ -548,7 +548,8 @@ while current != current.parent:
 ```
 
 **Common Use Cases:**
-- Loading framework config: `project_root / '.ravl' / 'config.toml'`
+- Loading framework LLM config: `project_root / '.ravl' / 'config' / 'llm.toml'`
+- Loading framework defaults: `project_root / '.ravl' / 'config' / 'framework_defaults.toml'`
 - Finding venv path: `project_root / '.ravl' / 'venv'`
 - Accessing project-level config: `project_root / 'ravl_loops' / 'config' / 'ravl.toml'`
 - Loading .env file: `project_root / '.env'`
