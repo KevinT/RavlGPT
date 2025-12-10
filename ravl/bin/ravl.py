@@ -355,7 +355,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
         emoji = config.get('emoji', '➿')
         name = config.get('description', loop_dir.name)
 
-        if not args.quiet:
+        if not args.hide_execution:
             print(f"\n{emoji} {name}", file=sys.stderr)
             print(f"   Mode: {args.mode}", file=sys.stderr)
             print(f"   Timeout: {args.timeout}s", file=sys.stderr)
@@ -363,8 +363,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         start_time = time.time()
 
-        # Set RAVL_QUIET environment variable if quiet mode enabled
-        if args.quiet:
+        # Set RAVL_QUIET environment variable if hide_execution mode enabled
+        if args.hide_execution:
             os.environ['RAVL_QUIET'] = '1'
 
         # Resolve learning path BEFORE importing loop class
@@ -383,7 +383,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         if is_locked:
             # Execute locked code directly
-            if not args.quiet:
+            if not args.hide_execution:
                 # Show relative path from loop dir
                 try:
                     relative_path = locked_code_path.relative_to(loop_dir)
@@ -419,7 +419,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
             }
             self._save_results(learning_path, action_results, args.mode, duration)
 
-            if not args.quiet:
+            if not args.hide_execution:
                 if result.get('success'):
                     print(f"\n✅ Locked code executed successfully", file=sys.stderr)
                 else:
@@ -471,15 +471,15 @@ class RAVLUniversalRunner(RAVLCLIBase):
                 loop_instance,
                 previous_findings=previous_findings,
                 deep_learning=not args.no_deep_learning,
-                quiet=args.quiet
+                quiet=args.hide_execution
             )
 
             # Save results
             self._save_results(learning_path, action_results, args.mode, time.time() - start_time)
 
-            # Print summary (unless in quiet mode)
+            # Print summary (unless in hide_execution mode)
             duration = time.time() - start_time
-            if not args.quiet:
+            if not args.hide_execution:
                 RAVLRunner.print_summary(action_results, duration, name)
 
             sys.exit(0)
@@ -534,8 +534,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
             self.print_error(f"Delegation error: {e}")
             sys.exit(1)
 
-        # Display delegation info (unless quiet)
-        if not args.quiet:
+        # Display delegation info (unless hide_execution)
+        if not args.hide_execution:
             emoji = wrapper_config.get('emoji', '➿')
             name = wrapper_config.get('description', wrapper_loop_dir.name)
             chain_names = [Path(p).name for p in chain]
@@ -706,11 +706,11 @@ class RAVLUniversalRunner(RAVLCLIBase):
                         loop_instance.write_execution_metadata(execution_metadata)
                     except Exception as meta_error:
                         # Don't fail the loop if metadata writing fails
-                        if not args.quiet:
+                        if not args.hide_execution:
                             print(f"Warning: Could not write execution metadata: {meta_error}", file=sys.stderr)
 
             # Display completion message
-            if not args.quiet:
+            if not args.hide_execution:
                 print(f"\n✅ {wrapper_config.get('description', wrapper_loop_dir.name)} completed successfully", file=sys.stderr)
 
     def _run_markdown_loop(self, loop_dir: Path, config: Dict[str, Any], args: argparse.Namespace):
