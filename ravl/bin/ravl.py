@@ -1089,19 +1089,25 @@ def main():
 
         elif cmd == '--health':
             import subprocess
-            script_path = Path(__file__).parent / "ravl_health.py"
+            import importlib.util
+            spec = importlib.util.find_spec("ravl.bin.ravl_health")
+            script_path = Path(spec.origin)
             result = subprocess.run([sys.executable, str(script_path)] + sys.argv[2:])
             sys.exit(result.returncode)
 
         elif cmd == '--execution-health':
             import subprocess
-            script_path = Path(__file__).parent / "ravl_execution_health.py"
+            import importlib.util
+            spec = importlib.util.find_spec("ravl.bin.ravl_execution_health")
+            script_path = Path(spec.origin)
             result = subprocess.run([sys.executable, str(script_path)] + sys.argv[2:])
             sys.exit(result.returncode)
 
         elif cmd == '--loop-health':
             import subprocess
-            script_path = Path(__file__).parent / "ravl_loop_health.py"
+            import importlib.util
+            spec = importlib.util.find_spec("ravl.bin.ravl_loop_health")
+            script_path = Path(spec.origin)
             result = subprocess.run([sys.executable, str(script_path)] + sys.argv[2:])
             sys.exit(result.returncode)
 

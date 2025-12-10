@@ -76,7 +76,11 @@ if run_execution:
     print("EXECUTION HEALTH CHECK (Solution Space)", file=sys.stderr)
     print("=" * 60, file=sys.stderr)
 
-    cmd = [sys.executable, str(_framework_dir / "bin" / "ravl_execution_health.py"), loop_name]
+    # Use importlib to find script without importing it (avoids argparse side effects)
+    import importlib.util
+    spec = importlib.util.find_spec("ravl.bin.ravl_execution_health")
+    script_path = Path(spec.origin)
+    cmd = [sys.executable, str(script_path), loop_name]
     result = subprocess.run(cmd, cwd=str(project_root))
 
     if result.returncode != 0:
@@ -91,7 +95,11 @@ if run_loop:
     print("LOOP HEALTH CHECK (Problem Space)", file=sys.stderr)
     print("=" * 60, file=sys.stderr)
 
-    cmd = [sys.executable, str(_framework_dir / "bin" / "ravl_loop_health.py"), loop_name]
+    # Use importlib to find script without importing it (avoids argparse side effects)
+    import importlib.util
+    spec = importlib.util.find_spec("ravl.bin.ravl_loop_health")
+    script_path = Path(spec.origin)
+    cmd = [sys.executable, str(script_path), loop_name]
     result = subprocess.run(cmd, cwd=str(project_root))
 
     if result.returncode != 0:

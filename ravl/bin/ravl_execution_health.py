@@ -103,10 +103,10 @@ except Exception as e:
     print(f"Error validating loop: {str(e)}", file=sys.stderr)
     sys.exit(1)
 
-# Build ravl command - use the project's ravl wrapper
-ravl_wrapper = project_root / "ravl"
+# Build ravl command - use Python module invocation (works for both local and UV installations)
 ravl_cmd = [
-    str(ravl_wrapper),
+    sys.executable,
+    "-m", "ravl.bin.ravl",
     "ravl.framework.health_checks.execution_health_check",
     "--hide-execution"  # Suppress framework banners, show only health diagnostics
 ]
