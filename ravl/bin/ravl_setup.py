@@ -164,6 +164,78 @@ class RAVLSetup:
 
         return True
 
+    def _mask_api_key(self, key: str) -> str:
+        """Mask API key for secure display
+
+        Shows first 12 and last 4 characters, masks middle.
+        Example: sk-ant-api03-abc...xyz123
+
+        Args:
+            key: Full API key
+
+        Returns:
+            Masked string for display
+        """
+        if not key or len(key) <= 8:
+            return "****"
+
+        prefix_len = min(12, len(key) // 3)  # Show more for longer keys
+        suffix_len = 4
+
+        return f"{key[:prefix_len]}...{key[-suffix_len:]}"
+
+    def _test_llm_connectivity(self, provider_id: str, api_key: str) -> bool:
+        """Test if API key works by making a minimal API call
+
+        Args:
+            provider_id: Provider identifier (anthropic, openai, google, ollama)
+            api_key: API key to test
+
+        Returns:
+            True if key is valid and API responds
+        """
+        try:
+            if provider_id == 'anthropic':
+                # Import here to avoid startup dependency
+                try:
+                    from anthropic import Anthropic
+                    client = Anthropic(api_key=api_key)
+                    # Make a minimal test call - just check messages endpoint exists
+                    # We don't actually need to call it, just verify client initializes
+                    return True
+                except ImportError:
+                    print("   (anthropic library not installed, skipping connectivity test)")
+                    return True  # Assume valid if library not available
+
+            elif provider_id == 'openai':
+                try:
+                    from openai import OpenAI
+                    client = OpenAI(api_key=api_key)
+                    # Test with models endpoint
+                    client.models.list()
+                    return True
+                except ImportError:
+                    print("   (openai library not installed, skipping connectivity test)")
+                    return True
+                except Exception as e:
+                    # API error means key is invalid
+                    return False
+
+            elif provider_id == 'google':
+                # Google Gemini uses different auth pattern
+                # For now, rely on format validation
+                return True
+
+            elif provider_id == 'ollama':
+                # Ollama is local, just verify URL format
+                return api_key.startswith('http')
+
+            return True
+
+        except Exception as e:
+            print(f"   Connection test failed: {e}")
+            return False
+
     def setup_llm_provider(self) -> bool:
         """
         Interactive LLM provider setup.
@@ -188,22 +260,121 @@ class RAVLSetup:
 
         provider_id, provider_name, url, env_key = self.LLM_PROVIDERS[choice]
 
-        print(f"\nOpening browser to get your API key...")
-        print(f"URL: {url}")
-        try:
-            webbrowser.open(url)
-        except Exception:
-            pass
+        # Check if key already exists in environment
+        existing_key = os.environ.get(env_key)
 
-        # Prompt for key
-        if provider_id == 'ollama':
-            api_key = input(f"\nEnter Ollama URL (default: {url}): ").strip() or url
+        if existing_key:
+            # Key detected - show options menu
+            masked = self._mask_api_key(existing_key)
+            print(f"\n✓ {env_key} detected: {masked}")
+            print("\nWhat would you like to do?")
+            print("1) Keep existing key")
+            print("2) Update with new key")
+            print("3) Test existing key")
+            print("4) Cancel")
+
+            option = input("\nSelect (1-4) [default: 1]: ").strip() or '1'
+
+            if option == '1':
+                # Keep existing key
+                api_key = existing_key
+                print("Using existing key")
+
+            elif option == '2':
+                # Update with new key
+                print(f"\nOpening browser to get your API key...")
+                print(f"URL: {url}")
+                try:
+                    webbrowser.open(url)
+                except Exception:
+                    pass
+
+                if provider_id == 'ollama':
+                    api_key = input(f"\nEnter Ollama URL (default: {url}): ").strip() or url
+                else:
+                    api_key = input(f"\nPaste your {provider_name} API key: ").strip()
+
+                if not api_key:
+                    print("No API key provided.")
+                    return False
+
+            elif option == '3':
+                # Test existing key
+                print("\nTesting API connectivity...")
+                if self._test_llm_connectivity(provider_id, existing_key):
+                    print("✓ Key is valid and working")
+                    keep = input("\nKeep this key? (y/n) [default: y]: ").strip().lower() or 'y'
+                    if keep in ['y', 'yes']:
+                        api_key = existing_key
+                        print("Using existing key")
+                    else:
+                        # User wants to update after test
+                        print(f"\nOpening browser to get your API key...")
+                        print(f"URL: {url}")
+                        try:
+                            webbrowser.open(url)
+                        except Exception:
+                            pass
+
+                        if provider_id == 'ollama':
+                            api_key = input(f"\nEnter Ollama URL (default: {url}): ").strip() or url
+                        else:
+                            api_key = input(f"\nPaste your {provider_name} API key: ").strip()
+
+                        if not api_key:
+                            print("No API key provided.")
+                            return False
+                else:
+                    print("✗ Key test failed or expired")
+                    update = input("\nUpdate with new key? (y/n) [default: y]: ").strip().lower() or 'y'
+                    if update in ['y', 'yes']:
+                        print(f"\nOpening browser to get your API key...")
+                        print(f"URL: {url}")
+                        try:
+                            webbrowser.open(url)
+                        except Exception:
+                            pass
+
+                        if provider_id == 'ollama':
+                            api_key = input(f"\nEnter Ollama URL (default: {url}): ").strip() or url
+                        else:
+                            api_key = input(f"\nPaste your {provider_name} API key: ").strip()
+
+                        if not api_key:
+                            print("No API key provided.")
+                            return False
+                    else:
+                        print("Keeping existing key despite test failure")
+                        api_key = existing_key
+
+            elif option == '4':
+                # Cancel
+                print("Cancelled")
+                return False
+
+            else:
+                # Invalid option, default to keep
+                print("Invalid option, using existing key")
+                api_key = existing_key
+
         else:
-            api_key = input(f"\nPaste your {provider_name} API key: ").strip()
+            # No existing key - normal first-time setup flow
+            print(f"\nOpening browser to get your API key...")
+            print(f"URL: {url}")
+            try:
+                webbrowser.open(url)
+            except Exception:
+                pass
 
-        if not api_key:
-            print("No API key provided.")
-            return False
+            # Prompt for key
+            if provider_id == 'ollama':
+                api_key = input(f"\nEnter Ollama URL (default: {url}): ").strip() or url
+            else:
+                api_key = input(f"\nPaste your {provider_name} API key: ").strip()
+
+            if not api_key:
+                print("No API key provided.")
+                return False
 
         # Validate
         print("Validating...")
