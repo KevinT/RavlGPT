@@ -389,13 +389,20 @@ class RAVLRunner:
         project_root: Optional[Path] = None
     ) -> Dict[str, Any]:
         """
-        Resolve the LLM provider configuration with precedence:
+        Resolve the LLM provider and model configuration with precedence:
+
+        Provider precedence:
         1. Loop config (llm_provider in ravl.toml)
         2. Parent config (parent's config/ravl.toml llm_provider)
         3. Project config (ravl_loops/config/ravl.toml llm_provider)
         4. Framework config (.ravl/config.toml llm.default_provider)
         5. Project .env file (RAVL_DEFAULT_LLM_PROVIDER)
         6. Auto-detect from API keys (anthropic > openai > google > ollama)
+
+        Model precedence (if not in provider config above):
+        4. Framework config (.ravl/config.toml llm.default_model)
+        5. Project .env file (RAVL_DEFAULT_MODEL)
+        6. Provider hardcoded defaults (claude-sonnet-4-5, gpt-4o, gemini-3-pro-preview, llama3.1)
 
         Configuration formats supported:
         - Simple string: llm_provider: anthropic
@@ -448,35 +455,60 @@ class RAVLRunner:
                     pass  # If project config is malformed, fall through to next priority
 
         # Priority 4: Framework config (.ravl/config.toml)
-        from ravl.common.config.config_service import get_llm_provider_from_framework_config
+        from ravl.common.config.config_service import get_llm_provider_from_framework_config, get_llm_model_from_framework_config
         framework_provider = get_llm_provider_from_framework_config(project_root)
+        framework_model = get_llm_model_from_framework_config(project_root)
+
         if framework_provider:
             config = RAVLRunner._normalize_llm_config(framework_provider)
+            # Add framework model if present and not already set
+            if framework_model and 'model' not in config:
+                config['model'] = framework_model
             config['_source'] = 'framework config'
             return config
 
         # Priority 5: Project .env file
         if project_root:
             env_vars = RAVLRunner.load_env_file(project_root)
-            if 'RAVL_DEFAULT_LLM_PROVIDER' in env_vars:
-                env_value = env_vars['RAVL_DEFAULT_LLM_PROVIDER']
+            env_provider = env_vars.get('RAVL_DEFAULT_LLM_PROVIDER')
+            env_model = env_vars.get('RAVL_DEFAULT_MODEL')
+
+            if env_provider:
                 # Try to parse as JSON first (for dict format in .env)
                 try:
                     import json
-                    parsed = json.loads(env_value)
+                    parsed = json.loads(env_provider)
                     if isinstance(parsed, dict):
                         config = RAVLRunner._normalize_llm_config(parsed)
+                        # Add env model if present and not already set
+                        if env_model and 'model' not in config:
+                            config['model'] = env_model
                         config['_source'] = '.env file'
                         return config
                 except (json.JSONDecodeError, ValueError):
                     pass
                 # Otherwise treat as simple string
-                config = RAVLRunner._normalize_llm_config(env_value)
+                config = RAVLRunner._normalize_llm_config(env_provider)
+                # Add env model if present
+                if env_model:
+                    config['model'] = env_model
                 config['_source'] = '.env file'
                 return config
 
+            # If only model in .env but no provider, use it as a default for auto-detect
+            if env_model:
+                config = RAVLRunner._autodetect_llm_provider(project_root)
+                config['model'] = env_model
+                config['_source'] = '.env file (model only)'
+                return config
+
         # Priority 6: Auto-detect from API keys (lowest)
-        return RAVLRunner._autodetect_llm_provider(project_root)
+        # Check if framework model should be applied to auto-detected provider
+        config = RAVLRunner._autodetect_llm_provider(project_root)
+        if framework_model and 'model' not in config:
+            config['model'] = framework_model
+            config['_source'] = f"{config.get('_source', 'auto-detected')} + framework model"
+        return config
 
     @staticmethod
     def _normalize_llm_config(config: Any) -> Dict[str, Any]:

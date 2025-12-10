@@ -332,6 +332,32 @@ class ConfigService:
 
         return None
 
+    def get_llm_model(self) -> Optional[str]:
+        """
+        Get configured default LLM model from config hierarchy
+
+        Checks llm_provider dict in hierarchy, then framework config.
+        Does NOT check loop/parent/project configs (those use llm_provider dict).
+
+        Priority:
+        1. Loop config (llm_provider.model if dict)
+        2. Parent config (llm_provider.model if dict)
+        3. Project config (llm_provider.model if dict)
+        4. Framework config (llm.default_model)
+        5. None (not configured - provider uses hardcoded default)
+
+        Returns:
+            Model name string or None if not configured at framework level
+        """
+        # Check if llm_provider in hierarchy has a model key
+        llm_config = self.get('llm_provider', default={}, scope='all')
+        if isinstance(llm_config, dict) and 'model' in llm_config:
+            model = llm_config['model']
+            return str(model) if model else None
+
+        # Check framework config for default_model
+        return get_llm_model_from_framework_config(self.project_root)
+
     def set_framework_llm_provider(self, provider: str) -> Tuple[bool, Optional[str]]:
         """
         Save LLM provider choice to framework config
@@ -400,6 +426,43 @@ def get_llm_provider_from_framework_config(project_root: Optional[Path] = None) 
         if 'llm' in config and 'default_provider' in config['llm']:
             provider = config['llm']['default_provider']
             return str(provider).lower() if provider else None
+
+    except Exception:
+        pass
+
+    return None
+
+
+def get_llm_model_from_framework_config(project_root: Optional[Path] = None) -> Optional[str]:
+    """
+    Get default LLM model from framework config only (not hierarchy)
+
+    Reads llm.default_model from .ravl/config.toml
+
+    Args:
+        project_root: Project root path (auto-detected if not provided)
+
+    Returns:
+        Model name string or None if not configured
+    """
+    if project_root is None:
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        project_root = RAVLCLIBase.find_project_root(required=False)
+        if project_root is None:
+            return None
+
+    framework_config_path = project_root / '.ravl' / 'config.toml'
+
+    if not framework_config_path.exists():
+        return None
+
+    try:
+        with open(framework_config_path, 'rb') as f:
+            config = tomllib.load(f)
+
+        if 'llm' in config and 'default_model' in config['llm']:
+            model = config['llm']['default_model']
+            return str(model) if model else None
 
     except Exception:
         pass
