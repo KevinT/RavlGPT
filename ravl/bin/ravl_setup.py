@@ -625,6 +625,36 @@ class RAVLSetup:
                 print("\n✗ Invalid choice. Please select 1-3.")
                 input("\nPress Enter to continue...")
 
+    def setup_llm_configuration(self) -> None:
+        """
+        LLM Configuration submenu - groups provider and defaults together
+        """
+        while True:
+            print("\n" + "=" * 60)
+            print("LLM Configuration")
+            print("=" * 60)
+
+            # Show current provider status
+            from ravl.common.cli.first_run_detector import get_configured_llm_provider
+            current_provider = get_configured_llm_provider()
+            provider_status = f"✓ {current_provider}" if current_provider else "not configured"
+
+            print("\nWhat would you like to configure?")
+            print(f"1) LLM Provider ({provider_status})")
+            print("2) LLM Defaults (prompt normalization, max tokens)")
+            print("3) Back to main menu")
+
+            choice = input("\nEnter your choice (1-3): ").strip()
+
+            if choice == '1':
+                self.setup_llm_provider()
+            elif choice == '2':
+                self.setup_llm_defaults()
+            elif choice == '3':
+                break
+            else:
+                print("Invalid choice. Please enter 1-3.")
+
     def _setup_prompt_normalization(self) -> None:
         """
         Interactive prompt normalization configuration sub-menu.
@@ -1103,51 +1133,41 @@ class RAVLSetup:
 
     def main_menu(self):
         """Main setup menu."""
-        self._print_header()
+        while True:
+            self._print_header()
 
-        # Show current configuration
-        current_llm = get_configured_llm_provider()
-        current_apis = get_configured_apis()
+            # Show current configuration
+            current_llm = get_configured_llm_provider()
+            current_apis = get_configured_apis()
 
-        if not current_llm and not current_apis:
-            print("Nothing configured yet.\n")
+            if not current_llm and not current_apis:
+                print("Nothing configured yet.\n")
 
-        # Show menu
-        print("What would you like to configure?")
-        print("1) LLM Provider" + (f" (✓ {current_llm.title()})" if current_llm else " (required - RAVL uses this to generate code)"))
-        print("2) API Integrations (optional - add APIs your loops need)")
-        print("3) LLM Defaults (token limits, optimization)")
-        print("4) MCP Servers (optional - connect to Model Context Protocol servers)")
-        print("5) Exit")
+            # Show menu
+            print("What would you like to configure?")
+            llm_status = f"✓ {current_llm}" if current_llm else "not configured"
+            print(f"1) LLM Configuration ({llm_status})")
+            print("2) API Integrations (optional - add APIs your loops need)")
+            print("3) MCP Servers (optional - connect to Model Context Protocol servers)")
+            print("4) Exit")
 
-        choice = input("\nSelect (1-5): ").strip()
+            choice = input("\nEnter your choice (1-4): ").strip()
 
-        if choice == '1':
-            self.setup_llm_provider()
-            # Return to main menu
-            self.main_menu()
+            if choice == '1':
+                self.setup_llm_configuration()
 
-        elif choice == '2':
-            self.setup_api_integration()
-            # Return to main menu
-            self.main_menu()
+            elif choice == '2':
+                self.setup_api_integration()
 
-        elif choice == '3':
-            self.setup_llm_defaults()
-            # Return to main menu
-            self.main_menu()
+            elif choice == '3':
+                self.setup_mcp_servers()
 
-        elif choice == '4':
-            self.setup_mcp_servers()
-            # Return to main menu
-            self.main_menu()
+            elif choice == '4':
+                print("\n✓ Configuration complete!")
+                break
 
-        elif choice == '5':
-            return
-
-        else:
-            print("Invalid choice.")
-            self.main_menu()
+            else:
+                print("Invalid choice. Please enter 1-4.")
 
     def run(self):
         """Run the setup wizard."""

@@ -395,12 +395,12 @@ class RAVLRunner:
         1. Loop config (llm_provider in ravl.toml)
         2. Parent config (parent's config/ravl.toml llm_provider)
         3. Project config (ravl_loops/config/ravl.toml llm_provider)
-        4. Framework config (.ravl/config.toml llm.default_provider)
+        4. Framework config (.ravl/config/llm.toml llm.default_provider)
         5. Project .env file (RAVL_DEFAULT_LLM_PROVIDER)
         6. Auto-detect from API keys (anthropic > openai > google > ollama)
 
         Model precedence (if not in provider config above):
-        4. Framework config (.ravl/config.toml llm.default_model)
+        4. Framework config (.ravl/config/llm.toml llm.default_model)
         5. Project .env file (RAVL_DEFAULT_MODEL)
         6. Provider hardcoded defaults (claude-sonnet-4-5, gpt-4o, gemini-3-pro-preview, llama3.1)
 
@@ -454,7 +454,7 @@ class RAVLRunner:
                 except Exception:
                     pass  # If project config is malformed, fall through to next priority
 
-        # Priority 4: Framework config (.ravl/config.toml)
+        # Priority 4: Framework config (.ravl/config/llm.toml)
         from ravl.common.config.config_service import get_llm_provider_from_framework_config, get_llm_model_from_framework_config
         framework_provider = get_llm_provider_from_framework_config(project_root)
         framework_model = get_llm_model_from_framework_config(project_root)

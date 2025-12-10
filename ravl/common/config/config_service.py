@@ -318,11 +318,11 @@ class ConfigService:
         1. Loop config (llm.default_provider)
         2. Parent config
         3. Project config
-        4. Framework config (.ravl/config.toml)
+        4. Framework config (.ravl/config/llm.toml)
         5. None (not configured)
 
         Returns:
-            Provider name ("anthropic", "google", etc.) or None
+            Provider name ("anthropic", "google", "openai", "ollama") or None
         """
         # Check loop/parent/project configs first
         llm_config = self.get('llm', {}, scope='all')

@@ -112,8 +112,8 @@ class RAVLCLIBase:
         Get configuration file path based on installation type.
 
         Returns:
-            Submodule: <project>/.ravl/config.toml
-            Package: ~/.config/ravl/config.toml
+            Submodule: <project>/.ravl/config/llm.toml
+            Package: ~/.config/ravl/llm.toml
         """
         install_type = RAVLCLIBase.get_installation_type()
 
@@ -121,16 +121,16 @@ class RAVLCLIBase:
             # Find project root and use .ravl/ if it exists
             try:
                 project_root = RAVLCLIBase.find_project_root(required=False)
-                ravl_dir = project_root / '.ravl'
+                ravl_dir = project_root / '.ravl' / 'config'
                 if ravl_dir.exists():
-                    return ravl_dir / 'config.toml'
+                    return ravl_dir / 'llm.toml'
             except Exception:
                 pass
 
         # Package install or fallback: Use user config directory
         config_dir = Path.home() / '.config' / 'ravl'
         config_dir.mkdir(parents=True, exist_ok=True)
-        return config_dir / 'config.toml'
+        return config_dir / 'llm.toml'
 
     @staticmethod
     def print_success(message: str):

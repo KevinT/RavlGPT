@@ -33,11 +33,12 @@ def get_configured_llm_provider() -> Optional[str]:
     Get the currently configured default LLM provider.
 
     Priority:
-    1. Framework config file (.ravl/config.toml)
+    1. Framework config file (.ravl/config/llm.toml)
     2. Environment variable (RAVL_DEFAULT_LLM_PROVIDER)
     3. Auto-detect from API keys
 
-    Returns the provider name or None if no default is set.
+    Returns:
+        Provider name ("anthropic", "google", "openai", "ollama") or None
     """
     # Check framework config first
     from ravl.common.config.config_service import get_llm_provider_from_framework_config
