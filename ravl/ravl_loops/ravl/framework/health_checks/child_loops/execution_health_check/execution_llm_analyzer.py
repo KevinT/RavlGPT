@@ -41,11 +41,17 @@ class ExecutionLLMAnalyzer:
         Initialize execution LLM diagnostic analyzer
 
         Args:
-            api_key: Anthropic API key (uses env var if not provided)
+            api_key: LLM API key (uses env var if not provided)
             prompts_dir: Directory containing prompt files (defaults to ./config/)
         """
+        # Auto-detect LLM provider from framework config
+        # Import at runtime to avoid circular dependencies
+        import os
+        from ravl.common.config.config_service import get_llm_provider_from_framework_config
+        provider_type = get_llm_provider_from_framework_config() or "anthropic"
+
         # Use framework LLM provider (automatically logs to .ravl/logs/llm/)
-        self.llm = LLMProviderFactory.create_provider(provider_name="anthropic", api_key=api_key)
+        self.llm = LLMProviderFactory.create_provider(provider_type=provider_type, api_key=api_key)
 
         # Set prompts directory
         if prompts_dir is None:
