@@ -601,16 +601,16 @@ class RAVLListCommand(RAVLCLIBase):
         loop_name = loop_info['path'].name
         display_name = self._format_loop_name(loop_name)
 
-        # Last run: "-" for organizers (they don't execute), otherwise show date
-        if is_organizer:
-            last_run = '-'
-        else:
-            last_run = loop_info.get('last_run') or 'Never'
-
         # Use appropriate tree character
         branch = " └──" if is_last else " ├──"
         lock_indicator = self._get_lock_indicator(loop_info['path'])
-        print(f"{branch} {emoji}{lock_indicator} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
+
+        # Show "Last run" only for executable loops, not for organizers
+        if is_organizer:
+            print(f"{branch} {emoji}{lock_indicator} {loop_name} - {display_name}", file=sys.stderr)
+        else:
+            last_run = loop_info.get('last_run') or 'Never'
+            print(f"{branch} {emoji}{lock_indicator} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
 
         # Print children with proper indentation
         children = loop_info.get('children', [])
@@ -641,15 +641,15 @@ class RAVLListCommand(RAVLCLIBase):
         loop_name = config['name']
         display_name = self._format_loop_name(loop_name)
 
-        # Last run: "-" for organizers (they don't execute), otherwise show date
-        if is_organizer:
-            last_run = '-'
-        else:
-            last_run = loop_info.get('last_run') or 'Never'
-
         branch = "└──" if is_last else "├──"
         lock_indicator = self._get_lock_indicator(loop_info['path'])
-        print(f"{prefix}{branch} {emoji}{lock_indicator} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
+
+        # Show "Last run" only for executable loops, not for organizers
+        if is_organizer:
+            print(f"{prefix}{branch} {emoji}{lock_indicator} {loop_name} - {display_name}", file=sys.stderr)
+        else:
+            last_run = loop_info.get('last_run') or 'Never'
+            print(f"{prefix}{branch} {emoji}{lock_indicator} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
 
         # Print grandchildren with proper prefix continuation
         child_prefix = prefix + ("    " if is_last else "│   ")
