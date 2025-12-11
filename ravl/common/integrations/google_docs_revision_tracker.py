@@ -436,7 +436,7 @@ class GoogleDocsRevisionTracker:
 
                 # Add delay between requests to avoid rate limiting (except for last revision)
                 if i < len(revisions_metadata) - 1:
-                    time.sleep(2.0)  # 2 second delay between revisions to avoid 429 errors
+                    time.sleep(4.0)  # 4 second delay between revisions to avoid 429 errors
             except Exception as e:
                 log_execution(f"Failed to save revision {seq_str}: {e}", status='error')
 
