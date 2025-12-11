@@ -34,6 +34,34 @@ class RAVLSetup:
         '4': ('ollama', 'Ollama (local)', 'http://localhost:11434', 'OLLAMA_BASE_URL'),
     }
 
+    # Popular models per provider
+    LLM_MODELS = {
+        'anthropic': [
+            ('claude-opus-4-5-20251101', 'Claude Opus 4.5 (most capable, highest cost)'),
+            ('claude-sonnet-4-5-20250929', 'Claude Sonnet 4.5 (balanced)'),
+            ('claude-3-5-sonnet-20241022', 'Claude 3.5 Sonnet (previous generation)'),
+            ('claude-3-opus-20240229', 'Claude 3 Opus (legacy)'),
+        ],
+        'openai': [
+            ('gpt-4o', 'GPT-4o (most capable)'),
+            ('gpt-4o-mini', 'GPT-4o mini (faster, cheaper)'),
+            ('gpt-4-turbo', 'GPT-4 Turbo (legacy)'),
+            ('gpt-3.5-turbo', 'GPT-3.5 Turbo (cheapest)'),
+        ],
+        'google': [
+            ('gemini-3-pro-preview', 'Gemini 3 Pro Preview (experimental)'),
+            ('gemini-2.0-flash-exp', 'Gemini 2.0 Flash (fast)'),
+            ('gemini-1.5-pro-002', 'Gemini 1.5 Pro (most capable)'),
+            ('gemini-1.5-flash-002', 'Gemini 1.5 Flash (fast, cheap)'),
+        ],
+        'ollama': [
+            ('llama3.1', 'Llama 3.1 (default)'),
+            ('llama3.1:70b', 'Llama 3.1 70B (large)'),
+            ('llama3.1:8b', 'Llama 3.1 8B (small, fast)'),
+            ('mixtral', 'Mixtral (alternative)'),
+        ],
+    }
+
     def __init__(self, project_root: Path):
         self.project_root = project_root
         self.env_file = project_root / '.env'
@@ -627,33 +655,293 @@ class RAVLSetup:
 
     def setup_llm_configuration(self) -> None:
         """
-        LLM Configuration submenu - groups provider and defaults together
+        LLM Configuration submenu - groups provider, model, and defaults together
         """
         while True:
             print("\n" + "=" * 60)
             print("LLM Configuration")
             print("=" * 60)
 
-            # Show current provider status
+            # Show current provider and model status
             from ravl.common.cli.first_run_detector import get_configured_llm_provider
+            from ravl.common.config.config_service import get_llm_model_from_framework_config
+
             current_provider = get_configured_llm_provider()
+            current_model = get_llm_model_from_framework_config()
+
             provider_status = f"✓ {current_provider}" if current_provider else "not configured"
+            model_status = f"✓ {current_model}" if current_model else "using default"
 
             print("\nWhat would you like to configure?")
             print(f"1) LLM Provider ({provider_status})")
-            print("2) LLM Defaults (prompt normalization, max tokens)")
-            print("3) Back to main menu")
+            print(f"2) LLM Model ({model_status})")
+            print("3) LLM Defaults (prompt normalization, max tokens)")
+            print("4) Back to main menu")
 
-            choice = input("\nEnter your choice (1-3): ").strip()
+            choice = input("\nEnter your choice (1-4): ").strip()
 
             if choice == '1':
                 self.setup_llm_provider()
             elif choice == '2':
-                self.setup_llm_defaults()
+                self.setup_llm_model()
             elif choice == '3':
+                self.setup_llm_defaults()
+            elif choice == '4':
                 break
             else:
-                print("Invalid choice. Please enter 1-3.")
+                print("Invalid choice. Please enter 1-4.")
+
+    def setup_llm_model(self) -> None:
+        """
+        Configure default LLM model for the current provider
+        """
+        from ravl.common.cli.first_run_detector import get_configured_llm_provider
+        from ravl.common.config.config_service import (
+            get_llm_model_from_framework_config,
+            save_framework_llm_model
+        )
+
+        # Get current provider
+        current_provider = get_configured_llm_provider()
+        if not current_provider:
+            print("\n✗ No LLM provider configured yet!")
+            print("   Please configure a provider first (option 1).")
+            input("\nPress Enter to continue...")
+            return
+
+        # Get current model
+        current_model = get_llm_model_from_framework_config()
+
+        print("\n" + "=" * 60)
+        print(f"Configure Default Model for {current_provider.title()}")
+        print("=" * 60)
+
+        if current_model:
+            print(f"\nCurrently configured: {current_model}")
+        else:
+            print("\nNo model configured (using provider default)")
+
+        # Show available models for this provider
+        models = self.LLM_MODELS.get(current_provider, [])
+
+        if not models:
+            print(f"\n✗ No predefined models for {current_provider}")
+            print("   You can manually edit .ravl/config/llm.toml")
+            input("\nPress Enter to continue...")
+            return
+
+        print("\nAvailable models:")
+        for i, (model_name, description) in enumerate(models, 1):
+            marker = " (current)" if model_name == current_model else ""
+            print(f"{i}) {model_name}{marker}")
+            print(f"   {description}")
+
+        print(f"{len(models) + 1}) Enter custom model name")
+        print(f"{len(models) + 2}) Cancel")
+
+        choice = input(f"\nSelect model (1-{len(models) + 2}): ").strip()
+
+        try:
+            choice_num = int(choice)
+
+            if 1 <= choice_num <= len(models):
+                # User selected a predefined model
+                selected_model = models[choice_num - 1][0]
+
+            elif choice_num == len(models) + 1:
+                # Custom model name
+                selected_model = input("\nEnter model name: ").strip()
+                if not selected_model:
+                    print("✗ Model name cannot be empty")
+                    input("\nPress Enter to continue...")
+                    return
+
+            elif choice_num == len(models) + 2:
+                # Cancel
+                return
+
+            else:
+                print("✗ Invalid choice")
+                input("\nPress Enter to continue...")
+                return
+
+        except ValueError:
+            print("✗ Invalid input")
+            input("\nPress Enter to continue...")
+            return
+
+        # Save the model
+        success, error = save_framework_llm_model(selected_model, self.project_root)
+
+        if success:
+            print(f"\n✓ Default model set to: {selected_model}")
+            print(f"   Location: .ravl/config/llm.toml")
+        else:
+            print(f"\n✗ Failed to save model: {error}")
+
+        input("\nPress Enter to continue...")
+
+    def setup_project_settings(self) -> None:
+        """
+        Project-level configuration submenu
+        """
+        while True:
+            print("\n" + "=" * 60)
+            print("Project Settings")
+            print("=" * 60)
+
+            # Load current project config
+            project_config_path = self.project_root / 'ravl_loops' / 'config' / 'ravl.toml'
+            project_config = {}
+
+            if project_config_path.exists():
+                try:
+                    try:
+                        import tomllib
+                    except ImportError:
+                        import tomli as tomllib
+                    with open(project_config_path, 'rb') as f:
+                        project_config = tomllib.load(f) or {}
+                except Exception:
+                    pass
+
+            # Show current settings
+            venv_path = project_config.get('venv_path', 'not set (using default)')
+            learning_path = project_config.get('learning_path', 'not set (using default)')
+            dep_count = len(project_config.get('allowed_dependencies', {}))
+
+            print("\nCurrent configuration:")
+            print(f"  Virtual environment: {venv_path}")
+            print(f"  Learning path: {learning_path}")
+            print(f"  Allowed dependencies: {dep_count} packages")
+
+            print("\nWhat would you like to configure?")
+            print("1) Virtual Environment Path")
+            print("2) Learning Artifacts Path")
+            print("3) Allowed Dependencies")
+            print("4) Back to main menu")
+
+            choice = input("\nEnter your choice (1-4): ").strip()
+
+            if choice == '1':
+                self._setup_project_venv_path(project_config_path, project_config)
+            elif choice == '2':
+                self._setup_project_learning_path(project_config_path, project_config)
+            elif choice == '3':
+                self._setup_project_dependencies(project_config_path, project_config)
+            elif choice == '4':
+                break
+            else:
+                print("Invalid choice. Please enter 1-4.")
+
+    def _setup_project_venv_path(self, config_path: Path, current_config: Dict) -> None:
+        """Configure virtual environment path"""
+        print("\n" + "=" * 60)
+        print("Virtual Environment Path")
+        print("=" * 60)
+
+        current = current_config.get('venv_path', '')
+        if current:
+            print(f"\nCurrent: {current}")
+        else:
+            print("\nNot configured (using default: .ravl/venv)")
+
+        print("\nOptions:")
+        print("1) Use default (.ravl/venv)")
+        print("2) Shared project venv (.venv)")
+        print("3) Custom path")
+        print("4) Cancel")
+
+        choice = input("\nSelect option (1-4): ").strip()
+
+        if choice == '1':
+            new_path = None  # Use default
+        elif choice == '2':
+            new_path = ".venv"
+        elif choice == '3':
+            new_path = input("Enter path: ").strip()
+            if not new_path:
+                print("✗ Path cannot be empty")
+                input("\nPress Enter to continue...")
+                return
+        elif choice == '4':
+            return
+        else:
+            print("✗ Invalid choice")
+            input("\nPress Enter to continue...")
+            return
+
+        # Save to config
+        if new_path is None:
+            # Remove from config to use default
+            current_config.pop('venv_path', None)
+        else:
+            current_config['venv_path'] = new_path
+
+        self._save_project_config(config_path, current_config)
+        print(f"\n✓ Virtual environment path updated")
+        input("\nPress Enter to continue...")
+
+    def _setup_project_learning_path(self, config_path: Path, current_config: Dict) -> None:
+        """Configure learning artifacts path"""
+        print("\n" + "=" * 60)
+        print("Learning Artifacts Path")
+        print("=" * 60)
+
+        current = current_config.get('learning_path', '')
+        if current:
+            print(f"\nCurrent: {current}")
+        else:
+            print("\nNot configured (using default: loop_dir/learnings)")
+
+        print("\nEnter new path (or press Enter to use default):")
+        new_path = input("Path: ").strip()
+
+        if new_path:
+            current_config['learning_path'] = new_path
+        else:
+            # Remove from config to use default
+            current_config.pop('learning_path', None)
+
+        self._save_project_config(config_path, current_config)
+        print(f"\n✓ Learning path updated")
+        input("\nPress Enter to continue...")
+
+    def _setup_project_dependencies(self, config_path: Path, current_config: Dict) -> None:
+        """Configure allowed dependencies"""
+        print("\n" + "=" * 60)
+        print("Allowed Dependencies Management")
+        print("=" * 60)
+
+        print("\nThis is an advanced feature.")
+        print("Dependencies are best managed by editing:")
+        print(f"  {config_path}")
+
+        print("\nExample format:")
+        print("[allowed_dependencies.package-name]")
+        print('min_version = "1.0.0"')
+        print('max_version = "2.0.0"')
+
+        input("\nPress Enter to continue...")
+
+    def _save_project_config(self, config_path: Path, config: Dict) -> None:
+        """Save project config to TOML file"""
+        try:
+            try:
+                import tomli_w
+            except ImportError:
+                print("✗ tomli-w not installed")
+                return
+        except ImportError:
+            print("✗ tomli-w not installed")
+            return
+
+        try:
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(config_path, 'wb') as f:
+                tomli_w.dump(config, f)
+        except Exception as e:
+            print(f"✗ Failed to save config: {e}")
 
     def _setup_prompt_normalization(self) -> None:
         """
@@ -1147,27 +1435,31 @@ class RAVLSetup:
             print("What would you like to configure?")
             llm_status = f"✓ {current_llm}" if current_llm else "not configured"
             print(f"1) LLM Configuration ({llm_status})")
-            print("2) API Integrations (optional - add APIs your loops need)")
-            print("3) MCP Servers (optional - connect to Model Context Protocol servers)")
-            print("4) Exit")
+            print("2) Project Settings")
+            print("3) API Integrations (optional - add APIs your loops need)")
+            print("4) MCP Servers (optional - connect to Model Context Protocol servers)")
+            print("5) Exit")
 
-            choice = input("\nEnter your choice (1-4): ").strip()
+            choice = input("\nEnter your choice (1-5): ").strip()
 
             if choice == '1':
                 self.setup_llm_configuration()
 
             elif choice == '2':
-                self.setup_api_integration()
+                self.setup_project_settings()
 
             elif choice == '3':
-                self.setup_mcp_servers()
+                self.setup_api_integration()
 
             elif choice == '4':
+                self.setup_mcp_servers()
+
+            elif choice == '5':
                 print("\n✓ Configuration complete!")
                 break
 
             else:
-                print("Invalid choice. Please enter 1-4.")
+                print("Invalid choice. Please enter 1-5.")
 
     def run(self):
         """Run the setup wizard."""

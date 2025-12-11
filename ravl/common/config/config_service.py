@@ -514,3 +514,49 @@ def save_framework_llm_provider(provider: str, project_root: Optional[Path] = No
         return (True, None)
     except Exception as e:
         return (False, str(e))
+
+
+def save_framework_llm_model(model: str, project_root: Optional[Path] = None) -> Tuple[bool, Optional[str]]:
+    """
+    Save LLM model to framework config
+
+    Args:
+        model: Model name (e.g., "claude-opus-4-5-20251101")
+        project_root: Project root (auto-detected if not provided)
+
+    Returns:
+        (success, error_message)
+    """
+    if tomli_w is None:
+        return (False, "tomli-w not installed")
+
+    if project_root is None:
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        project_root = RAVLCLIBase.find_project_root(required=False)
+        if project_root is None:
+            return (False, "Could not find project root")
+
+    framework_config_path = project_root / '.ravl' / 'config' / 'llm.toml'
+
+    # Load existing config
+    config = {}
+    if framework_config_path.exists():
+        try:
+            with open(framework_config_path, 'rb') as f:
+                config = tomllib.load(f)
+        except Exception:
+            pass
+
+    # Update model
+    if 'llm' not in config:
+        config['llm'] = {}
+    config['llm']['default_model'] = model
+
+    # Save
+    try:
+        framework_config_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(framework_config_path, 'wb') as f:
+            tomli_w.dump(config, f)
+        return (True, None)
+    except Exception as e:
+        return (False, str(e))
