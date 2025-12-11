@@ -193,7 +193,7 @@ class AnthropicProvider(LLMProvider):
             raise
 
     def get_provider_name(self) -> str:
-        return f"Anthropic ({self.model})"
+        return "anthropic"
 
 
 class OpenAIProvider(LLMProvider):
@@ -280,7 +280,7 @@ class OpenAIProvider(LLMProvider):
             raise
 
     def get_provider_name(self) -> str:
-        return f"OpenAI ({self.model})"
+        return "openai"
 
 
 class GoogleProvider(LLMProvider):
@@ -289,7 +289,7 @@ class GoogleProvider(LLMProvider):
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "gemini-2.0-flash-exp",
+        model: str = "gemini-3-pro-preview",
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         top_p: Optional[float] = None
@@ -351,7 +351,7 @@ class GoogleProvider(LLMProvider):
             raise
 
     def get_provider_name(self) -> str:
-        return f"Google ({self.model})"
+        return "google"
 
 
 class OllamaProvider(LLMProvider):
@@ -424,7 +424,7 @@ class OllamaProvider(LLMProvider):
             raise
 
     def get_provider_name(self) -> str:
-        return f"Ollama ({self.model})"
+        return "ollama"
 
 
 class LLMProviderFactory:
@@ -523,7 +523,7 @@ class LLMProviderFactory:
         elif provider_type == "google":
             return GoogleProvider(
                 api_key=api_key,
-                model=model or "gemini-2.0-flash-exp",
+                model=model or "gemini-3-pro-preview",
                 temperature=temperature,
                 max_tokens=max_tokens,
                 top_p=top_p
