@@ -160,12 +160,8 @@ class SimpleCodeExecutor:
 
                         if success:
                             approver.display_success_message(approved_packages)
-                            return {
-                                'success': False,
-                                'error': 'APPROVAL_REQUIRED_RERUN',
-                                'message': f'✅ Approved {len(approved_packages)} package(s). Please re-run loop.',
-                                'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
-                            }
+                            log_execution("✅ Packages approved - continuing with execution...", status='success')
+                            # Continue to validation and execution (don't return early)
                         else:
                             return {
                                 'success': False,

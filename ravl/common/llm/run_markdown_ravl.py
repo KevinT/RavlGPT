@@ -398,6 +398,8 @@ class ConfigBasedRAVLRunner:
         for var_name, var_value in context_vars.items():
             log_message(f"   {var_name}: {var_value}", status='info', indent=0)
         log_message(f"   Mode: {args.mode}", status='info', indent=0)
+        if getattr(args, 'interactive', False):
+            log_message(f"   Interactive: enabled", status='info', indent=0)
 
         start_time = time.time()
 

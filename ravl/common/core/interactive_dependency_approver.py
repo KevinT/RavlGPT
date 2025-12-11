@@ -220,12 +220,9 @@ class InteractiveDependencyApprover:
         print(f"Approved {len(packages)} package(s) and saved to:", file=sys.stderr)
         print(f"  {config_path}", file=sys.stderr)
         print("\n" + "-" * 70, file=sys.stderr)
-        print("TO RE-RUN:", file=sys.stderr)
-
-        # Get loop namespace for run command
-        loop_name = self.loop_dir.name
-        print(f"  ravl {loop_name} --interactive", file=sys.stderr)
-
+        print("NEXT STEPS:", file=sys.stderr)
+        print("  • Installing approved packages...", file=sys.stderr)
+        print("  • Continuing with loop execution...", file=sys.stderr)
         print("=" * 70, file=sys.stderr)
         print("", file=sys.stderr)
 
