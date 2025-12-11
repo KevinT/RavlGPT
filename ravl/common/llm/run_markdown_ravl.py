@@ -401,9 +401,9 @@ class ConfigBasedRAVLRunner:
             log_execution(f"   {var_name}: {var_value}", status='info', indent=0)
 
         # Display runtime config
-        log_message(f"   Mode: {args.mode}", status='info', indent=0)
+        log_execution(f"   mode: {args.mode}", status='info', indent=0)
         if getattr(args, 'interactive', False):
-            log_message(f"   Interactive: enabled", status='info', indent=0)
+            log_execution(f"   Interactive: enabled", status='info', indent=0)
 
         start_time = time.time()
 
@@ -447,7 +447,7 @@ class ConfigBasedRAVLRunner:
             if not success:
                 raise RuntimeError(f"Failed to initialize virtual environment: {error}")
 
-            log_message(f"   venv: {venv_path}", status='info', indent=0)
+            log_execution(f"   venv: {venv_path}", status='info', indent=0)
 
             # Initialize executor (with initialization failure handling)
             executor = None
@@ -471,7 +471,7 @@ class ConfigBasedRAVLRunner:
                     llm_config = RAVLRunner.resolve_llm_config(self.loop_dir, self.config, project_root)
                     source = llm_config.get('_source', 'config')
 
-                    log_message(f"   LLM: {provider_name} ({model_name}) from {source}", status='info', indent=0)
+                    log_execution(f"   llm: {provider_name} ({model_name}) from {source}", status='info', indent=0)
 
             except Exception as init_error:
                 # Executor initialization failed (e.g., missing API key, invalid config)
