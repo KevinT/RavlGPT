@@ -23,6 +23,7 @@ from google_docs_revision_tracker import GoogleDocsRevisionTracker
 from google_workspace_user_fetcher import GoogleWorkspaceUserFetcher
 from google_slides_exporter import GoogleSlidesExporter
 from google_sheets_analyzer import GoogleSheetsAnalyzer
+from google_sheets_revision_tracker import GoogleSheetsRevisionTracker
 
 __all__ = [
     'CredentialValidator',
@@ -34,4 +35,5 @@ __all__ = [
     'GoogleWorkspaceUserFetcher',
     'GoogleSlidesExporter',
     'GoogleSheetsAnalyzer',
+    'GoogleSheetsRevisionTracker',
 ]

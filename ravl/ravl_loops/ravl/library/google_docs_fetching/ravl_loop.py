@@ -298,19 +298,39 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
 
                 # Always collect edit history metadata
                 doc_name = filename.replace('.md', '')
-                tracker = GoogleDocsRevisionTracker(self)
-                try:
-                    edit_history = tracker.get_edit_history(doc_content.get('doc_id'), self.max_revisions)
-                except Exception as e:
-                    error_msg = str(e)
-                    print(f"      ⚠️  Could not fetch edit history: {e}", file=sys.stderr)
-                    self.act_results['warnings'].append({
-                        'document': url,
-                        'step': 'edit_history_fetch',
-                        'error': error_msg,
-                        'timestamp': datetime.now(timezone.utc).isoformat()
-                    })
-                    edit_history = []
+
+                # Detect document type and use appropriate tracker for edit history
+                if '/spreadsheets/d/' in url:
+                    # Use Sheets-specific revision tracker for edit history
+                    from ravl.common.integrations import GoogleSheetsRevisionTracker
+                    tracker = GoogleSheetsRevisionTracker(self)
+                    try:
+                        edit_history = tracker.get_edit_history(doc_content.get('spreadsheet_id'), self.max_revisions)
+                    except Exception as e:
+                        error_msg = str(e)
+                        print(f"      ⚠️  Could not fetch edit history: {e}", file=sys.stderr)
+                        self.act_results['warnings'].append({
+                            'document': url,
+                            'step': 'edit_history_fetch',
+                            'error': error_msg,
+                            'timestamp': datetime.now(timezone.utc).isoformat()
+                        })
+                        edit_history = []
+                else:
+                    # Use Docs revision tracker for edit history
+                    tracker = GoogleDocsRevisionTracker(self)
+                    try:
+                        edit_history = tracker.get_edit_history(doc_content.get('doc_id'), self.max_revisions)
+                    except Exception as e:
+                        error_msg = str(e)
+                        print(f"      ⚠️  Could not fetch edit history: {e}", file=sys.stderr)
+                        self.act_results['warnings'].append({
+                            'document': url,
+                            'step': 'edit_history_fetch',
+                            'error': error_msg,
+                            'timestamp': datetime.now(timezone.utc).isoformat()
+                        })
+                        edit_history = []
 
                 # Track revision content if enabled (per-document setting)
                 # Do this BEFORE creating metadata entry so we can include revisions_exported
@@ -318,28 +338,57 @@ class GoogleDocsFetchingLoop(BaseRAVLLoop, GoogleAPIsMixin):
                 revision_files = []
                 doc_include_revisions = doc_config.get('include_revisions', False)
                 if doc_include_revisions:
-                    try:
-                        revision_result = tracker.save_missing_revisions(
-                            document_name=doc_name,
-                            doc_id=doc_content.get('doc_id'),
-                            output_path=str(target_path),
-                            revisions_metadata=edit_history,
-                            max_count=self.max_revisions,
-                            metadata_path=str(metadata_path)
-                        )
-                        revision_files = revision_result.get('files_created', [])
-                        revisions_exported = revision_result.get('revisions_exported', {})
-                        if revision_files:
-                            print(f"      ✓ Revisions saved: {len(revision_files)} new revision files", file=sys.stderr)
-                    except Exception as e:
-                        error_msg = str(e)
-                        print(f"      ⚠️  Could not save revisions: {e}", file=sys.stderr)
-                        self.act_results['warnings'].append({
-                            'document': url,
-                            'step': 'revisions_save',
-                            'error': error_msg,
-                            'timestamp': datetime.now(timezone.utc).isoformat()
-                        })
+                    # Detect document type and use appropriate tracker
+                    if '/spreadsheets/d/' in url:
+                        # Use Sheets-specific revision tracker
+                        from ravl.common.integrations import GoogleSheetsRevisionTracker
+                        sheets_tracker = GoogleSheetsRevisionTracker(self)
+                        try:
+                            revision_result = sheets_tracker.save_missing_revisions(
+                                document_name=doc_name,
+                                spreadsheet_id=doc_content.get('spreadsheet_id'),  # Note: different key for Sheets
+                                output_path=str(target_path),
+                                revisions_metadata=edit_history,
+                                max_count=self.max_revisions,
+                                metadata_path=str(metadata_path)
+                            )
+                            revision_files = revision_result.get('files_created', [])
+                            revisions_exported = revision_result.get('revisions_exported', {})
+                            if revision_files:
+                                print(f"      ✓ Revisions saved: {len(revision_files)} new revision files", file=sys.stderr)
+                        except Exception as e:
+                            error_msg = str(e)
+                            print(f"      ⚠️  Could not save revisions: {e}", file=sys.stderr)
+                            self.act_results['warnings'].append({
+                                'document': url,
+                                'step': 'revisions_save',
+                                'error': error_msg,
+                                'timestamp': datetime.now(timezone.utc).isoformat()
+                            })
+                    else:
+                        # Use Docs revision tracker (existing code)
+                        try:
+                            revision_result = tracker.save_missing_revisions(
+                                document_name=doc_name,
+                                doc_id=doc_content.get('doc_id'),
+                                output_path=str(target_path),
+                                revisions_metadata=edit_history,
+                                max_count=self.max_revisions,
+                                metadata_path=str(metadata_path)
+                            )
+                            revision_files = revision_result.get('files_created', [])
+                            revisions_exported = revision_result.get('revisions_exported', {})
+                            if revision_files:
+                                print(f"      ✓ Revisions saved: {len(revision_files)} new revision files", file=sys.stderr)
+                        except Exception as e:
+                            error_msg = str(e)
+                            print(f"      ⚠️  Could not save revisions: {e}", file=sys.stderr)
+                            self.act_results['warnings'].append({
+                                'document': url,
+                                'step': 'revisions_save',
+                                'error': error_msg,
+                                'timestamp': datetime.now(timezone.utc).isoformat()
+                            })
 
                 # Create/append metadata entry
                 sourced_now = datetime.now(timezone.utc).isoformat()

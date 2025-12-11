@@ -3,3 +3,7 @@ description = "Fetch Google Docs/Slides/Sheets with lineage tracking and revisio
 emoji = "📄"
 type = "framework"
 class = "GoogleDocsFetchingLoop"
+
+[allowed_dependencies.openpyxl]
+min_version = "3.0.0"
+max_version = "3.999.999"
