@@ -413,6 +413,31 @@ class RAVLSetup:
         self.env_vars[env_key] = api_key
         os.environ[env_key] = api_key  # Update process env for immediate effect
 
+        # Warn if shell environment has a different value
+        # (After this change, .env will override shell, but user should know)
+        import subprocess
+        try:
+            # Check what shell environment currently has (before we updated os.environ)
+            result = subprocess.run(
+                ['sh', '-c', f'echo ${env_key}'],
+                capture_output=True,
+                text=True,
+                timeout=1
+            )
+            shell_value = result.stdout.strip()
+            if shell_value and shell_value != api_key:
+                print(f"\n⚠️  WARNING: {env_key} is also set in your shell environment")
+                print(f"  Shell value: {shell_value[:15]}...")
+                print(f"  .env value:  {api_key[:15]}...")
+                print(f"\n  Your .env file will now take precedence, but to avoid confusion:")
+                print(f"  Edit ~/.zshrc (or ~/.bashrc) and remove or comment out:")
+                print(f"    export {env_key}=...")
+                print(f"\n  Then run: source ~/.zshrc")
+                input("\nPress Enter to continue...")
+        except Exception:
+            # If shell check fails, silently continue (not critical)
+            pass
+
         # Ask if this should be the default
         if not current or current != provider_id:
             set_default = input(f"\nSet {provider_name} as your default LLM provider? (y/n): ").strip().lower()
@@ -427,6 +452,12 @@ class RAVLSetup:
                     print(f"✗ Failed to save provider preference: {error}")
 
         self._save_env()
+
+        # Clean up legacy RAVL_DEFAULT_LLM_PROVIDER if present
+        if 'RAVL_DEFAULT_LLM_PROVIDER' in self.env_vars:
+            del self.env_vars['RAVL_DEFAULT_LLM_PROVIDER']
+            self._save_env()
+            print("  Removed legacy RAVL_DEFAULT_LLM_PROVIDER (now using .ravl/config/llm.toml)")
 
         print(f"✓ {provider_name} configured")
         return True
@@ -455,12 +486,12 @@ class RAVLSetup:
             next_option = 1
 
         print(f"{next_option}) Add new API integration")
-        print(f"{next_option + 1}) Back to main menu")
+        print("0) Back")
 
-        choice = input(f"\nSelect (1-{next_option + 1}): ").strip()
+        choice = input(f"\nSelect (0-{next_option}): ").strip()
 
         # Check if user wants to go back
-        if choice == str(next_option + 1):
+        if choice == '0':
             return False
 
         # Check if user wants to add new API
@@ -641,18 +672,18 @@ class RAVLSetup:
             print("What would you like to configure?")
             print("1) Prompt Normalization (token optimization)")
             print("2) Max Tokens (per-use-case limits)")
-            print("3) Back to main menu")
+            print("0) Back")
 
-            choice = input("\nSelect (1-3): ").strip()
+            choice = input("\nSelect (0-2): ").strip()
 
             if choice == '1':
                 self._setup_prompt_normalization()
             elif choice == '2':
                 self._setup_max_tokens()
-            elif choice == '3':
+            elif choice == '0':
                 return False
             else:
-                print("\n✗ Invalid choice. Please select 1-3.")
+                print("\n✗ Invalid choice. Please select 0-2.")
                 input("\nPress Enter to continue...")
 
     def setup_llm_configuration(self) -> None:
@@ -678,9 +709,9 @@ class RAVLSetup:
             print(f"1) LLM Provider ({provider_status})")
             print(f"2) LLM Model ({model_status})")
             print("3) LLM Defaults (prompt normalization, max tokens)")
-            print("4) Back to main menu")
+            print("0) Back")
 
-            choice = input("\nEnter your choice (1-4): ").strip()
+            choice = input("\nEnter your choice (0-3): ").strip()
 
             if choice == '1':
                 self.setup_llm_provider()
@@ -688,10 +719,10 @@ class RAVLSetup:
                 self.setup_llm_model()
             elif choice == '3':
                 self.setup_llm_defaults()
-            elif choice == '4':
+            elif choice == '0':
                 break
             else:
-                print("Invalid choice. Please enter 1-4.")
+                print("Invalid choice. Please enter 0-3.")
 
     def setup_llm_model(self) -> None:
         """
@@ -821,9 +852,9 @@ class RAVLSetup:
             print("1) Virtual Environment Path")
             print("2) Learning Artifacts Path")
             print("3) Allowed Dependencies")
-            print("4) Back to main menu")
+            print("0) Back")
 
-            choice = input("\nEnter your choice (1-4): ").strip()
+            choice = input("\nEnter your choice (0-3): ").strip()
 
             if choice == '1':
                 self._setup_project_venv_path(project_config_path, project_config)
@@ -831,10 +862,10 @@ class RAVLSetup:
                 self._setup_project_learning_path(project_config_path, project_config)
             elif choice == '3':
                 self._setup_project_dependencies(project_config_path, project_config)
-            elif choice == '4':
+            elif choice == '0':
                 break
             else:
-                print("Invalid choice. Please enter 1-4.")
+                print("Invalid choice. Please enter 0-3.")
 
     def _setup_project_venv_path(self, config_path: Path, current_config: Dict) -> None:
         """Configure virtual environment path"""
@@ -975,9 +1006,9 @@ class RAVLSetup:
             print("2) Change minimum block size")
             print("3) Toggle logging on/off")
             print("4) Reset to framework defaults")
-            print("5) Back to LLM Defaults menu")
+            print("0) Back")
 
-            choice = input("\nSelect (1-5): ").strip()
+            choice = input("\nSelect (0-4): ").strip()
 
             if choice == '1':
                 # Toggle enabled
@@ -1040,12 +1071,12 @@ class RAVLSetup:
 
                 input("\nPress Enter to continue...")
 
-            elif choice == '5':
+            elif choice == '0':
                 # Back to LLM Defaults menu
                 return
 
             else:
-                print("\n✗ Invalid choice. Please select 1-5.")
+                print("\n✗ Invalid choice. Please select 0-4.")
                 input("\nPress Enter to continue...")
 
     def _setup_max_tokens(self) -> None:
@@ -1083,9 +1114,9 @@ class RAVLSetup:
             print("\nWhat would you like to do?")
             print(f"{len(max_tokens_keys) + 1}) Change a specific limit")
             print(f"{len(max_tokens_keys) + 2}) Reset all to framework defaults")
-            print(f"{len(max_tokens_keys) + 3}) Back to LLM Defaults menu")
+            print("0) Back")
 
-            choice = input(f"\nSelect (1-{len(max_tokens_keys) + 3}): ").strip()
+            choice = input(f"\nSelect (0-{len(max_tokens_keys) + 2}): ").strip()
 
             # Parse choice
             try:
@@ -1147,12 +1178,12 @@ class RAVLSetup:
 
                 input("\nPress Enter to continue...")
 
-            elif choice_num == len(max_tokens_keys) + 3:
+            elif choice_num == 0:
                 # Back to LLM Defaults menu
                 return
 
             else:
-                print(f"\n✗ Invalid choice. Please select 1-{len(max_tokens_keys) + 3}.")
+                print(f"\n✗ Invalid choice. Please select 0-{len(max_tokens_keys) + 2}.")
                 input("\nPress Enter to continue...")
 
     def setup_mcp_servers(self) -> bool:
@@ -1185,12 +1216,12 @@ class RAVLSetup:
 
         print(f"{next_option}) Add new MCP server")
         print(f"{next_option + 1}) Test connections")
-        print(f"{next_option + 2}) Back to main menu")
+        print("0) Back")
 
-        choice = input(f"\nSelect (1-{next_option + 2}): ").strip()
+        choice = input(f"\nSelect (0-{next_option + 1}): ").strip()
 
         # Check if user wants to go back
-        if choice == str(next_option + 2):
+        if choice == '0':
             return False
 
         # Check if user wants to test connections
@@ -1440,9 +1471,9 @@ class RAVLSetup:
             print("2) Project Settings")
             print("3) API Integrations (optional - add APIs your loops need)")
             print("4) MCP Servers (optional - connect to Model Context Protocol servers)")
-            print("5) Exit")
+            print("0) Exit")
 
-            choice = input("\nEnter your choice (1-5): ").strip()
+            choice = input("\nEnter your choice (0-4): ").strip()
 
             if choice == '1':
                 self.setup_llm_configuration()
@@ -1456,12 +1487,12 @@ class RAVLSetup:
             elif choice == '4':
                 self.setup_mcp_servers()
 
-            elif choice == '5':
+            elif choice == '0':
                 print("\n✓ Configuration complete!")
                 break
 
             else:
-                print("Invalid choice. Please enter 1-5.")
+                print("Invalid choice. Please enter 0-4.")
 
     def run(self):
         """Run the setup wizard."""

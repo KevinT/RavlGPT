@@ -125,10 +125,25 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         # Load .env file and set all variables in environment
         env_vars = RAVLRunner.load_env_file(self.project_root)
+
+        # Detect conflicts (for migration warning)
+        conflicts = []
         for key, value in env_vars.items():
-            # Only set if not already in environment (don't override existing)
-            if key not in os.environ:
-                os.environ[key] = value
+            if key in os.environ and os.environ[key] != value:
+                conflicts.append(key)
+
+        # .env file takes precedence (it's the project source of truth)
+        # Shell environment is used only as fallback if key not in .env
+        for key, value in env_vars.items():
+            os.environ[key] = value
+
+        # Warn about shell conflicts (migration helper)
+        if conflicts and not os.environ.get('RAVL_SUPPRESS_ENV_WARNINGS'):
+            print("\n⚠️  Note: .env file values are now preferred over shell environment.")
+            print(f"  Updated {len(conflicts)} variable(s): {', '.join(conflicts[:3])}")
+            if len(conflicts) > 3:
+                print(f"  ... and {len(conflicts) - 3} more")
+            print("  To suppress this message: export RAVL_SUPPRESS_ENV_WARNINGS=1\n")
 
         self.discovery = LoopDiscovery(self.project_root, loops_dir=loops_dir)
 
