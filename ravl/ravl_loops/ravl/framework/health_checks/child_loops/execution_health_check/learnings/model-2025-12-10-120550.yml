@@ -1,5 +1,5 @@
-learning_iterations: 15
-last_learned: '2025-12-10T12:17:50.863311+00:00'
+learning_iterations: 9
+last_learned: '2025-12-10T12:05:50.008323+00:00'
 known_failure_patterns: {}
 successful_strategies: []
 loops_diagnosed:

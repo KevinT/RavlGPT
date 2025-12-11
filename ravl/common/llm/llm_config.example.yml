@@ -16,7 +16,7 @@ llm_config:
 # Example 3: Google Gemini
 # llm_config:
 #   provider: google
-#   model: gemini-2.0-flash-exp
+#   model: gemini-3-pro-preview
 #   # api_key: "optional-if-not-in-env"
 
 # Example 4: Ollama (local, free)

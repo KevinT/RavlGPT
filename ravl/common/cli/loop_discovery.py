@@ -601,6 +601,49 @@ class LoopDiscovery:
         self._discover_namespace_organizers(self.framework_loops_dir, 'framework', loops)
         self._discover_namespace_organizers(self.loops_dir, 'project', loops)
 
+        # Scan child_loops directories of ALL discovered loops (both executable and organizers)
+        # This enables nested namespace organizers like experimental/child_loops/clickup/
+        loops_to_scan = list(loops)  # Copy to avoid modifying while iterating
+        for loop in loops_to_scan:
+            loop_path = loop['path']
+            loop_type = loop['loop_type']
+            child_loops_dir = loop_path / 'child_loops'
+            if not child_loops_dir.exists():
+                continue
+
+            for child in child_loops_dir.iterdir():
+                if not child.is_dir():
+                    continue
+
+                # Check if it's a namespace organizer
+                if self._is_namespace_organizer(child):
+                    # Load config to get emoji and description
+                    config = self.load_config(child)
+                    description = config.get('description', child.name.replace('_', ' ').title())
+                    emoji = config.get('emoji', '📁')
+
+                    # Try to get better description from README if available
+                    try:
+                        readme_content = (child / 'README.md').read_text()
+                        first_line = readme_content.split('\n')[0]
+                        if first_line.startswith('#'):
+                            description = first_line.lstrip('#').strip()
+                    except:
+                        pass
+
+                    loops.append({
+                        'path': child,
+                        'config': {
+                            'name': child.name,
+                            'description': description,
+                            'emoji': emoji
+                        },
+                        'parent': loop_path,
+                        'last_run': None,
+                        'loop_type': loop_type,
+                        'is_namespace_organizer': True
+                    })
+
         return loops
 
     def _matches_hierarchical_path(self, loop_path: Path, segments: List[str]) -> bool:

@@ -607,10 +607,10 @@ class RAVLListCommand(RAVLCLIBase):
 
         # Show "Last run" only for executable loops, not for organizers
         if is_organizer:
-            print(f"{branch} {emoji}{lock_indicator} {loop_name} - {display_name}", file=sys.stderr)
+            print(f"{branch} {emoji}{lock_indicator} {display_name}", file=sys.stderr)
         else:
             last_run = loop_info.get('last_run') or 'Never'
-            print(f"{branch} {emoji}{lock_indicator} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
+            print(f"{branch} {emoji}{lock_indicator} {display_name} - Last run: {last_run}", file=sys.stderr)
 
         # Print children with proper indentation
         children = loop_info.get('children', [])
@@ -646,10 +646,10 @@ class RAVLListCommand(RAVLCLIBase):
 
         # Show "Last run" only for executable loops, not for organizers
         if is_organizer:
-            print(f"{prefix}{branch} {emoji}{lock_indicator} {loop_name} - {display_name}", file=sys.stderr)
+            print(f"{prefix}{branch} {emoji}{lock_indicator} {display_name}", file=sys.stderr)
         else:
             last_run = loop_info.get('last_run') or 'Never'
-            print(f"{prefix}{branch} {emoji}{lock_indicator} {loop_name} - {display_name} - Last run: {last_run}", file=sys.stderr)
+            print(f"{prefix}{branch} {emoji}{lock_indicator} {display_name} - Last run: {last_run}", file=sys.stderr)
 
         # Print grandchildren with proper prefix continuation
         child_prefix = prefix + ("    " if is_last else "│   ")

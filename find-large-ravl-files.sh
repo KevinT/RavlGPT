@@ -6,7 +6,7 @@
 THRESHOLD=${1:-500}
 
 echo "Finding files in .ravl with more than $THRESHOLD lines..."
-echo "Excluding: venv/ and logs/ folders"
+echo "Excluding: venv/, logs/, and build/ folders"
 echo ""
 
-find .ravl -type f -not -path ".ravl/venv/*" -not -path ".ravl/logs/*" -exec wc -l {} + | awk -v threshold="$THRESHOLD" '$1 > threshold {print $1, $2}' | sort -rn
+find .ravl -type f -not -path "*/venv/*" -not -path "*/logs/*" -not -path "*/build/*" -exec wc -l {} + | awk -v threshold="$THRESHOLD" '$1 > threshold {print $1, $2}' | sort -rn
