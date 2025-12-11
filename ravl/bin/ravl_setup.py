@@ -160,7 +160,7 @@ class RAVLSetup:
 
     def _validate_llm_key(self, provider: str, api_key: str) -> bool:
         """
-        Validate an LLM provider API key.
+        Validate an LLM provider API key by making an actual API call.
 
         Returns True if valid, False otherwise.
         """
@@ -168,18 +168,56 @@ class RAVLSetup:
             if provider == 'anthropic':
                 import anthropic
                 client = anthropic.Anthropic(api_key=api_key)
-                # Simple test - just check if key format is valid
-                return api_key.startswith('sk-ant-')
+                # Make a minimal API call to verify the key works
+                # Use a very small max_tokens to minimize cost
+                try:
+                    client.messages.create(
+                        model="claude-3-haiku-20240307",  # Cheapest model
+                        max_tokens=1,
+                        messages=[{"role": "user", "content": "test"}]
+                    )
+                    return True
+                except anthropic.AuthenticationError:
+                    return False
+                except anthropic.PermissionDeniedError:
+                    return False
+                except Exception:
+                    # Other errors (rate limit, etc.) - key might still be valid
+                    # Fall back to format check
+                    return api_key.startswith('sk-ant-')
 
             elif provider == 'openai':
                 import openai
                 client = openai.OpenAI(api_key=api_key)
-                # Simple test
-                return api_key.startswith('sk-')
+                # Make a minimal API call
+                try:
+                    client.chat.completions.create(
+                        model="gpt-3.5-turbo",  # Cheapest model
+                        max_tokens=1,
+                        messages=[{"role": "user", "content": "test"}]
+                    )
+                    return True
+                except openai.AuthenticationError:
+                    return False
+                except Exception:
+                    # Fall back to format check
+                    return api_key.startswith('sk-')
 
             elif provider == 'google':
-                # Just check non-empty for now
-                return len(api_key) > 0
+                import google.generativeai as genai
+                # Configure with the API key
+                genai.configure(api_key=api_key)
+                try:
+                    # Make a minimal API call
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    model.generate_content("test", generation_config={'max_output_tokens': 1})
+                    return True
+                except Exception as e:
+                    # Check for authentication errors
+                    if 'API_KEY_INVALID' in str(e) or 'authentication' in str(e).lower():
+                        return False
+                    # Other errors - key might still be valid
+                    return len(api_key) > 0
 
             elif provider == 'ollama':
                 import requests
