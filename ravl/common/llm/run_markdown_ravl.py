@@ -395,8 +395,12 @@ class ConfigBasedRAVLRunner:
         # Display startup info
         emoji = self.config.get('emoji', '➿')
         log_message(f"{emoji} {loop_name} starting...", status='info', indent=0)
+
+        # Display config items (execution information - dimmed by default)
         for var_name, var_value in context_vars.items():
-            log_message(f"   {var_name}: {var_value}", status='info', indent=0)
+            log_execution(f"   {var_name}: {var_value}", status='info', indent=0)
+
+        # Display runtime config
         log_message(f"   Mode: {args.mode}", status='info', indent=0)
         if getattr(args, 'interactive', False):
             log_message(f"   Interactive: enabled", status='info', indent=0)
