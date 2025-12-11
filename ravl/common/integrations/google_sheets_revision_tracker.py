@@ -494,7 +494,7 @@ class GoogleSheetsRevisionTracker:
 
                 # Add delay between requests to avoid rate limiting (except for last revision)
                 if i < len(revisions_metadata) - 1:
-                    time.sleep(0.5)  # 500ms delay between revisions
+                    time.sleep(2.0)  # 2 second delay between revisions to avoid 429 errors
 
             except FileNotFoundError as e:
                 # Revision not exportable (pruned by Google) - skip it and continue
