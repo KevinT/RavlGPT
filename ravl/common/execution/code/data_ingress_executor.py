@@ -360,13 +360,14 @@ class DataIngressExecutor:
 
         return text
 
-    def execute_code(self, code: str, timeout: int = 300) -> Dict[str, Any]:
+    def execute_code(self, code: str, timeout: int = 300, interactive: bool = False) -> Dict[str, Any]:
         """
         Execute generated Python code safely in isolated environment
 
         Args:
             code: Python code to execute (should define fetch_data() function)
             timeout: Execution timeout in seconds
+            interactive: Enable interactive dependency approval workflow (not yet implemented for data ingress)
 
         Returns:
             Dict with keys: success (bool), data (dict), error (str), execution_time (float),

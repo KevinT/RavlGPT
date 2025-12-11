@@ -68,7 +68,8 @@ class ActOrchestrator:
         simple_code_executor,
         should_attempt_code_generation_fn: Callable[[], bool],
         is_data_ingress_loop_fn: Callable[[bool], bool],
-        get_available_credentials_fn: Callable[[], list]
+        get_available_credentials_fn: Callable[[], list],
+        interactive: bool = False
     ):
         """
         Initialize act orchestrator
@@ -105,6 +106,7 @@ class ActOrchestrator:
         self.should_attempt_code_generation = should_attempt_code_generation_fn
         self.is_data_ingress_loop = is_data_ingress_loop_fn
         self.get_available_credentials = get_available_credentials_fn
+        self.interactive = interactive
 
         # Track generated code for learning
         self.last_generated_code = None
@@ -364,7 +366,7 @@ class ActOrchestrator:
                     from data_ingress_executor import DataIngressExecutor
 
                 executor = DataIngressExecutor(self.loop_dir, self.llm, project_root=self.project_root)
-                execution_result = executor.execute_code(generated_code, timeout=self.config.get('execution_timeout', 300))
+                execution_result = executor.execute_code(generated_code, timeout=self.config.get('execution_timeout', 300), interactive=self.interactive)
 
                 act_result['code_executed'] = True
                 act_result['execution_result'] = execution_result
@@ -379,7 +381,7 @@ class ActOrchestrator:
                     act_result['execution_error'] = execution_result.get('error', 'Unknown error')
             else:
                 # General loops use simple executor (file I/O, data transforms, etc.)
-                execution_result = self.simple_code_executor.execute_code(generated_code, timeout=self.config.get('execution_timeout', 300))
+                execution_result = self.simple_code_executor.execute_code(generated_code, timeout=self.config.get('execution_timeout', 300), interactive=self.interactive)
 
                 act_result['code_executed'] = True
                 act_result['execution_result'] = execution_result

@@ -421,7 +421,7 @@ class RAVLUniversalRunner(RAVLCLIBase):
             with open(locked_code_path, 'r') as f:
                 code = f.read()
 
-            result = executor.execute_code(code)
+            result = executor.execute_code(code, interactive=args.interactive)
 
             # Save result
             duration = time.time() - start_time
@@ -778,6 +778,9 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
         if hasattr(args, 'venv_path') and args.venv_path:
             cmd.extend(['--venv-path', str(args.venv_path)])
+
+        if hasattr(args, 'interactive') and args.interactive:
+            cmd.append('--interactive')
 
         # Add any loop-specific arguments that were passed (e.g., --role for role_ambitions)
         if hasattr(args, 'unknown_args'):
@@ -1243,6 +1246,11 @@ def main():
         '--show-config',
         action='store_true',
         help='Display resolved configuration without executing the loop'
+    )
+    parser.add_argument(
+        '--interactive',
+        action='store_true',
+        help='Enable interactive dependency approval workflow'
     )
 
     # Use parse_known_args to allow loop-specific parameters through

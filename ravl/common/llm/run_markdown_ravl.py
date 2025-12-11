@@ -452,7 +452,8 @@ class ConfigBasedRAVLRunner:
                     loop_dir=self.loop_dir,
                     learnings_dir=learnings_dir,
                     context_vars=context_vars,
-                    force_code_regeneration=force_code_regeneration
+                    force_code_regeneration=force_code_regeneration,
+                    interactive=getattr(args, 'interactive', False)
                 )
 
                 # Log LLM provider and model being used
@@ -464,7 +465,7 @@ class ConfigBasedRAVLRunner:
                     llm_config = RAVLRunner.resolve_llm_config(self.loop_dir, self.config, project_root)
                     source = llm_config.get('_source', 'config')
 
-                    log_message(f"   LLM: {provider_name} ({model_name}) as set in {source}", status='info', indent=0)
+                    log_message(f"   LLM: {provider_name} ({model_name}) from {source}", status='info', indent=0)
 
             except Exception as init_error:
                 # Executor initialization failed (e.g., missing API key, invalid config)
@@ -930,6 +931,11 @@ def main():
         help='Show execution learning details (code generation, DSL, caching). '
              'Default: only show domain learning progress.'
     )
+    initial_parser.add_argument(
+        '--interactive',
+        action='store_true',
+        help='Enable interactive dependency approval workflow'
+    )
 
     # Parse just these arguments first
     initial_args, remaining_argv = initial_parser.parse_known_args()
@@ -989,6 +995,10 @@ def main():
             args.learning_path = initial_args.learning_path
         elif 'learning_path' in runner.config:
             args.learning_path = runner.config['learning_path']
+
+        # Pass interactive flag from initial_args
+        if hasattr(initial_args, 'interactive'):
+            args.interactive = initial_args.interactive
 
         # Handle --show-config: Display configuration and exit
         if initial_args.show_config:

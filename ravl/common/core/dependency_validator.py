@@ -443,3 +443,47 @@ After adding to whitelist, run the loop again.
 
         # Return the most relevant location for the error message
         return self.loop_dir / 'config' / 'ravl.toml'
+
+    def get_unapproved_packages(self, requirements_path: Path) -> List[Tuple[str, str]]:
+        """
+        Extract list of unapproved packages for interactive approval.
+
+        This method scans a requirements.txt file and identifies packages that are
+        not in the whitelist. Used by InteractiveDependencyApprover to present
+        a batch approval prompt to the user.
+
+        Args:
+            requirements_path: Path to generated requirements.txt file
+
+        Returns:
+            List of (package_name, version) tuples that are not approved
+        """
+        unapproved = []
+
+        if not requirements_path.exists():
+            return unapproved
+
+        with open(requirements_path, 'r') as f:
+            lines = f.readlines()
+
+        whitelist = self._resolve_whitelist() or {}
+
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+
+            # Parse package==version or just package
+            if '==' in line:
+                package_name, version = line.split('==', 1)
+            else:
+                package_name = line
+                version = "latest"
+
+            package_name = package_name.strip()
+
+            # Check if package is not in whitelist
+            if package_name not in whitelist:
+                unapproved.append((package_name, version.strip()))
+
+        return unapproved

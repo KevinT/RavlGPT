@@ -83,13 +83,14 @@ class SimpleCodeExecutor:
             required=False
         )
 
-    def execute_code(self, code: str, timeout: int = 300) -> Dict[str, Any]:
+    def execute_code(self, code: str, timeout: int = 300, interactive: bool = False) -> Dict[str, Any]:
         """
         Execute generated Python code with venv support
 
         Args:
             code: Python code to execute
             timeout: Execution timeout in seconds
+            interactive: Enable interactive dependency approval workflow
 
         Returns:
             Dict with keys: success (bool), error (str), execution_time (float),
@@ -140,6 +141,45 @@ class SimpleCodeExecutor:
             execution_learning_dir.mkdir(parents=True, exist_ok=True)
             requirements_path = execution_learning_dir / 'generated_requirements.txt'
             RequirementsGenerator.save_requirements(code_clean, requirements_path)
+
+            # Interactive approval workflow
+            if interactive:
+                from ravl.common.core.interactive_dependency_approver import InteractiveDependencyApprover
+
+                validator = DependencyValidator(self.loop_dir, self.project_root)
+                approver = InteractiveDependencyApprover(self.loop_dir, validator)
+                unapproved = approver.get_unapproved_packages(requirements_path)
+
+                if unapproved:
+                    # Prompt user for approval
+                    approved_packages = approver.prompt_for_approval(unapproved)
+
+                    if approved_packages:
+                        # User approved - write to config
+                        success, error = approver.write_approvals(approved_packages)
+
+                        if success:
+                            approver.display_success_message(approved_packages)
+                            return {
+                                'success': False,
+                                'error': 'APPROVAL_REQUIRED_RERUN',
+                                'message': f'✅ Approved {len(approved_packages)} package(s). Please re-run loop.',
+                                'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
+                            }
+                        else:
+                            return {
+                                'success': False,
+                                'error': f'Failed to save approvals: {error}',
+                                'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
+                            }
+                    else:
+                        # User declined
+                        return {
+                            'success': False,
+                            'error': 'USER_DECLINED_APPROVAL',
+                            'message': '❌ Dependency approval declined by user.',
+                            'code_hash': hashlib.md5(code_clean.encode()).hexdigest(),
+                        }
 
             # Validate requirements against whitelist
             validator = DependencyValidator(self.loop_dir, self.project_root)

@@ -99,7 +99,8 @@ class MarkdownRAVLExecutor:
         learnings_dir: Path,
         context_vars: Optional[Dict[str, str]] = None,
         llm_provider: Optional[LLMProvider] = None,
-        force_code_regeneration: bool = False
+        force_code_regeneration: bool = False,
+        interactive: bool = False
     ):
         """
         Initialize executor
@@ -111,12 +112,14 @@ class MarkdownRAVLExecutor:
             context_vars: Context variables (e.g., {"current role": "CTO"})
             llm_provider: LLM provider to use (defaults to Anthropic)
             force_code_regeneration: Force fresh code generation, bypassing cache for this run
+            interactive: Enable interactive dependency approval workflow
         """
         self.markdown_text = markdown_text
         self.loop_dir = loop_dir
         self.learnings_dir = learnings_dir
         self.context_vars = context_vars or {}
         self.force_code_regeneration = force_code_regeneration
+        self.interactive = interactive
         self.used_interpretation = False  # Track if LLM interpretation was used
 
         # Find project root for venv/dependency resolution
@@ -238,7 +241,8 @@ class MarkdownRAVLExecutor:
             simple_code_executor=self.simple_code_executor,
             should_attempt_code_generation_fn=self._should_attempt_code_generation,
             is_data_ingress_loop_fn=self._is_data_ingress_loop,
-            get_available_credentials_fn=self._get_available_notion_credentials
+            get_available_credentials_fn=self._get_available_notion_credentials,
+            interactive=self.interactive
         )
 
         self.verification_manager = VerificationManager(
