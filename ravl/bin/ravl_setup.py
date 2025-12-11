@@ -260,47 +260,8 @@ class RAVLSetup:
         Returns:
             True if key is valid and API responds
         """
-        try:
-            if provider_id == 'anthropic':
-                # Import here to avoid startup dependency
-                try:
-                    from anthropic import Anthropic
-                    client = Anthropic(api_key=api_key)
-                    # Make a minimal test call - just check messages endpoint exists
-                    # We don't actually need to call it, just verify client initializes
-                    return True
-                except ImportError:
-                    print("   (anthropic library not installed, skipping connectivity test)")
-                    return True  # Assume valid if library not available
-
-            elif provider_id == 'openai':
-                try:
-                    from openai import OpenAI
-                    client = OpenAI(api_key=api_key)
-                    # Test with models endpoint
-                    client.models.list()
-                    return True
-                except ImportError:
-                    print("   (openai library not installed, skipping connectivity test)")
-                    return True
-                except Exception as e:
-                    # API error means key is invalid
-                    return False
-
-            elif provider_id == 'google':
-                # Google Gemini uses different auth pattern
-                # For now, rely on format validation
-                return True
-
-            elif provider_id == 'ollama':
-                # Ollama is local, just verify URL format
-                return api_key.startswith('http')
-
-            return True
-
-        except Exception as e:
-            print(f"   Connection test failed: {e}")
-            return False
+        # Reuse _validate_llm_key to avoid code duplication
+        return self._validate_llm_key(provider_id, api_key)
 
     def setup_llm_provider(self) -> bool:
         """
@@ -448,8 +409,9 @@ class RAVLSetup:
             print("✗ Validation failed. Please check your API key.")
             return False
 
-        # Save
+        # Save to both internal dict and process environment
         self.env_vars[env_key] = api_key
+        os.environ[env_key] = api_key  # Update process env for immediate effect
 
         # Ask if this should be the default
         if not current or current != provider_id:
@@ -586,8 +548,9 @@ class RAVLSetup:
                 print("No token provided.")
                 return False
 
-            # Save to .env
+            # Save to both internal dict and process environment
             self.env_vars[env_key] = api_token
+            os.environ[env_key] = api_token  # Update process env for immediate effect
             self._save_env()
 
             print(f"✓ {api_name} configured (saved as {env_key})")
@@ -623,6 +586,7 @@ class RAVLSetup:
                         api_token = input(f"\nEnter new {info['env_var']} value: ").strip()
                         if api_token:
                             self.env_vars[info['env_var']] = api_token
+                            os.environ[info['env_var']] = api_token  # Update process env for immediate effect
                             self._save_env()
                             print(f"✓ {api_name} token updated")
                             return True
