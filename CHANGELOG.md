@@ -6,6 +6,30 @@ The RAVL framework is an autonomous agent system for building self-improving loo
 
 ---
 
+## December 2025
+
+### Interactive Dependency Approval
+- Add `--interactive` flag when running loops to approve new dependencies in one step
+- System prompts for batch approval of all unapproved packages, writes to config, then you re-run
+- Eliminates manual config file editing workflow
+
+### Loop Locking
+- Lock loops to execute only verified code (prevents regeneration)
+- Useful for production loops or ensuring consistent behavior with proven code
+- Framework properly tracks verification status for locked loops
+
+### Enhanced Configuration Wizard
+- `ravl --config` now includes LLM model selection with curated options per provider
+- New Project Settings menu for configuring venv paths, learning paths, and dependencies
+- Set default LLM model via wizard or config: `default_model = "gemini-1.5-flash-002"` in `.ravl/config/llm.toml`
+
+### Default Model Configuration
+- Specify preferred LLM model at framework, project, or loop level
+- Set via `RAVL_DEFAULT_MODEL` environment variable or config hierarchy
+- Example: Use faster/cheaper models for development, premium models for production
+
+---
+
 ## November 2025
 
 ### Problem Space Learning & Domain Knowledge
