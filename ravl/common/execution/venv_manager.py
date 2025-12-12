@@ -285,20 +285,25 @@ class VenvManager:
                     timeout=120,
                 )
             else:
-                # UV tool installation - framework is already installed, use .pth file
-                # Find site-packages directory in this venv
-                python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
-                site_packages = self.venv_path / "lib" / f"python{python_version}" / "site-packages"
+                # UV package installation - install ravl-framework package into this venv
+                # This makes the framework available to generated code in the loop's venv
+                if not self.has_uv:
+                    return (False, "UV is required but not installed. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh")
 
-                # Ensure site-packages exists
-                site_packages.mkdir(parents=True, exist_ok=True)
+                # Install ravl-framework package using UV
+                cmd = ["uv", "pip", "install", "ravl-framework", "--quiet"]
 
-                # Write .pth file pointing to framework location
-                pth_file = site_packages / "ravl-framework.pth"
-                with open(pth_file, 'w') as f:
-                    f.write(str(framework_root) + '\n')
+                # Set VIRTUAL_ENV to tell UV which venv to use
+                env = os.environ.copy()
+                env["VIRTUAL_ENV"] = str(self.venv_path)
 
-                # Note: Framework dependencies (anthropic, openai, etc.) will be installed below
+                subprocess.run(
+                    cmd,
+                    check=True,
+                    capture_output=True,
+                    env=env,
+                    timeout=120,
+                )
 
             # Also install framework requirements (pyyaml, anthropic, etc.)
             requirements_file = framework_root / "requirements.txt"
