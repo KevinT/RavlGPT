@@ -249,7 +249,7 @@ class VenvManager:
         Make RAVL framework available in this venv and install its dependencies.
 
         For source installations (submodule): Uses editable mode (pip install -e)
-        For UV tool installations: Creates .pth file to link to existing framework
+        For UV tool installations: Skip install, use PYTHONPATH to global UV tool
 
         This makes common.llm.llm_logger and other framework utilities available
         to generated code running in this venv.
@@ -261,11 +261,10 @@ class VenvManager:
             # Find framework root (works for both submodule and UV installation)
             framework_root = RAVLCLIBase.find_framework_root()
 
-            # Check if pyproject.toml exists (source installation vs installed package)
-            pyproject_toml = framework_root / "pyproject.toml"
-            setup_py = framework_root / "setup.py"
+            # Detect installation type to determine framework install strategy
+            installation_type = RAVLCLIBase.get_installation_type()
 
-            if pyproject_toml.exists() or setup_py.exists():
+            if installation_type == 'submodule':
                 # Source installation (submodule) - use editable mode with UV
                 if not self.has_uv:
                     return (False, "UV is required but not installed. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh")
@@ -285,32 +284,17 @@ class VenvManager:
                     timeout=120,
                 )
             else:
-                # UV package installation - install ravl-framework package into this venv
-                # This makes the framework available to generated code in the loop's venv
-                if not self.has_uv:
-                    return (False, "UV is required but not installed. Install with: curl -LsSf https://astral.sh/uv/install.sh | sh")
+                # UV/package installation - Skip framework install
+                # Framework already installed in global UV tool venv, accessible via PYTHONPATH
+                # (PYTHONPATH is set by simple_code_executor.py when running generated code)
+                pass
 
-                # Install ravl-framework package using UV
-                cmd = ["uv", "pip", "install", "ravl-framework", "--quiet"]
-
-                # Set VIRTUAL_ENV to tell UV which venv to use
-                env = os.environ.copy()
-                env["VIRTUAL_ENV"] = str(self.venv_path)
-
-                subprocess.run(
-                    cmd,
-                    check=True,
-                    capture_output=True,
-                    env=env,
-                    timeout=120,
-                )
-
-            # Also install framework requirements (pyyaml, anthropic, etc.)
+            # Both modes: Install framework requirements (pyyaml, anthropic, etc.)
             requirements_file = framework_root / "requirements.txt"
             if requirements_file.exists():
                 success, error = self.install_requirements(requirements_file, quiet=True)
                 if not success:
-                    return (False, f"Framework installed but requirements failed: {error}")
+                    return (False, f"Framework requirements failed: {error}")
 
             return (True, None)
 

@@ -373,14 +373,20 @@ class RAVLRunner:
             if 'RAVL_DEFAULT_VENV_DIRECTORY' in env_vars:
                 return Path(env_vars['RAVL_DEFAULT_VENV_DIRECTORY']).expanduser().resolve()
 
-        # Priority 5: Default (.ravl/venv)
-        if project_root:
-            return (project_root / '.ravl' / 'venv').resolve()
-        else:
+        # Priority 5: Default (installation-aware)
+        if not project_root:
             # Find project root from loop_dir when project_root not provided
             # Uses loop_dir as fallback if outside RAVL project
             project_root = RAVLCLIBase.find_project_root(loop_dir, required=False)
+
+        installation_type = RAVLCLIBase.get_installation_type()
+
+        if installation_type == 'submodule':
+            # Submodule: use .ravl/venv (backward compatible)
             return (project_root / '.ravl' / 'venv').resolve()
+        else:
+            # UV/package: use canonical .venv at project root
+            return (project_root / '.venv').resolve()
 
     @staticmethod
     def resolve_llm_config(
