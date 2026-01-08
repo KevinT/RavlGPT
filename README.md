@@ -67,7 +67,7 @@ ravl ravl.examples.example_3_analysis_loop
 **For existing projects with RAVL:**
 ```bash
 git clone --recurse-submodules https://github.com/your-org/your-project.git
-chmod +x .ravl/bin/*
+chmod +x .ravl/ravl/bin/*
 ```
 
 **Update framework to latest:**
@@ -88,8 +88,8 @@ RAVL comes with a set of powerful helper commands:
 | `ravl --clean {loop name}` | Remove all learning artifacts (keeps code) |
 | `ravl --execution-health {loop}` | Diagnose execution/code generation issues |
 | `ravl --loop-health {loop}` | Diagnose domain learning issues |
-| `.ravl/bin/ravl-sync-claude` | Install `/ravl-*` slash commands in Claude Code |
-| `.ravl/bin/ravl-sync-opencode` | Install `/ravl-*` slash commands in Opencode |
+| `.ravl/ravl/bin/ravl-sync-claude` | Install `/ravl-*` slash commands in Claude Code |
+| `.ravl/ravl/bin/ravl-sync-opencode` | Install `/ravl-*` slash commands in Opencode |
 
 **Quick Access via Wrapper:**
 
@@ -97,7 +97,7 @@ The project includes a `./ravl` symlink that provides a unified interface:
 
 ```bash
 # Make CLI tools executable
-chmod +x .ravl/bin/*
+chmod +x .ravl/ravl/bin/*
 
 # From project root, use the unified wrapper:
 ravl --list              			# List all loops
@@ -111,7 +111,7 @@ ravl --help             			# Show all options
 
 If the `./ravl` symlink doesn't exist in your project, create it:
 ```bash
-ln -s .ravl/bin/ravl-wrapper ./ravl
+ln -s .ravl/ravl/bin/ravl-wrapper ./ravl
 ```
 
 **Optional: Add to PATH**
@@ -132,7 +132,7 @@ source ~/.bashrc
 
 Or create a symlink in a directory already on your PATH:
 ```bash
-ln -s $(git rev-parse --show-toplevel)/.ravl/bin/ravl-wrapper /usr/local/bin/ravl
+ln -s $(git rev-parse --show-toplevel)/.ravl/ravl/bin/ravl-wrapper /usr/local/bin/ravl
 ```
 
 ## Quick Start

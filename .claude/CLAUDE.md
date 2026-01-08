@@ -502,7 +502,7 @@ def validate_custom_token(token: str) -> bool:
 - Project loops: `ravl_loops/` (at project root)
 - Markdown loops: `ravl_loops/*/ravl_loop.md`
 - Python loops: `ravl_loops/*/ravl_loop.py`
-- Auto-detected by `.ravl/bin/ravl` runner
+- Auto-detected by `.ravl/ravl/bin/ravl-wrapper` runner
 
 ### Error Handling Strategy
 - Semantic analysis: Extract patterns from error messages

@@ -154,7 +154,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 
 Make CLI tools executable manually:
 ```bash
-chmod +x .ravl/bin/*
+chmod +x .ravl/ravl/bin/*
 chmod +x ./ravl
 ```
 
@@ -193,10 +193,10 @@ If you prefer not to use the install script:
 git submodule add https://github.com/KevinT/RavlGPT .ravl
 
 # 2. Make tools executable
-chmod +x .ravl/bin/*
+chmod +x .ravl/ravl/bin/*
 
 # 3. Create wrapper
-ln -s .ravl/bin/ravl-wrapper ./ravl
+ln -s .ravl/ravl/bin/ravl-wrapper ./ravl
 
 # 4. Test
 $ ravl --list
@@ -215,7 +215,7 @@ cd your-project
 git submodule update --init --recursive
 
 # Make tools executable
-chmod +x .ravl/bin/*
+chmod +x .ravl/ravl/bin/*
 
 # Run
 $ ravl --list

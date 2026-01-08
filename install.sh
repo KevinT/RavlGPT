@@ -57,7 +57,7 @@ fi
 
 # Make CLI tools executable
 echo "Making CLI tools executable..."
-if chmod +x .ravl/bin/* 2>&1; then
+if chmod +x .ravl/ravl/bin/* 2>&1; then
     echo -e "${GREEN}✅ Made CLI tools executable${NC}"
 else
     echo -e "${YELLOW}⚠️  Could not make tools executable (may need manual chmod)${NC}"
@@ -68,7 +68,7 @@ echo "Creating ./ravl wrapper..."
 if [ -L "./ravl" ]; then
     rm -f ./ravl
 fi
-if ln -s .ravl/bin/ravl-wrapper ./ravl 2>&1; then
+if ln -s .ravl/ravl/bin/ravl-wrapper ./ravl 2>&1; then
     echo -e "${GREEN}✅ Created ./ravl wrapper${NC}"
 else
     echo -e "${YELLOW}⚠️  Could not create symlink (may need to create manually)${NC}"
