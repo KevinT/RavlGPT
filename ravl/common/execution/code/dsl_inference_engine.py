@@ -32,13 +32,14 @@ class DSLInferenceEngine:
         self.loop_dir = loop_dir
         self.learnings_dir = learnings_dir
 
-    def infer(self, act_section: str, verify_section: str) -> Dict[str, Any]:
+    def infer(self, act_section: str, verify_section: str, configured_provider: str = 'anthropic') -> Dict[str, Any]:
         """
         Infer DSL from loop specification
 
         Args:
             act_section: Content of Act section from ravl_loop.md
             verify_section: Content of Verify section from ravl_loop.md
+            configured_provider: LLM provider from ravl.toml config (default: 'anthropic')
 
         Returns:
             Inferred DSL as dictionary
@@ -70,7 +71,7 @@ class DSLInferenceEngine:
         dsl['warning_history'] = self._load_warning_history()
 
         # Generate guidance for LLM based on analysis
-        dsl['llm_guidance'] = self._generate_llm_guidance(dsl, verify_section)
+        dsl['llm_guidance'] = self._generate_llm_guidance(dsl, verify_section, configured_provider)
 
         return dsl
 
@@ -512,9 +513,14 @@ class DSLInferenceEngine:
         # Default suggestion
         return f"Avoid using {api} - check Python documentation for modern alternative"
 
-    def _generate_llm_guidance(self, dsl: Dict[str, Any], verify_section: str) -> str:
+    def _generate_llm_guidance(self, dsl: Dict[str, Any], verify_section: str, configured_provider: str = 'anthropic') -> str:
         """
         Generate natural language guidance for the LLM based on inferred DSL
+
+        Args:
+            dsl: Inferred DSL dictionary
+            verify_section: Content of Verify section from ravl_loop.md
+            configured_provider: LLM provider from ravl.toml config (default: 'anthropic')
         """
         guidance_lines = [
             "# Code Generation Guidance",
@@ -725,8 +731,25 @@ class DSLInferenceEngine:
             guidance_lines.append("")
             guidance_lines.append("# REQUIRED: LLM API Calls:")
             guidance_lines.append("- YOU MUST use framework LLM provider (automatic logging and error handling)")
+            guidance_lines.append("- import os")
+            guidance_lines.append("- from pathlib import Path")
             guidance_lines.append("- from ravl.common.llm.llm_providers import LLMProviderFactory")
-            guidance_lines.append("- provider = LLMProviderFactory.create_provider('anthropic')  # or 'openai', 'google', 'ollama'")
+            guidance_lines.append("- from ravl.common.ravl_runner import RAVLRunner")
+            guidance_lines.append("- ")
+            guidance_lines.append("- # Resolve LLM config from ravl.toml (respects config hierarchy)")
+            guidance_lines.append("- # RAVL_LOOP_DIR is set by SimpleCodeExecutor to the loop directory")
+            guidance_lines.append("- loop_dir = Path(os.environ['RAVL_LOOP_DIR'])")
+            guidance_lines.append("- llm_config = RAVLRunner.resolve_llm_config(loop_dir=loop_dir, project_root=None)")
+            guidance_lines.append("- ")
+            guidance_lines.append("- # Create provider using resolved config (respects [llm_provider] in ravl.toml)")
+            guidance_lines.append("- provider = LLMProviderFactory.create_provider(")
+            guidance_lines.append(f"-     llm_config.get('provider', '{configured_provider}'),")
+            guidance_lines.append("-     model=llm_config.get('model'),")
+            guidance_lines.append("-     temperature=llm_config.get('temperature'),")
+            guidance_lines.append("-     max_tokens=llm_config.get('max_tokens'),")
+            guidance_lines.append("-     top_p=llm_config.get('top_p')")
+            guidance_lines.append("- )")
+            guidance_lines.append("- ")
             guidance_lines.append(f"- response = provider.complete(prompt, max_tokens={recommended_tokens})")
             guidance_lines.append("- DO NOT make direct Anthropic/OpenAI API calls - this bypasses framework logging")
             guidance_lines.append("- All LLM calls must go through LLMProvider for debugging and health monitoring")

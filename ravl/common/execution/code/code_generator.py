@@ -133,7 +133,9 @@ class CodeGenerator:
 
         # Infer DSL from loop specification
         log_execution("Inferring DSL from specification...")
-        dsl = self.dsl_engine.infer(act_spec, verify_spec)
+        # Pass configured provider to DSL inference so generated code respects ravl.toml
+        provider_name = self.llm.get_provider_name().lower()
+        dsl = self.dsl_engine.infer(act_spec, verify_spec, configured_provider=provider_name)
 
         # Save inferred DSL for reference (pattern must match _get_next_attempt_number lookup)
         dsl_file = self.learnings_dir / f'dsl_iteration_{dsl["attempt_number"]}.json'
