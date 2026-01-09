@@ -6,19 +6,19 @@ This document describes the `config/ravl.toml` format for RAVL loops.
 
 Every RAVL loop requires a `config/ravl.toml` file with at minimum:
 
-```yaml
-name: my_loop
-description: Brief description of what this loop does
-emoji: ➿
+```toml
+description = "Brief description of what this loop does"
+emoji = "➿"
 ```
 
 ### Required Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `name` | string | Loop identifier (matches directory name) |
 | `description` | string | Human-readable description |
 | `emoji` | string | Single emoji for display |
+
+**Note:** The loop name is determined by the directory name, not a config field.
 
 ## Loop Types
 
@@ -26,21 +26,19 @@ emoji: ➿
 
 Default type. Requires `ravl_loop.py` implementation.
 
-```yaml
-name: example_github_trending_tracker
-description: Track GitHub trending repositories
-emoji: ⭐
+```toml
+description = "Track GitHub trending repositories"
+emoji = "⭐"
 ```
 
 ### Markdown Loops
 
 For LLM-interpreted markdown-based loops.
 
-```yaml
-name: example_tech_news_curator
-description: Curate and score tech news stories
-emoji: 📰
-type: markdown
+```toml
+description = "Curate and score tech news stories"
+emoji = "📰"
+type = "markdown"
 ```
 
 ## Advanced Configuration
@@ -49,22 +47,21 @@ type: markdown
 
 For markdown loops that need dynamic input:
 
-```yaml
-template_variables:
-  week_number:
-    cli_arg: --week
-    required: false
-    help: Week number to analyze
-    type: string
-    default: current
+```toml
+[template_variables.week_number]
+cli_arg = "--week"
+required = false
+help = "Week number to analyze"
+type = "string"
+default = "current"
 ```
 
 ### Learning Path Configuration
 
 Custom location for learning artifacts (see main project CLAUDE.md):
 
-```yaml
-learning_path: /custom/path/to/learnings
+```toml
+learning_path = "/custom/path/to/learnings"
 ```
 
 ### Virtual Environment Path
@@ -74,13 +71,13 @@ Custom venv location for generated code dependencies.
 **Configuration Priority (highest to lowest):**
 
 1. **CLI flag**: `./ravl my_loop --venv-path /tmp/venv`
-2. **Loop config**: `venv_path: /custom/venv` in `config/ravl.toml`
+2. **Loop config**: `venv_path = "/custom/venv"` in `config/ravl.toml`
 3. **Project config**: `ravl_loops/config/ravl.toml`
 4. **Environment variable**: `RAVL_DEFAULT_VENV_DIRECTORY=/data/venvs`
 5. **Default**: `.ravl/venv`
 
-```yaml
-venv_path: /custom/path/to/venv
+```toml
+venv_path = "/custom/path/to/venv"
 ```
 
 **Note:** Unlike learning paths, venv paths do NOT inherit from parent loops. Each loop can specify its own venv or share a project-wide venv configured via environment variable.
@@ -89,15 +86,14 @@ venv_path: /custom/path/to/venv
 
 Approved packages for generated code (hierarchical):
 
-```yaml
-allowed_dependencies:
-  google-api-python-client:
-    min_version: '2.100.0'
-    max_version: '3.0.0'
+```toml
+[allowed_dependencies.google-api-python-client]
+min_version = "2.100.0"
+max_version = "3.0.0"
 
-  pandas:
-    min_version: '2.0.0'
-    max_version: '3.0.0'
+[allowed_dependencies.pandas]
+min_version = "2.0.0"
+max_version = "3.0.0"
 ```
 
 **Resolution Order**: Loop config → Parent config → Project config → Framework config
@@ -106,8 +102,8 @@ allowed_dependencies:
 
 For loops using Google APIs:
 
-```yaml
-max_google_file_revisions_to_track: 100
+```toml
+max_google_file_revisions_to_track = 100
 ```
 
 ### Runtime Options
@@ -143,28 +139,26 @@ For loops that integrate with external APIs (data ingestion, API automation), co
 
 ### Single API Integration
 
-```yaml
+```toml
 # Simple single-API configuration
-apis:
-  notion:
-    context7_path: /websites/developers_notion
+[apis.notion]
+context7_path = "/websites/developers_notion"
 ```
 
 ### Multiple API Integrations
 
 Loops can integrate with multiple APIs simultaneously:
 
-```yaml
+```toml
 # Multi-API configuration
-apis:
-  notion:
-    context7_path: /websites/developers_notion
+[apis.notion]
+context7_path = "/websites/developers_notion"
 
-  clickup:
-    context7_path: /websites/developer_clickup
+[apis.clickup]
+context7_path = "/websites/developer_clickup"
 
-  google_docs:
-    context7_path: /websites/developers_google_com
+[apis.google_docs]
+context7_path = "/websites/developers_google_com"
 ```
 
 **How It Works:**
@@ -176,21 +170,19 @@ apis:
 
 **Context7 Cache Configuration:**
 
-```yaml
-apis:
-  notion:
-    context7_path: /websites/developers_notion
-    context7_cache_ttl_hours: 72  # Override default cache TTL
+```toml
+[apis.notion]
+context7_path = "/websites/developers_notion"
+context7_cache_ttl_hours = 72  # Override default cache TTL
 ```
 
 **Custom API (Not on Context7):**
 
-```yaml
-apis:
-  custom_internal_api:
-    endpoint: https://api.internal.company.com/v1
-    auth_method: Bearer
-    # No context7_path - provide inline documentation via ACT section
+```toml
+[apis.custom_internal_api]
+endpoint = "https://api.internal.company.com/v1"
+auth_method = "Bearer"
+# No context7_path - provide inline documentation via ACT section
 ```
 
 **When to Use Multi-API:**
@@ -213,42 +205,39 @@ Child loops automatically inherit parent configurations unless overridden.
 
 ## Complete Example
 
-```yaml
-name: api_data_ingestion
-description: Ingest data from external API with self-healing
-emoji: 🔄
-type: markdown
+```toml
+description = "Ingest data from external API with self-healing"
+emoji = "🔄"
+type = "markdown"
 
 # Custom paths (can also use RAVL_DEFAULT_VENV_DIRECTORY in .env)
-learning_path: /data/ravl_learning/api_ingestion  # CLI: --learning-path
-venv_path: /data/venvs/api_ingestion             # CLI: --venv-path, env: RAVL_DEFAULT_VENV_DIRECTORY
+learning_path = "/data/ravl_learning/api_ingestion"  # CLI: --learning-path
+venv_path = "/data/venvs/api_ingestion"              # CLI: --venv-path, env: RAVL_DEFAULT_VENV_DIRECTORY
 
 # Template variables for markdown
-template_variables:
-  api_endpoint:
-    cli_arg: --endpoint
-    required: true
-    help: API endpoint URL
-    type: string
+[template_variables.api_endpoint]
+cli_arg = "--endpoint"
+required = true
+help = "API endpoint URL"
+type = "string"
 
-  start_date:
-    cli_arg: --start-date
-    required: false
-    help: Start date for data fetch (YYYY-MM-DD)
-    type: string
+[template_variables.start_date]
+cli_arg = "--start-date"
+required = false
+help = "Start date for data fetch (YYYY-MM-DD)"
+type = "string"
 
 # Approved dependencies
-allowed_dependencies:
-  requests:
-    min_version: '2.31.0'
-    max_version: '3.0.0'
+[allowed_dependencies.requests]
+min_version = "2.31.0"
+max_version = "3.0.0"
 
-  pydantic:
-    min_version: '2.0.0'
-    max_version: '3.0.0'
+[allowed_dependencies.pydantic]
+min_version = "2.0.0"
+max_version = "3.0.0"
 
 # Google integration
-max_google_file_revisions_to_track: 50
+max_google_file_revisions_to_track = 50
 ```
 
 ## See Also

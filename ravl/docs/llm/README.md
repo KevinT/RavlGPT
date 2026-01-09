@@ -144,15 +144,13 @@ Generates role-specific ambitions based on handbook gaps.
 **Location:** `.ravl/ravls/strategy_guardian/child_loops/role_ambitions/`
 
 **Config:**
-```yaml
-name: role_ambitions
-description: Generate role-specific ambitions
+```toml
+description = "Generate role-specific ambitions"
 
-template_variables:
-  organisational role:
-    cli_arg: --role
-    required: true
-    help: Role to generate ambitions for
+[template_variables."organisational role"]
+cli_arg = "--role"
+required = true
+help = "Role to generate ambitions for"
 ```
 
 **Usage:**

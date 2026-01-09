@@ -2,19 +2,35 @@
 
 Complete reference for configuring RAVL loops at every level: CLI flags, configuration files, environment variables, and framework defaults.
 
+## File Format Distinction
+
+**RAVL uses different formats for different purposes:**
+
+- **TOML** (`.toml`) - **Configuration files**: Loop settings, dependencies, paths, LLM providers
+  - Example: `ravl_loops/my_loop/config/ravl.toml`
+  - Example: `.ravl/config/framework_defaults.toml`
+
+- **YAML** (`.yml`) - **Data/Learning files**: Model state, metrics, learning artifacts
+  - Example: `learnings/model.yml`
+  - Example: `learnings/loop_learning/current_state/latest_metrics.yml`
+
+**Why this distinction?**
+- TOML is strongly-typed and explicit, making it ideal for configuration
+- YAML is more human-readable and flexible, better for data artifacts
+
 ## Quick Reference
 
 | Configuration Aspect | CLI Flag | Config File | Environment Variable | Default |
 |---------------------|----------|-------------|---------------------|---------|
-| Learning path | `--learning-path PATH` | `learning_path:` | N/A | `{loop_dir}/learnings` |
-| Virtual environment | `--venv-path PATH` | `venv_path:` | `RAVL_DEFAULT_VENV_DIRECTORY` | `.ravl/venv` |
+| Learning path | `--learning-path PATH` | `learning_path =` | N/A | `{loop_dir}/learnings` |
+| Virtual environment | `--venv-path PATH` | `venv_path =` | `RAVL_DEFAULT_VENV_DIRECTORY` | `.ravl/venv` |
 | Loop directory | `--loop-dir PATH` | N/A | `RAVL_DEFAULT_LOOP_DIRECTORY` | `ravl_loops/` |
 | Execution mode | `--mode {fast,full}` | N/A | N/A | `full` |
 | Suppress framework output | `--hide-execution` | N/A | N/A | `false` |
 | Timeout | `--timeout SECONDS` | N/A | N/A | `300` |
 | Deep learning | `--no-deep-learning` | N/A | N/A | `true` |
 | Learning discovery | N/A | `[learning]` section | N/A | All enabled |
-| Dependencies | N/A | `allowed_dependencies:` | N/A | Framework defaults |
+| Dependencies | N/A | `[allowed_dependencies.*]` | N/A | Framework defaults |
 | LLM provider | N/A | N/A | `ANTHROPIC_API_KEY`, etc. | N/A |
 | Google credentials | N/A | N/A | `GOOGLE_CREDENTIALS` | N/A |
 
@@ -59,35 +75,32 @@ Options:
 
 ### 2. Configuration Files (ravl.toml)
 
-YAML configuration files provide persistent, version-controlled settings:
+TOML configuration files provide persistent, version-controlled settings:
 
-```yaml
-name: my_loop
-description: Example loop with custom configuration
-emoji: 🔄
-type: markdown  # or 'python' (default)
+```toml
+description = "Example loop with custom configuration"
+emoji = "🔄"
+type = "markdown"  # or 'python' (default)
 
 # Custom paths
-learning_path: /data/ravl_learning/my_loop
-venv_path: /data/venvs/my_loop
+learning_path = "/data/ravl_learning/my_loop"
+venv_path = "/data/venvs/my_loop"
 
 # Dependency whitelist
-allowed_dependencies:
-  pandas:
-    min_version: '2.0.0'
-    max_version: '3.0.0'
+[allowed_dependencies.pandas]
+min_version = "2.0.0"
+max_version = "3.0.0"
 
-  requests:
-    min_version: '2.31.0'
-    max_version: '3.0.0'
+[allowed_dependencies.requests]
+min_version = "2.31.0"
+max_version = "3.0.0"
 
 # Template variables (markdown loops only)
-template_variables:
-  data_source:
-    cli_arg: --data-source
-    required: true
-    help: Data source URL
-    type: string
+[template_variables.data_source]
+cli_arg = "--data-source"
+required = true
+help = "Data source URL"
+type = "string"
 ```
 
 **Configuration Hierarchy:**
@@ -150,7 +163,7 @@ If no configuration is provided, RAVL uses sensible defaults:
 **Priority (highest to lowest):**
 
 1. **CLI flag**: `ravl my_loop --learning-path /tmp/test`
-2. **Loop config**: `learning_path: /custom/path` in `config/ravl.toml`
+2. **Loop config**: `learning_path = "/custom/path"` in `config/ravl.toml`
 3. **Default**: `{loop_dir}/learnings`
 
 **Child Loop Inheritance:**
@@ -168,7 +181,7 @@ Child loops automatically inherit parent's `learning_path`:
 **Priority (highest to lowest):**
 
 1. **CLI flag**: `ravl my_loop --venv-path /tmp/venv`
-2. **Loop config**: `venv_path: /custom/venv` in `config/ravl.toml`
+2. **Loop config**: `venv_path = "/custom/venv"` in `config/ravl.toml`
 3. **Project config**: `ravl_loops/config/ravl.toml`
 4. **Environment variable**: `RAVL_DEFAULT_VENV_DIRECTORY=/data/venvs`
 5. **Default**: `.ravl/venv`
@@ -179,7 +192,7 @@ Child loops automatically inherit parent's `learning_path`:
 
 **Priority (highest to lowest):**
 
-1. **Loop config**: `allowed_dependencies:` in loop's `config/ravl.toml`
+1. **Loop config**: `[allowed_dependencies.*]` in loop's `config/ravl.toml`
 2. **Parent config**: Inherited from parent loop
 3. **Project config**: `ravl_loops/config/ravl.toml`
 4. **Framework defaults**: `.ravl/config/framework_defaults.toml`
@@ -204,11 +217,10 @@ The first available API key determines the provider. If multiple keys exist, Ant
 
 Required in every `config/ravl.toml`:
 
-```yaml
-name: my_loop
-description: Brief description of loop purpose
-emoji: 🔄
-type: python  # or 'markdown'
+```toml
+description = "Brief description of loop purpose"
+emoji = "🔄"
+type = "python"  # or 'markdown'
 ```
 
 ### Learning Path Configuration
@@ -226,9 +238,9 @@ ravl_loops/my_loop/learnings/
 
 **Custom configuration:**
 
-```yaml
+```toml
 # In config/ravl.toml
-learning_path: /mnt/shared/ravl_learning/my_loop
+learning_path = "/mnt/shared/ravl_learning/my_loop"
 ```
 
 **Child loop example:**
@@ -253,9 +265,9 @@ All loops use `/data/venvs/shared`, reducing disk usage and install time.
 
 **Per-loop venv:**
 
-```yaml
+```toml
 # In config/ravl.toml
-venv_path: /data/venvs/my_loop_venv
+venv_path = "/data/venvs/my_loop_venv"
 ```
 
 Useful when loops need conflicting package versions.
@@ -272,20 +284,19 @@ Ephemeral venv for each build.
 
 Generated code can install packages, but only with approval:
 
-```yaml
+```toml
 # In config/ravl.toml
-allowed_dependencies:
-  pandas:
-    min_version: '2.0.0'    # Prevents too-old versions
-    max_version: '3.0.0'    # Prevents breaking major updates
+[allowed_dependencies.pandas]
+min_version = "2.0.0"    # Prevents too-old versions
+max_version = "3.0.0"    # Prevents breaking major updates
 
-  google-api-python-client:
-    min_version: '2.100.0'
-    max_version: '3.0.0'
+[allowed_dependencies.google-api-python-client]
+min_version = "2.100.0"
+max_version = "3.0.0"
 
-  pydantic:
-    min_version: '2.0.0'
-    max_version: '3.0.0'
+[allowed_dependencies.pydantic]
+min_version = "2.0.0"
+max_version = "3.0.0"
 ```
 
 **Approval workflow:**
@@ -329,40 +340,39 @@ GOOGLE_API_KEY=...
 
 **Custom models (Advanced):**
 
-Create `.ravl/config/llm_config.yml`:
+Create `.ravl/config/llm_config.toml`:
 
-```yaml
-anthropic:
-  model: claude-sonnet-4.0
-  temperature: 0.7
-  max_tokens: 4000
+```toml
+[anthropic]
+model = "claude-sonnet-4.0"
+temperature = 0.7
+max_tokens = 4000
 
-openai:
-  model: gpt-4-turbo
-  temperature: 0.5
+[openai]
+model = "gpt-4-turbo"
+temperature = 0.5
 ```
 
 ### Template Variables (Markdown Loops)
 
 For markdown-based loops that need dynamic input:
 
-```yaml
+```toml
 # In config/ravl.toml
-type: markdown
+type = "markdown"
 
-template_variables:
-  data_source:
-    cli_arg: --data-source
-    required: true
-    help: URL of data source
-    type: string
+[template_variables.data_source]
+cli_arg = "--data-source"
+required = true
+help = "URL of data source"
+type = "string"
 
-  start_date:
-    cli_arg: --start-date
-    required: false
-    default: "2024-01-01"
-    help: Start date for data fetch
-    type: string
+[template_variables.start_date]
+cli_arg = "--start-date"
+required = false
+default = "2024-01-01"
+help = "Start date for data fetch"
+type = "string"
 ```
 
 **Usage:**
@@ -508,13 +518,13 @@ ravl my_loop --learning-path /tmp/test_learning --hide-execution
 - Team needs to share loop setup
 - Defining loop-specific dependencies
 
-```yaml
+```toml
 # config/ravl.toml - committed to git
-learning_path: /data/project_learning/my_loop
-allowed_dependencies:
-  custom-package:
-    min_version: '1.0.0'
-    max_version: '2.0.0'
+learning_path = "/data/project_learning/my_loop"
+
+[allowed_dependencies.custom-package]
+min_version = "1.0.0"
+max_version = "2.0.0"
 ```
 
 ### Use Environment Variables (.env) When:
@@ -650,34 +660,32 @@ ANTHROPIC_API_KEY=sk-ant-projectC...
 
 **Parent config (ravl_loops/parent/config/ravl.toml):**
 
-```yaml
-name: parent_loop
-description: Coordinator loop
-emoji: 🔄
+```toml
+description = "Coordinator loop"
+emoji = "🔄"
 
-allowed_dependencies:
-  pandas:
-    min_version: '2.0.0'
-    max_version: '3.0.0'
-  requests:
-    min_version: '2.31.0'
-    max_version: '3.0.0'
+[allowed_dependencies.pandas]
+min_version = "2.0.0"
+max_version = "3.0.0"
+
+[allowed_dependencies.requests]
+min_version = "2.31.0"
+max_version = "3.0.0"
 ```
 
 **Child loop config (ravl_loops/parent/special_child/config/ravl.toml):**
 
-```yaml
-name: special_child
-description: Needs ML packages
-emoji: 🤖
+```toml
+description = "Needs ML packages"
+emoji = "🤖"
 
-allowed_dependencies:
-  scikit-learn:
-    min_version: '1.3.0'
-    max_version: '2.0.0'
-  numpy:
-    min_version: '1.24.0'
-    max_version: '2.0.0'
+[allowed_dependencies.scikit-learn]
+min_version = "1.3.0"
+max_version = "2.0.0"
+
+[allowed_dependencies.numpy]
+min_version = "1.24.0"
+max_version = "2.0.0"
 ```
 
 **Result:**
@@ -735,9 +743,9 @@ ravl my_loop --learning-path /tmp/test  # CLI overrides config
 
 **A:** Yes! Child config always takes precedence:
 
-```yaml
-# Parent: learning_path: /data/parent
-# Child:  learning_path: /data/child_override
+```toml
+# Parent: learning_path = "/data/parent"
+# Child:  learning_path = "/data/child_override"
 # Result: Child uses /data/child_override (NOT /data/parent/child_name)
 ```
 
@@ -745,12 +753,12 @@ ravl my_loop --learning-path /tmp/test  # CLI overrides config
 
 **A:** Configure per-loop:
 
-```yaml
+```toml
 # Loop A config
-venv_path: /data/venvs/loop_a_venv
+venv_path = "/data/venvs/loop_a_venv"
 
 # Loop B config
-venv_path: /data/venvs/loop_b_venv
+venv_path = "/data/venvs/loop_b_venv"
 ```
 
 ### Q: How do I migrate from default paths to custom paths?
