@@ -70,7 +70,7 @@ class LLMLogger:
             f.write("---\n\n")
 
     def log_call(self, provider: str, prompt: str, response: str,
-                 max_tokens: int, error: Optional[str] = None):
+                 max_tokens: int, error: Optional[str] = None, model: Optional[str] = None):
         """
         Log an LLM call with prompt and response to markdown file
 
@@ -80,6 +80,7 @@ class LLMLogger:
             response: The response received from the LLM
             max_tokens: Maximum tokens requested
             error: Optional error message if call failed
+            model: Optional model name (e.g., "claude-haiku-4-5-20251001")
         """
         timestamp = datetime.now().isoformat()
 
@@ -89,6 +90,8 @@ class LLMLogger:
             f.write(f"## LLM Call - {timestamp}\n\n")
             f.write(f"**Status:** {status}  \n")
             f.write(f"**Provider:** {provider}  \n")
+            if model:
+                f.write(f"**Model:** {model}  \n")
             f.write(f"**Max Tokens:** {max_tokens}  \n")
             f.write(f"**Prompt Length:** {len(prompt)} chars  \n")
             f.write(f"**Response Length:** {len(response)} chars  \n")
@@ -146,7 +149,7 @@ def get_logger(log_dir: str = None, provider: Optional[str] = None) -> LLMLogger
 
 def log_llm_call(provider: str, prompt: str, response: str,
                  max_tokens: int, error: Optional[str] = None,
-                 log_dir: str = None):
+                 log_dir: str = None, model: Optional[str] = None):
     """
     Convenience function to log an LLM call
 
@@ -157,6 +160,7 @@ def log_llm_call(provider: str, prompt: str, response: str,
         max_tokens: Maximum tokens requested
         error: Optional error message if call failed
         log_dir: Optional directory path for log files. If None, uses default .ravl/logs/llm/
+        model: Optional model name (e.g., "claude-haiku-4-5-20251001")
     """
     logger = get_logger(log_dir=log_dir, provider=provider)
-    logger.log_call(provider, prompt, response, max_tokens, error)
+    logger.log_call(provider, prompt, response, max_tokens, error, model)

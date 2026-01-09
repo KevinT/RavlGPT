@@ -184,11 +184,11 @@ class AnthropicProvider(LLMProvider):
         try:
             response = self.client.messages.create(**api_params)
             response_text = response.content[0].text
-            log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
+            log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens, model=self.model)
             return response_text
         except Exception as e:
             formatted_error = self._format_api_error(e, self.get_provider_name())
-            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error)
+            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error, model=self.model)
             print(formatted_error)  # Show to user immediately
             raise
 
@@ -271,11 +271,11 @@ class OpenAIProvider(LLMProvider):
         try:
             response = self.client.chat.completions.create(**api_params)
             response_text = response.choices[0].message.content
-            log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
+            log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens, model=self.model)
             return response_text
         except Exception as e:
             formatted_error = self._format_api_error(e, self.get_provider_name())
-            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error)
+            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error, model=self.model)
             print(formatted_error)  # Show to user immediately
             raise
 
@@ -342,11 +342,11 @@ class GoogleProvider(LLMProvider):
                 generation_config=gen_config
             )
             response_text = response.text
-            log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
+            log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens, model=self.model)
             return response_text
         except Exception as e:
             formatted_error = self._format_api_error(e, self.get_provider_name())
-            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error)
+            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=formatted_error, model=self.model)
             print(formatted_error)  # Show to user immediately
             raise
 
@@ -417,10 +417,10 @@ class OllamaProvider(LLMProvider):
             response.raise_for_status()
 
             response_text = response.json()["response"]
-            log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens)
+            log_llm_call(self.get_provider_name(), prompt, response_text, max_tokens, model=self.model)
             return response_text
         except Exception as e:
-            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=str(e))
+            log_llm_call(self.get_provider_name(), prompt, "", max_tokens, error=str(e), model=self.model)
             raise
 
     def get_provider_name(self) -> str:
