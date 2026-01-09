@@ -421,7 +421,9 @@ class RAVLUniversalRunner(RAVLCLIBase):
             with open(locked_code_path, 'r') as f:
                 code = f.read()
 
-            result = executor.execute_code(code, interactive=args.interactive)
+            # Get timeout from config (same as normal execution)
+            timeout = config.get('execution_timeout', DEFAULT_EXECUTION_TIMEOUT)
+            result = executor.execute_code(code, timeout=timeout, interactive=args.interactive)
 
             # Save result
             duration = time.time() - start_time

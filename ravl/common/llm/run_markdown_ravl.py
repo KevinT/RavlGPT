@@ -283,7 +283,10 @@ class ConfigBasedRAVLRunner:
             with open(locked_code_path, 'r') as f:
                 code = f.read()
 
-            result = executor.execute_code(code)
+            # Get timeout from config (same as normal execution)
+            timeout = self.config.get('execution_timeout', DEFAULT_EXECUTION_TIMEOUT)
+            interactive = getattr(args, 'interactive', False)
+            result = executor.execute_code(code, timeout=timeout, interactive=interactive)
 
             # Save result
             duration = time.time()
