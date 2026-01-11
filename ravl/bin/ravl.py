@@ -84,7 +84,7 @@ def _show_wrapper_hint():
 
     os.environ[hint_env] = '1'
 
-    project_root = Path(__file__).resolve().parent.parent.parent
+    project_root = RAVLCLIBase.find_project_root(required=False)
     script_name = Path(sys.argv[0]).name
 
     # Only show if called as .ravl/bin/ravl (direct call, not via wrapper)
@@ -1075,7 +1075,7 @@ def main():
     # Capture execution context for child loops to inherit
     # Child loops will use the same Python interpreter and ravl script as parent
     # This ensures they run in the same venv/context
-    framework_root = Path(__file__).resolve().parent.parent.parent  # .ravl directory
+    framework_root = RAVLCLIBase.find_framework_root()
     ravl_py_path = framework_root / 'ravl' / 'bin' / 'ravl.py'
 
     os.environ['RAVL_COMMAND'] = sys.executable  # Python interpreter (respects venv)
@@ -1262,7 +1262,7 @@ def main():
     args.unknown_args = unknown
 
     # Resolve loop directory if provided
-    project_root = Path(__file__).resolve().parent.parent.parent
+    project_root = RAVLCLIBase.find_project_root(required=False)
     resolved_loops_dir = None
     if args.loop_dir:
         resolved_loops_dir = Path(args.loop_dir).expanduser().resolve()

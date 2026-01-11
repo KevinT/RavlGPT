@@ -101,9 +101,8 @@ class RAVLSetup:
     def _print_header(self):
         """Print the RAVL setup header with current config."""
         # Import version from framework root
-        import sys
-        from pathlib import Path
-        framework_root = Path(__file__).resolve().parent.parent.parent
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        framework_root = RAVLCLIBase.find_framework_root()
         sys.path.insert(0, str(framework_root))
         try:
             from __init__ import __version__
