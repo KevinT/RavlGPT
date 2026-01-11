@@ -30,7 +30,9 @@ def _load_registry() -> Dict:
     if _REGISTRY_CACHE is not None:
         return _REGISTRY_CACHE
 
-    registry_path = Path(__file__).parent.parent.parent.parent / 'config' / 'mcp_servers_registry.yml'
+    from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+    framework_root = RAVLCLIBase.find_framework_root()
+    registry_path = framework_root / 'config' / 'mcp_servers_registry.yml'
 
     if not registry_path.exists():
         return {}
@@ -190,7 +192,9 @@ def add_mcp_server_to_registry(
     registry[server_key] = config
 
     # Save back to YAML
-    registry_path = Path(__file__).parent.parent.parent.parent / 'config' / 'mcp_servers_registry.yml'
+    from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+    framework_root = RAVLCLIBase.find_framework_root()
+    registry_path = framework_root / 'config' / 'mcp_servers_registry.yml'
     with open(registry_path, 'w') as f:
         yaml.dump(registry, f, default_flow_style=False, sort_keys=False)
 

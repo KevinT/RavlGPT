@@ -30,7 +30,9 @@ def _load_registry() -> Dict:
     if _REGISTRY_CACHE is not None:
         return _REGISTRY_CACHE
 
-    registry_path = Path(__file__).parent.parent.parent.parent / 'config' / 'api_credentials_registry.yml'
+    from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+    framework_root = RAVLCLIBase.find_framework_root()
+    registry_path = framework_root / 'config' / 'api_credentials_registry.yml'
 
     if not registry_path.exists():
         return {}
@@ -133,7 +135,9 @@ def add_api_to_registry(api_name: str, env_var: str, documentation: str = '', **
     }
 
     # Save back to YAML
-    registry_path = Path(__file__).parent.parent.parent.parent / 'config' / 'api_credentials_registry.yml'
+    from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+    framework_root = RAVLCLIBase.find_framework_root()
+    registry_path = framework_root / 'config' / 'api_credentials_registry.yml'
     with open(registry_path, 'w') as f:
         yaml.dump(registry, f, default_flow_style=False, sort_keys=False)
 

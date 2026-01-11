@@ -29,9 +29,8 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
 # Bootstrap: Add framework to path
-# __file__ is .ravl/ravl/common/llm/run_markdown_ravl.py
-# parent.parent.parent.parent gives .ravl/
-_ravl_root = Path(__file__).resolve().parent.parent.parent.parent
+from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+_ravl_root = RAVLCLIBase.find_framework_root()
 sys.path.insert(0, str(_ravl_root))
 
 from ravl.common.ravl_runner import RAVLRunner

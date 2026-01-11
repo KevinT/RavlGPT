@@ -45,7 +45,9 @@ class LLMLogger:
     def __init__(self, log_dir: str = None, provider: Optional[str] = None):
         if log_dir is None:
             # Default to centralized LLM logs directory (.ravl/logs/llm/)
-            base_log_dir = Path(__file__).parent.parent.parent / 'logs' / 'llm'
+            from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+            framework_root = RAVLCLIBase.find_framework_root()
+            base_log_dir = framework_root / 'logs' / 'llm'
         else:
             base_log_dir = Path(log_dir)
 

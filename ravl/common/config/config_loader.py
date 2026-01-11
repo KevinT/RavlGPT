@@ -69,7 +69,9 @@ def load_framework_config() -> Dict[str, Any]:
     global _config_cache
 
     if _config_cache is None:
-        config_dir = Path(__file__).parent.parent.parent / 'config'
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        framework_root = RAVLCLIBase.find_framework_root()
+        config_dir = framework_root / 'config'
         _config_cache = load_config_file(config_dir, 'framework_defaults')
 
     return _config_cache

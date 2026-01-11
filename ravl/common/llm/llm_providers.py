@@ -59,8 +59,9 @@ def _get_install_instructions(package_name: str) -> str:
     # Try to find the framework venv
     venv_path = os.environ.get('RAVL_VENV_PATH')
     if not venv_path:
-        # Try to detect framework venv relative to this file
-        framework_root = Path(__file__).parent.parent.parent.parent
+        # Try to detect framework venv
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+        framework_root = RAVLCLIBase.find_framework_root()
         venv_path = framework_root / 'venv'
 
     if Path(venv_path).exists():
