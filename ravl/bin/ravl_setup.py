@@ -22,6 +22,7 @@ from ravl.common.cli.first_run_detector import (
     get_all_apis_with_status,
     get_all_mcp_servers_with_status
 )
+from ravl.common.llm.model_discovery import ModelDiscovery
 
 
 class RAVLSetup:
@@ -754,11 +755,26 @@ class RAVLSetup:
         else:
             print("\nNo model configured (using provider default)")
 
-        # Show available models for this provider
-        models = self.LLM_MODELS.get(current_provider, [])
+        # Get API key for model discovery
+        provider_config = self.LLM_PROVIDERS.get(str(list(self.LLM_PROVIDERS.keys()).index(current_provider) + 1))
+        if provider_config:
+            api_key_env = provider_config[3] if len(provider_config) > 3 else None
+            api_key = self.env_vars.get(api_key_env) if api_key_env else None
+        else:
+            api_key = None
+
+        # Use model discovery to get available models
+        discovery = ModelDiscovery(config_path=self.project_root / '.ravl' / 'config' / 'llm.toml')
+
+        try:
+            models = discovery.get_models_as_tuples(current_provider, api_key)
+        except Exception as e:
+            print(f"\n⚠  Model discovery failed: {e}")
+            print(f"   Using fallback models for {current_provider}")
+            models = discovery.get_models_as_tuples(current_provider, api_key=None)
 
         if not models:
-            print(f"\n✗ No predefined models for {current_provider}")
+            print(f"\n✗ No models available for {current_provider}")
             print("   You can manually edit .ravl/config/llm.toml")
             input("\nPress Enter to continue...")
             return

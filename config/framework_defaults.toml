@@ -21,9 +21,16 @@ default = 8192
 [llm.prompt_normalization]
 # Detect repeated blocks and replace them with references to first occurrence
 # Reduces LLM token consumption, with a nett positive benefit in most cases
-enabled = true 
+enabled = true
 min_block_size = 200  # Minimum character count for deduplication candidates
 enable_logging = true  # Log reduction percentages and duplicate counts
+
+[llm.model_discovery]
+# Dynamic model discovery from provider APIs with caching
+enabled = true  # Enable/disable API-based model discovery
+cache_ttl_hours = 24  # How long to cache model lists (hours)
+auto_refresh = true  # Auto-refresh stale cache when API key available
+prompt_on_stale = false  # Ask user before using stale cache (vs using silently)
 
 [allowed_dependencies.pyyaml]
 min_version = "6.0.1"
