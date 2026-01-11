@@ -756,12 +756,14 @@ class RAVLSetup:
             print("\nNo model configured (using provider default)")
 
         # Get API key for model discovery
-        provider_config = self.LLM_PROVIDERS.get(str(list(self.LLM_PROVIDERS.keys()).index(current_provider) + 1))
-        if provider_config:
-            api_key_env = provider_config[3] if len(provider_config) > 3 else None
-            api_key = self.env_vars.get(api_key_env) if api_key_env else None
-        else:
-            api_key = None
+        api_key_map = {
+            'anthropic': 'ANTHROPIC_API_KEY',
+            'openai': 'OPENAI_API_KEY',
+            'google': 'GOOGLE_API_KEY',
+            'ollama': 'OLLAMA_BASE_URL'
+        }
+        api_key_env = api_key_map.get(current_provider)
+        api_key = self.env_vars.get(api_key_env) if api_key_env else None
 
         # Use model discovery to get available models
         discovery = ModelDiscovery(config_path=self.project_root / '.ravl' / 'config' / 'llm.toml')
