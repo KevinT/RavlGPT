@@ -42,6 +42,7 @@ sys.path.insert(0, str(_current))
 from ravl.common.core.loop_lock_manager import LoopLockManager
 from ravl.common.cli.loop_discovery import LoopDiscovery
 from ravl.common.ravl_runner import RAVLRunner
+from ravl.common.cli.ravl_cli_base import RAVLCLIBase
 
 
 def main():
@@ -92,7 +93,7 @@ def main():
         sys.exit(0 if args.help else 1)
 
     # Find project root and discover loop
-    project_root = Path(__file__).resolve().parent.parent.parent.parent
+    project_root = RAVLCLIBase.find_project_root(required=True)
     discovery = LoopDiscovery(project_root)
 
     try:
