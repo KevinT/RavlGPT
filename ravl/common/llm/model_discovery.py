@@ -59,7 +59,10 @@ class ModelDiscovery:
 
     def _load_fallback_models(self) -> Dict[str, List[ModelMetadata]]:
         """Load fallback models from config/model_fallbacks.json"""
-        fallback_file = Path(__file__).parent.parent.parent / 'config' / 'model_fallbacks.json'
+        from ravl.common.cli.ravl_cli_base import RAVLCLIBase
+
+        framework_root = RAVLCLIBase.find_framework_root()
+        fallback_file = framework_root / 'config' / 'model_fallbacks.json'
 
         if not fallback_file.exists():
             print(f"Warning: Fallback models file not found: {fallback_file}")
