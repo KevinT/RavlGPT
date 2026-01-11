@@ -507,7 +507,7 @@ class LLMProviderFactory:
         if provider_type == "anthropic":
             return AnthropicProvider(
                 api_key=api_key,
-                model=model or "claude-sonnet-4-5-20250929",
+                model=model or "claude-haiku-4-5-20251001",
                 temperature=temperature,
                 max_tokens=max_tokens,
                 top_p=top_p
