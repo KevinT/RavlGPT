@@ -1252,7 +1252,7 @@ def main():
     parser.add_argument(
         '--interactive',
         action='store_true',
-        help='Enable interactive dependency approval workflow'
+        help='Enable interactive dependency approval and unknown unknowns prompting'
     )
 
     # Use parse_known_args to allow loop-specific parameters through

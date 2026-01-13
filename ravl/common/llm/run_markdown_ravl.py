@@ -795,6 +795,66 @@ class ConfigBasedRAVLRunner:
                 if execution_count > 0:
                     log_message(f"   • {execution_count} execution question(s): learnings/execution_learning/current_state/known_execution_unknowns.md",
                                status='info', indent=0)
+
+            # Interactive unknown unknowns prompting
+            if getattr(args, 'interactive', False):
+                from ravl.common.core.interactive_unknowns_asker import InteractiveUnknownsAsker
+
+                # Check if either category has questions before asking for attribution
+                execution_unknowns_file = learnings_dir / 'execution_learning' / 'current_state' / 'known_execution_unknowns.md'
+                loop_unknowns_file = learnings_dir / 'loop_learning' / 'current_state' / 'known_loop_unknowns.md'
+
+                # Quick check if there are any questions at all
+                has_execution = execution_unknowns_file.exists()
+                has_loop = loop_unknowns_file.exists()
+
+                if has_execution or has_loop:
+                    # Ask for attribution once at the start
+                    print("\n" + "=" * 80)
+                    print("📝 Unknown Unknowns - Interactive Prompting")
+                    print("=" * 80)
+                    answered_by = input("Who is answering these questions? (name/team, or press Enter for 'human'): ").strip()
+                    if not answered_by:
+                        answered_by = "human"
+                    print("💡 Tip: Type 's' to skip a question, 'skip-all' to skip remaining, or 'exit'/'quit' to stop.\n")
+
+                    total_answered = 0
+                    exit_requested = False
+
+                    # Ask execution unknowns first (infrastructure must work)
+                    if has_execution and not exit_requested:
+                        execution_asker = InteractiveUnknownsAsker(
+                            learning_path=learnings_dir,
+                            category="execution",
+                            answered_by=answered_by
+                        )
+                        execution_answered, exit_requested = execution_asker.ask_unknowns()
+                        total_answered += execution_answered
+
+                    # Ask loop unknowns second (domain questions)
+                    if has_loop and not exit_requested:
+                        loop_asker = InteractiveUnknownsAsker(
+                            learning_path=learnings_dir,
+                            category="domain",
+                            answered_by=answered_by
+                        )
+                        loop_answered, exit_requested = loop_asker.ask_unknowns()
+                        total_answered += loop_answered
+
+                    # Log results if any questions were answered
+                    if total_answered > 0:
+                        log_message(f"[i] {total_answered} unknown unknowns answered and recorded.",
+                                   status='info', indent=0)
+                        if has_execution and execution_answered > 0:
+                            log_message(f"    - {execution_answered} execution (infrastructure)",
+                                       status='info', indent=0)
+                        if has_loop and loop_answered > 0:
+                            log_message(f"    - {loop_answered} loop (domain)",
+                                       status='info', indent=0)
+
+                    if exit_requested:
+                        log_message("[i] Interactive prompting exited by user.", status='info', indent=0)
+
             log_message("=" * 80, status='info', indent=0)
 
             # Close logger
