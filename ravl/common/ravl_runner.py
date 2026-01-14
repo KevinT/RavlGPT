@@ -789,7 +789,7 @@ class RAVLRunner:
         print("="*80, file=sys.stderr, flush=True)
 
     @staticmethod
-    def print_summary(findings: Dict[str, Any], duration: float, loop_name: str, log_file: Optional[Path] = None):
+    def print_summary(findings: Dict[str, Any], duration: float, loop_name: str, log_file: Optional[Path] = None) -> bool:
         """
         Print run summary
 
@@ -798,9 +798,38 @@ class RAVLRunner:
             duration: Run duration in seconds
             loop_name: Name of the loop
             log_file: Optional log file path
+
+        Returns:
+            bool: True if loop succeeded, False if errors occurred
         """
-        RAVLRunner.print_banner(f"{loop_name} completed successfully")
-        log_message(f"Duration: {duration:.1f}s", status='info', indent=3)
+        # Check for errors or failures
+        has_errors = bool(findings.get('errors', []))
+        has_failures = findings.get('status') == 'failed'
+        verification_failed = findings.get('verification_passed') == False
+
+        success = not (has_errors or has_failures or verification_failed)
+
+        if success:
+            RAVLRunner.print_banner(f"{loop_name} completed successfully")
+            log_message(f"Duration: {duration:.1f}s", status='info', indent=3)
+        else:
+            RAVLRunner.print_banner(f"{loop_name} completed with errors")
+            log_message(f"Duration: {duration:.1f}s", status='error', indent=3)
+
+            if has_errors:
+                error_count = len(findings['errors'])
+                log_message(f"Errors encountered: {error_count}", status='error', indent=3)
+                # Show first error for context
+                if error_count > 0:
+                    first_error = findings['errors'][0]
+                    error_msg = first_error.get('error', 'Unknown error')
+                    # Truncate long error messages
+                    if len(error_msg) > 150:
+                        error_msg = error_msg[:147] + '...'
+                    log_message(f"First error: {error_msg}", status='error', indent=3)
+
+            if verification_failed:
+                log_message(f"Verification failed", status='error', indent=3)
 
         # Print loop-specific counts
         if 'summary' in findings:
@@ -818,6 +847,8 @@ class RAVLRunner:
             log_message(f"Log file: {log_file.name}", status='info', indent=3)
 
         log_message("="*80, status='info', indent=0)
+
+        return success
 
     @staticmethod
     def handle_error(exception: Exception, tee_logger: Optional[TeeLogger] = None):

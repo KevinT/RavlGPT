@@ -859,7 +859,14 @@ class ConfigBasedRAVLRunner:
 
             # Close logger
             tee_logger.close()
-            sys.exit(0)
+
+            # Check for success before exiting
+            has_errors = bool(action_result.get('errors', []))
+            has_failures = action_result.get('status') == 'failed'
+            verification_failed = verification.get('verification_passed') == False if run_verify and verification else False
+            success = not (has_errors or has_failures or verification_failed)
+
+            sys.exit(0 if success else 1)
 
         except (KeyboardInterrupt, Exception) as e:
             RAVLRunner.handle_error(e, tee_logger)

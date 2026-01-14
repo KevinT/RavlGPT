@@ -63,21 +63,19 @@ class MarkdownParser:
             if heading_info:
                 level, heading_text = heading_info
 
-                # Save previous phase
-                if current_phase:
-                    phases[current_phase] = '\n'.join(current_content).strip()
+                # Only H1 headings are phase boundaries
+                # H2/H3 headings are treated as content within the current phase
+                if level == 1:
+                    # Save previous phase
+                    if current_phase:
+                        phases[current_phase] = '\n'.join(current_content).strip()
 
-                # Warn if not H1
-                if level != 1:
-                    log_execution(
-                        f"⚠️  Found H{level} heading '{heading_text}' (expected H1). "
-                        f"Use '# {heading_text}' instead of '{'#' * level} {heading_text}'",
-                        status='warning'
-                    )
-
-                # Start new phase - normalize the name
-                current_phase = self._normalize_phase_name(heading_text)
-                current_content = []
+                    # Start new phase - normalize the name
+                    current_phase = self._normalize_phase_name(heading_text)
+                    current_content = []
+                else:
+                    # H2/H3 headings remain as markdown content within the phase
+                    current_content.append(line)
             else:
                 current_content.append(line)
 
@@ -135,19 +133,17 @@ class MarkdownParser:
             if heading_info:
                 level, heading_text = heading_info
 
-                if current_phase:
-                    phases[current_phase] = '\n'.join(current_content).strip()
+                # Only H1 headings are phase boundaries
+                # H2/H3 headings are treated as content within the current phase
+                if level == 1:
+                    if current_phase:
+                        phases[current_phase] = '\n'.join(current_content).strip()
 
-                # Warn if not H1
-                if level != 1:
-                    log_execution(
-                        f"⚠️  Found H{level} heading '{heading_text}' (expected H1). "
-                        f"Use '# {heading_text}' instead of '{'#' * level} {heading_text}'",
-                        status='warning'
-                    )
-
-                current_phase = self._normalize_phase_name(heading_text)
-                current_content = []
+                    current_phase = self._normalize_phase_name(heading_text)
+                    current_content = []
+                else:
+                    # H2/H3 headings remain as markdown content within the phase
+                    current_content.append(line)
             else:
                 current_content.append(line)
 
@@ -244,21 +240,19 @@ class MarkdownParser:
             if heading_info:
                 level, heading_text = heading_info
 
-                # Save previous phase
-                if current_phase:
-                    phases[current_phase] = '\n'.join(current_content).strip()
+                # Only H1 headings are phase boundaries
+                # H2/H3 headings are treated as content within the current phase
+                if level == 1:
+                    # Save previous phase
+                    if current_phase:
+                        phases[current_phase] = '\n'.join(current_content).strip()
 
-                # Warn if not H1
-                if level != 1:
-                    log_execution(
-                        f"⚠️  Found H{level} heading '{heading_text}' (expected H1). "
-                        f"Use '# {heading_text}' instead of '{'#' * level} {heading_text}'",
-                        status='warning'
-                    )
-
-                # Start new phase - normalize the name
-                current_phase = self._normalize_phase_name(heading_text)
-                current_content = []
+                    # Start new phase - normalize the name
+                    current_phase = self._normalize_phase_name(heading_text)
+                    current_content = []
+                else:
+                    # H2/H3 headings remain as markdown content within the phase
+                    current_content.append(line)
             else:
                 current_content.append(line)
 

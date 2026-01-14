@@ -358,8 +358,8 @@ class RAVLUniversalRunner(RAVLCLIBase):
         # Check for delegation - resolve chain and execute delegated loop
         delegation = self.discovery.detect_delegation(config)
         if delegation:
-            self._run_delegated_loop(loop_dir, config, args)
-            return
+            success = self._run_delegated_loop(loop_dir, config, args)
+            sys.exit(0 if success else 1)
 
         # Check if this is a markdown loop - delegate to markdown runner
         if is_markdown_loop:
@@ -496,10 +496,17 @@ class RAVLUniversalRunner(RAVLCLIBase):
 
             # Print summary (unless in hide_execution mode)
             duration = time.time() - start_time
+            success = True
             if not args.hide_execution:
-                RAVLRunner.print_summary(action_results, duration, name)
+                success = RAVLRunner.print_summary(action_results, duration, name)
+            else:
+                # Check for errors even when hiding execution
+                has_errors = bool(action_results.get('errors', []))
+                has_failures = action_results.get('status') == 'failed'
+                verification_failed = action_results.get('verification_passed') == False
+                success = not (has_errors or has_failures or verification_failed)
 
-            sys.exit(0)
+            sys.exit(0 if success else 1)
 
         except KeyboardInterrupt:
             self.print_error("Interrupted by user")
@@ -726,9 +733,30 @@ class RAVLUniversalRunner(RAVLCLIBase):
                         if not args.hide_execution:
                             print(f"Warning: Could not write execution metadata: {meta_error}", file=sys.stderr)
 
+            # Check for errors in action_result
+            has_errors = bool(action_result.get('errors', []))
+            has_failures = action_result.get('status') == 'failed'
+            verification_failed = verification_result.get('verification_passed') == False if verification_result else False
+            success = not (has_errors or has_failures or verification_failed)
+
             # Display completion message
             if not args.hide_execution:
-                print(f"\n✅ {wrapper_config.get('description', wrapper_loop_dir.name)} completed successfully", file=sys.stderr)
+                if success:
+                    print(f"\n✅ {wrapper_config.get('description', wrapper_loop_dir.name)} completed successfully", file=sys.stderr)
+                else:
+                    print(f"\n❌ {wrapper_config.get('description', wrapper_loop_dir.name)} completed with errors", file=sys.stderr)
+                    if has_errors:
+                        error_count = len(action_result['errors'])
+                        print(f"   Errors encountered: {error_count}", file=sys.stderr)
+                        # Show first error for context
+                        if error_count > 0:
+                            first_error = action_result['errors'][0]
+                            error_msg = first_error.get('error', 'Unknown error')
+                            if len(error_msg) > 150:
+                                error_msg = error_msg[:147] + '...'
+                            print(f"   First error: {error_msg}", file=sys.stderr)
+
+            return success
 
     def _run_markdown_loop(self, loop_dir: Path, config: Dict[str, Any], args: argparse.Namespace):
         """
